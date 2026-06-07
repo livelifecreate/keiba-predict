@@ -1,0 +1,259 @@
+"""JRA公式サイトから出馬表を取得するスクレイパー"""
+
+import re
+import requests
+from bs4 import BeautifulSoup
+from dataclasses import dataclass, field
+from typing import Optional
+
+BASE_URL = "https://www.jra.go.jp"
+HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+}
+
+
+@dataclass
+class RaceInfo:
+    name: str
+    date: str
+    venue: str
+    race_number: str
+    distance: str
+    surface: str
+    conditions: str
+    start_time: str
+    url: str
+
+
+@dataclass
+class HorseEntry:
+    frame_number: str       # 枠番
+    horse_number: str       # 馬番
+    horse_name: str         # 馬名
+    record: str             # 戦績
+    prize_money: str        # 賞金
+    owner: str              # 馬主
+    trainer: str            # 調教師
+    age_sex: str            # 性齢
+    weight_carried: str     # 負担重量
+    jockey: str             # 騎手
+    recent_races: list[str] = field(default_factory=list)  # 近走
+    sire: str = ""  # 父
+    bms:  str = ""  # 母父（ブルードメアサイア―）
+    horse_weight: int = 0  # 馬体重kg（当日発表前は0）
+
+
+def fetch_html(url: str) -> BeautifulSoup:
+    resp = requests.get(url, headers=HEADERS, timeout=15)
+    resp.raise_for_status()
+    resp.encoding = resp.apparent_encoding
+    return BeautifulSoup(resp.text, "html.parser")
+
+
+def parse_race_info(soup: BeautifulSoup, url: str) -> RaceInfo:
+    header = soup.find(id="race_header") or soup.find(class_="race_header")
+    header_text = header.get_text(separator=" ", strip=True) if header else ""
+
+    # PC版: class="race_name" / スマホ版: h3タグに「11R麦秋ステークス」形式
+    race_name_elem = soup.find(class_="race_name")
+    if race_name_elem:
+        race_name = race_name_elem.get_text(strip=True)
+    else:
+        h3 = soup.find("h3")
+        if h3:
+            race_name = re.sub(r"^\d+R", "", h3.get_text(strip=True)).strip()
+        else:
+            race_name = ""
+
+    # PC版はheader_text、スマホ版はfull_textで検索
+    search_text = header_text if header_text else soup.get_text(separator=" ")
+
+    # 日付
+    date_match = re.search(r"\d{4}年\d{1,2}月\d{1,2}日", search_text)
+    date = date_match.group() if date_match else ""
+
+    # 発走時刻（「15時45分」または「発走15:45」形式）
+    time_match = re.search(r"(\d+時\d+分)", search_text)
+    if not time_match:
+        time_match = re.search(r"発走(\d+:\d+)", search_text)
+    start_time = time_match.group(1) if time_match else ""
+
+    # 競馬場
+    venue_match = re.search(r"\d+回(東京|中山|阪神|京都|中京|新潟|福島|小倉|札幌|函館)\d+日", search_text)
+    if not venue_match:
+        venue_match = re.search(r"(東京|中山|阪神|京都|中京|新潟|福島|小倉|札幌|函館)", search_text)
+    venue = venue_match.group(1) if venue_match else ""
+
+    # 回・日
+    race_num_match = re.search(r"(\d+)回(?:東京|中山|阪神|京都|中京|新潟|福島|小倉|札幌|函館)(\d+)日", search_text)
+    race_number = f"{race_num_match.group(1)}回{race_num_match.group(2)}日" if race_num_match else ""
+
+    # 距離と馬場（PC版「1,400メートル（芝」 / スマホ版「1400m ダート・左」）
+    dist_match = re.search(r"([\d,]+)\s*メートル\s*[（(]([芝ダ障])", search_text)
+    if dist_match:
+        distance = dist_match.group(1).replace(",", "") + "m"
+        surface = dist_match.group(2)
+    else:
+        dist_match2 = re.search(r"(\d+)m\s*(ダート|芝|障)", search_text)
+        if dist_match2:
+            distance = dist_match2.group(1) + "m"
+            s = dist_match2.group(2)
+            surface = "ダ" if "ダート" in s else "芝" if "芝" in s else "障"
+        else:
+            distance = ""
+            surface = ""
+
+    conditions = race_name
+
+    return RaceInfo(
+        name=race_name,
+        date=date,
+        venue=venue,
+        race_number=race_number,
+        distance=distance,
+        surface=surface,
+        conditions=conditions,
+        start_time=start_time,
+        url=url,
+    )
+
+
+def parse_horse_entry(cells: list) -> Optional[HorseEntry]:
+    if len(cells) < 4:
+        return None
+
+    # 枠番: waku クラスの img src から番号を取得
+    waku_cell = next((c for c in cells if "waku" in (c.get("class") or [])), None)
+    if waku_cell:
+        img = waku_cell.find("img")
+        if img:
+            m = re.search(r"/waku/(\d+)\.png", img.get("src", ""))
+            frame_num = m.group(1) if m else ""
+        else:
+            frame_num = waku_cell.get_text(strip=True)
+    else:
+        frame_num = cells[0].get_text(strip=True)
+
+    # 馬番: num クラス
+    num_cell = next((c for c in cells if "num" in (c.get("class") or [])), None)
+    horse_num = num_cell.get_text(strip=True) if num_cell else cells[1].get_text(strip=True)
+
+    # 馬名・戦績・賞金・馬主・調教師: horse クラス
+    horse_cell = next((c for c in cells if "horse" in (c.get("class") or [])), None)
+    horse_text = horse_cell.get_text(strip=True) if horse_cell else cells[2].get_text(strip=True)
+
+    # 馬名はアルファベット・カタカナ・漢字・ひらがな・長音符のみ（オッズ数字を除く）
+    horse_name_match = re.match(r"^([^\d（(]+)", horse_text)
+    horse_name = horse_name_match.group(1).strip() if horse_name_match else horse_text.split("(")[0].strip()
+
+    record_match = re.search(r"\((\d+\.\d+\.\d+\.\d+)\)", horse_text)
+    record = record_match.group(1) if record_match else ""
+
+    prize_match = re.search(r"([\d,]+\.?\d*)万円", horse_text)
+    prize = prize_match.group(0) if prize_match else ""
+
+    owner = ""
+    trainer = ""
+    if "万円" in horse_text:
+        after_prize = horse_text[horse_text.index("万円") + 2:].strip()
+        trainer_match = re.search(r"([^\s（(]+)\s*[（(](美浦|栗東)[）)]", after_prize)
+        if trainer_match:
+            trainer = trainer_match.group(1)
+        parts = after_prize.split()
+        owner = parts[0] if parts else ""
+
+    # 性齢・斤量・騎手: jockey クラス
+    jockey_cell = next((c for c in cells if "jockey" in (c.get("class") or [])), None)
+    jockey_text = jockey_cell.get_text(strip=True) if jockey_cell else cells[3].get_text(strip=True)
+
+    age_sex_match = re.match(r"(牡\d+|牝\d+|せん\d+|騸\d+)", jockey_text)
+    age_sex = age_sex_match.group(1) if age_sex_match else ""
+
+    weight_match = re.search(r"(\d+\.\d+)\s*kg", jockey_text)
+    weight = weight_match.group(1) + "kg" if weight_match else ""
+
+    # 騎手名: 斤量の後、レーティング番号の前まで
+    jockey_name_match = re.search(r"\d+\.\d+kg(.+?)(?:\s*\d{3}\s*[A-Z]|$)", jockey_text)
+    jockey = jockey_name_match.group(1).strip() if jockey_name_match else ""
+
+    # 近走: past クラス
+    recent = []
+    for cell in cells:
+        cls = cell.get("class") or []
+        if "past" in cls:
+            text = cell.get_text(strip=True)
+            if text:
+                recent.append(text)
+
+    return HorseEntry(
+        frame_number=frame_num,
+        horse_number=horse_num,
+        horse_name=horse_name,
+        record=record,
+        prize_money=prize,
+        owner=owner,
+        trainer=trainer,
+        age_sex=age_sex,
+        weight_carried=weight,
+        jockey=jockey,
+        recent_races=recent,
+    )
+
+
+def get_entry_list(url: str) -> tuple[RaceInfo, list[HorseEntry]]:
+    """出馬表を取得して (レース情報, 出走馬リスト) を返す"""
+    soup = fetch_html(url)
+    race_info = parse_race_info(soup, url)
+
+    table = soup.find("table", class_="basic")
+    if not table:
+        return race_info, []
+
+    entries = []
+    rows = table.find_all("tr")
+    for row in rows[1:]:
+        cells = row.find_all(["td", "th"])
+        entry = parse_horse_entry(cells)
+        if entry and entry.horse_number:
+            entries.append(entry)
+
+    return race_info, entries
+
+
+def get_thisweek_g1_urls() -> list[str]:
+    """今週のG1レース出馬表URLリストを返す"""
+    soup = fetch_html(f"{BASE_URL}/keiba/thisweek/")
+    urls = []
+    for a in soup.find_all("a", href=True):
+        href = a["href"]
+        if "syutsuba" in href and href.startswith("/keiba/g1/"):
+            full_url = BASE_URL + href
+            if full_url not in urls:
+                urls.append(full_url)
+    return urls
+
+
+def print_entry_list(race_info: RaceInfo, entries: list[HorseEntry]):
+    print(f"\n{'='*60}")
+    print(f"レース名  : {race_info.name}")
+    print(f"開催日    : {race_info.date}  {race_info.venue}  {race_info.start_time}")
+    print(f"コース    : {race_info.distance} ({race_info.surface})")
+    print(f"{'='*60}")
+    print(f"{'枠':>2} {'馬番':>3} {'馬名':<18} {'性齢':>4} {'斤量':>5} {'騎手':<12}")
+    print("-" * 60)
+    for e in entries:
+        print(f"{e.frame_number:>2} {e.horse_number:>3} {e.horse_name:<18} {e.age_sex:>4} {e.weight_carried:>5} {e.jockey:<12}")
+
+
+if __name__ == "__main__":
+    print("今週のG1出馬表を取得中...")
+    urls = get_thisweek_g1_urls()
+
+    if not urls:
+        print("今週のG1出馬表は見つかりませんでした。")
+    else:
+        for url in urls:
+            print(f"\nURL: {url}")
+            race_info, entries = get_entry_list(url)
+            print_entry_list(race_info, entries)
+            print(f"\n出走頭数: {len(entries)}頭")
