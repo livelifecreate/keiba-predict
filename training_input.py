@@ -70,10 +70,14 @@ class TrainingInput:
 
 def _csv_path(race_info) -> str:
     date = re.sub(r"[年月]", "", race_info.date).replace("日", "")
+    venue = re.sub(r"[\s　/\\:*?\"<>|]", "_", getattr(race_info, "venue", "") or "")
+    race_num = getattr(race_info, "race_num", 0)
+    rnum = f"{race_num}R" if race_num else ""
     name = re.sub(r"[\s　/\\:*?\"<>|]", "_", race_info.name)
+    parts = [p for p in [date, venue, rnum, name] if p]
     return os.path.join(
         os.path.dirname(__file__),
-        f"training_{date}_{name}.csv",
+        f"training_{'_'.join(parts)}.csv",
     )
 
 

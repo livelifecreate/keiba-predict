@@ -247,11 +247,70 @@ def save_csv(results: list[dict], path: str):
     print(f"\n[保存] {path}")
 
 
+VENUE_NAMES = ['中山', '阪神', '福島', '東京', '京都', '中京', '新潟', '小倉', '札幌', '函館']
+
+
+def find_kb_race_id(date: str, race_number: int, venue: str = "") -> str | None:
+    """日付・R番号から競馬ブックの12桁IDを取得する。
+    date       : "20260418" 形式
+    race_number: 11（R番号の数字）
+    venue      : "阪神" などの競馬場名（同日複数会場の絞り込み用・省略可）
+    """
+    headers = {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"}
+    url = f"https://p.keibabook.co.jp/cyuou/nittei/{date}/"
+    r = requests.get(url, headers=headers, timeout=15)
+    if r.status_code != 200:
+        return None
+    soup = BeautifulSoup(r.text, "lxml")
+    target_rr = f"{race_number:02d}"  # IDの末尾2桁がR番号
+    for tbl in soup.find_all("table", class_="kaisai"):
+        th = tbl.find("th")
+        th_txt = th.get_text(strip=True) if th else ""
+        tbl_venue = next((v for v in VENUE_NAMES if v in th_txt), None)
+        if venue and tbl_venue != venue:
+            continue
+        for a in tbl.find_all("a", href=True):
+            if "cyokyo" not in a["href"]:
+                continue
+            m = re.search(r"(\d{12})", a["href"])
+            if m and m.group(1)[10:12] == target_rr:
+                return m.group(1)
+    return None
+
+
+def get_today_race_ids() -> list[dict]:
+    """競馬ブックのtopページから当日の調教URLを取得する"""
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
+    }
+    r = requests.get("https://p.keibabook.co.jp/cyuou/top", headers=headers, timeout=15)
+    soup = BeautifulSoup(r.text, "lxml")
+    races = []
+    for a in soup.find_all("a", href=True):
+        href = a["href"]
+        m = re.search(r"/cyuou/cyokyo/\d+/\d+/(\d{12})", href)
+        if m:
+            race_id = m.group(1)
+            if not any(rc["race_id"] == race_id for rc in races):
+                parent = a.find_parent()
+                race_name = parent.get_text(strip=True)[:40] if parent else ""
+                races.append({"race_id": race_id, "url": f"https://p.keibabook.co.jp{href}", "label": race_name})
+    return races
+
+
 if __name__ == "__main__":
     args = sys.argv[1:]
     if not args:
         print("使い方: python3 keibabook_scraper.py <URL> [--output <ファイル名>]")
+        print("        python3 keibabook_scraper.py --list  # 当日レース一覧表示")
         sys.exit(1)
+
+    if args[0] == "--list":
+        races = get_today_race_ids()
+        print(f"本日の調教データ ({len(races)}レース)")
+        for rc in races:
+            print(f"  {rc['race_id']}: {rc['label']}")
+        sys.exit(0)
 
     url = args[0]
     output = None
@@ -266,7 +325,15 @@ if __name__ == "__main__":
     if output:
         save_csv(results, output)
     else:
-        # 自動ファイル名（URLの末尾IDを使用）
         race_id = url.rstrip("/").split("/")[-1]
-        auto_path = Path(__file__).parent / f"training_{race_id}.csv"
+        training_dir = Path(__file__).parent / "results" / "training"
+        training_dir.mkdir(parents=True, exist_ok=True)
+        auto_path = training_dir / f"training_{race_id}.csv"
         save_csv(results, str(auto_path))
+
+
+if __name__ == "__main__" and "--list" in sys.argv:
+    races = get_today_race_ids()
+    print(f"本日の調教データ ({len(races)}レース)")
+    for r in races:
+        print(f"  {r['race_id']}: {r['label']}")

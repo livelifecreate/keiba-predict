@@ -23,6 +23,7 @@ class RaceInfo:
     conditions: str
     start_time: str
     url: str
+    race_num: int = 0  # 何R（URLから抽出）
 
 
 @dataclass
@@ -105,6 +106,12 @@ def parse_race_info(soup: BeautifulSoup, url: str) -> RaceInfo:
 
     conditions = race_name
 
+    # URLからレース番号（何R）を抽出: pw01dde01{venue:2}{year:4}{kai:2}{nichi:2}{race:2}{date:8}
+    race_num = 0
+    m = re.search(r'pw01dde01\d{2}\d{4}\d{2}\d{2}(\d{2})\d{8}', url)
+    if m:
+        race_num = int(m.group(1))
+
     return RaceInfo(
         name=race_name,
         date=date,
@@ -115,6 +122,7 @@ def parse_race_info(soup: BeautifulSoup, url: str) -> RaceInfo:
         conditions=conditions,
         start_time=start_time,
         url=url,
+        race_num=race_num,
     )
 
 

@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(wait)"
+      "Bash(wait)",
+      "Bash(CLAUDE_CODE_TMPDIR=/var/folders grep -n \"grade_history\\\\|check_grade\" /Users/du/Documents/競馬予想システム/scorer.py)"
     ]
   }
 }

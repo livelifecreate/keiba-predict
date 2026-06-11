@@ -1,6 +1,18 @@
+# 秘密情報
 keibabook_cookie.txt
+.streamlit/secrets.toml
+
+# キャッシュ・一時ファイル
 __pycache__/
 *.pyc
+*.pyo
+cache/
+tmp/
+tmp_files/
+
+# 不要ファイル
+*.command
 .DS_Store
-score__.csv
-training__.csv
+
+# 調教キャッシュ（再取得可能）
+results/training/

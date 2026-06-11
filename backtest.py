@@ -396,7 +396,13 @@ def run_backtest(race_id: str, training_url: str = None):
     import csv, os
     date_clean = re.sub(r"[年月]", "", race_info.date).replace("日", "")
     name_clean = re.sub(r'[\s　/\\:*?"<>|]', "_", race_info.name)
-    csv_path = os.path.join(os.path.dirname(__file__), f"prediction_{race_id}_{name_clean}_最終.csv")
+    dm = re.match(r'(\d{4})年(\d{1,2})月(\d{1,2})日', race_info.date)
+    date_dir = f"{dm.group(1)}-{int(dm.group(2)):02d}-{int(dm.group(3)):02d}" if dm else "不明"
+    venue_dir = race_info.venue or "不明"
+    from pathlib import Path as _Path
+    save_dir = _Path(__file__).parent / "results" / date_dir / venue_dir
+    save_dir.mkdir(parents=True, exist_ok=True)
+    csv_path = str(save_dir / f"prediction_{race_id}_{name_clean}_最終.csv")
     with open(csv_path, "w", newline="", encoding="utf-8-sig") as f:
         writer = csv.writer(f)
         writer.writerow([race_info.name, race_info.date, race_info.venue,

@@ -73,6 +73,7 @@ RACE_GRADE_MAP: dict[str, int] = {
     "NHKマイルC": 7, "NHKマイルカップ": 7,
     "ヴィクトリアマイル": 7, "フェブラリーS": 7, "フェブラリーステークス": 7,
     "チャンピオンズC": 7, "チャンピオンズカップ": 7,
+    "ジャパンダートC": 7, "ジャパンダートクラシック": 7,
     "朝日杯FS": 7, "朝日杯フューチュリティS": 7,
     "阪神JF": 7, "阪神ジュベナイルF": 7,
     "ホープフルS": 7, "ホープフルステークス": 7,
@@ -92,36 +93,32 @@ RACE_GRADE_MAP: dict[str, int] = {
     "ダービー卿CT": 6, "ダービーCT": 6,
     "新潟大賞典": 6, "函館記念": 6, "小倉記念": 6,
     "札幌記念": 6, "関屋記念": 6, "新潟記念": 6,
-    "クイーンS": 6, "中京記念": 6,
+    "中京記念": 6,
     "スワンS": 6, "スプリングS": 6, "弥生賞": 6,
     "ローズS": 6, "紫苑S": 6,
     "チャレンジC": 6, "チャレンジカップ": 6,
-    "京阪杯": 6, "ディセンバーS": 6,
-    "カペラS": 6, "シリウスS": 6, "レパードS": 6,
-    "プロキオンS": 6, "マリーンC": 6,
-    "アンタレスS": 6, "ユニコーンS": 6, "ジャパンダートC": 6,
+    "京阪杯": 6,
+    "目黒記念": 6, "ユニコーンS": 6,
+    "府中牝馬S": 6, "京王杯SC": 6, "京王杯スプリングC": 6,
+    "東京スポーツ杯": 6, "ニュージーランドT": 6,
     # G3 (5)
     "中山金杯": 5, "京都金杯": 5, "ニューイヤーS": 5,
     "シンザン記念": 5, "京成杯": 5,
     "きさらぎ賞": 5, "クイーンC": 5, "共同通信杯": 5,
     "アーリントンC": 5, "ファルコンS": 5, "フラワーC": 5,
-    "ニュージーランドT": 5, "アンタレスS": 5,
-    "福島牝馬S": 5, "メトロポリタンS": 5, "目黒記念": 5,
-    "葵S": 5, "ユニコーンS": 5,
+    "アンタレスS": 5,
+    "福島牝馬S": 5,
+    "葵S": 5,
     "巴賞": 5, "七夕賞": 5, "プロキオンS": 5,
-    "小倉2歳S": 5, "北九州記念": 5, "BSN賞": 5, "レパードS": 5,
-    "TVh杯": 5, "クローバー賞": 5,
-    "エルムS": 5, "レパードS": 5,
-    "キーンランドC": 5, "札幌2歳S": 5, "小倉サマージャンプ": 5,
-    "セプテンバーS": 5, "エニフS": 5, "紫菊賞": 5,
-    "毎日放送賞": 5, "長岡S": 5, "ラジオNIKKEI賞": 5,
-    "ラジオNIKKEI杯": 5,
-    "産経賞オールカマー": 5,
-    "スポニチ賞": 5, "府中牝馬S": 5, "スワンS": 5,
-    "アルテミスS": 5, "京王杯SC": 5, "京王杯スプリングC": 5,
-    "東京スポーツ杯": 5, "カシオペアS": 5,
-    "デイリー杯2歳S": 5, "デスモアS": 5, "みずほ銀行賞": 5,
-    "白菊賞": 5, "京都2歳S": 5, "ターコイズS": 5, "ディセンバーS": 5,
+    "小倉2歳S": 5, "北九州記念": 5, "レパードS": 5,
+    "エルムS": 5, "カペラS": 5, "シリウスS": 5, "マリーンC": 5,
+    "キーンランドC": 5, "札幌2歳S": 5,
+    "エニフS": 5,
+    "ラジオNIKKEI賞": 5,
+    "アルテミスS": 5,
+    "カシオペアS": 5,
+    "京都2歳S": 5, "ターコイズS": 5,
+    "クイーンS": 5,
 }
 
 HIGH_GRADE_MIN = 6  # G2以上を「ハイレベル重賞」とする
@@ -145,6 +142,7 @@ class PastRace:
     horse_weight: int    # 馬体重 kg（0=不明）
     is_overseas: bool    # 海外競馬フラグ
     first_corner: int    # 1コーナー通過順位（0=不明）
+    last_corner: int = 0 # 最終コーナー通過順位（0=不明）
 
 
 @dataclass
@@ -160,6 +158,7 @@ class ScoreBreakdown:
     distance_drop:          float = 0.0  # +1（前走より200m以上距離短縮）
     prev_run_bonus:         float = 0.0  # +2/+1（前走好走ボーナス：G2未満1着→+2、2着→+1）
     prev2_run_bonus:        float = 0.0  # +1/+0.5（前々走好走ボーナス：G2未満1着→+1、2着→+0.5）
+    grade_history:          float = 0.0  # +1〜+3（3・4走前G1〜OP 1・2着）
     bloodline_distance:     float = 0.0  # -1.5〜+1.5（血統距離適性）
     # 減点（合計上限 -5.0）
     first_surface:         float = 0.0  # -5
@@ -170,7 +169,8 @@ class ScoreBreakdown:
     long_rest:             float = 0.0  # -3
     post_surface:          float = 0.0  # 枠番補正（実データ基準）芝1400/1600は±0.5、ダ内枠-2.0
     inner_post_senko:      float = 0.0  # +3 内枠先行ボーナス（脚質自動検出）
-    top_weight:            float = 0.0  # -1
+    light_weight:          float = 0.0  # +1
+    place_consistency:     float = 0.0  # +2/+3（直近5走で3着以内3回以上）
     no_steep_win:          float = 0.0  # -2
     weight_change:         float = 0.0  # -2
     wrong_direction:       float = 0.0  # -1
@@ -192,6 +192,7 @@ class ScoreBreakdown:
             + self.distance_drop
             + self.prev_run_bonus
             + self.prev2_run_bonus
+            + self.grade_history
             + self.inner_post_senko
             + max(self.bloodline_distance, 0.0)
             + max(self.track_condition, 0.0)
@@ -204,7 +205,8 @@ class ScoreBreakdown:
             + self.local_prev
             + self.long_rest
             + self.post_surface
-            + self.top_weight
+            + self.light_weight
+            + self.place_consistency
             + self.no_steep_win
             + self.weight_change
             + self.wrong_direction
@@ -221,12 +223,13 @@ class ScoreBreakdown:
 def parse_race_class(race_name: str) -> int:
     import unicodedata
     name = unicodedata.normalize("NFKC", race_name)  # 全角→半角正規化
-    if name.endswith("GIII"): return 5
-    if name.endswith("GII"):  return 6
-    if name.endswith("GI"):   return 7
+    # 固有レース名を先に判定（netkeibaのGIII/GII付きレース名より正確）
     for key, rank in RACE_GRADE_MAP.items():
         if key in name:
             return rank
+    if name.endswith("GIII"): return 5
+    if name.endswith("GII"):  return 6
+    if name.endswith("GI"):   return 7
     for key, rank in CLASS_RANK.items():
         if key in name:
             return rank
@@ -314,9 +317,11 @@ def parse_past_race(text: str) -> Optional[PastRace]:
     margin_match = re.search(r"\(([\d.]+)\)\s*$", text.strip())
     margin = float(margin_match.group(1)) if margin_match else 0.0
 
-    # 1コーナー通過順位
+    # コーナー通過順位
     corner_m = re.search(r"1角:(\d+)", text)
     first_corner = int(corner_m.group(1)) if corner_m else 0
+    last_corner_m = re.search(r"4角:(\d+)", text)
+    last_corner = int(last_corner_m.group(1)) if last_corner_m else 0
 
     return PastRace(
         date=date,
@@ -332,6 +337,7 @@ def parse_past_race(text: str) -> Optional[PastRace]:
         horse_weight=horse_weight,
         is_overseas=overseas,
         first_corner=first_corner,
+        last_corner=last_corner,
     )
 
 
@@ -375,11 +381,25 @@ def check_fastest_3f(my_3f: float, all_3f: list[float], prev_pos: int = 0) -> in
 
 
 def check_same_course(recent: list[PastRace], venue: str, distance: str, surface: str) -> int:
-    """近4戦以内に同コース1着"""
+    """近4戦以内に同コース1着（同距離+4 / 距離差400m以内+2）"""
+    try:
+        dist_m = int(distance.replace("m", ""))
+    except ValueError:
+        dist_m = 0
+    nearby = 0
     for p in recent[:4]:
-        if p.position == 1 and p.venue == venue and p.distance == distance and p.surface == surface:
+        if p.position != 1 or p.venue != venue or p.surface != surface:
+            continue
+        if p.distance == distance:
             return 4
-    return 0
+        if dist_m:
+            try:
+                p_dist = int(p.distance.replace("m", ""))
+                if abs(p_dist - dist_m) <= 400:
+                    nearby = 2
+            except ValueError:
+                pass
+    return nearby
 
 
 def check_second_start(recent: list[PastRace]) -> int:
@@ -416,14 +436,14 @@ def check_first_surface(recent: list[PastRace], race_surface: str, race_class: i
 
 def check_distance_up(recent: list[PastRace], race_distance: str, race_class: int = 4) -> int:
     """距離延長1ハロン(200m)以上（クラス別ペナルティ）
-    未勝利(0) : 0（適距離未確定のため免除）
-    1勝クラス(1): 前走1着→-1 / 前走3着以内近差→-2 / その他→-3
-    2勝以上(2+): 前走1着→-2 / 前走3着以内近差→-3 / その他→-5
+    2勝クラス以下: 免除（適距離が定まっていない段階のため）
+    3勝クラス(3): 前走1着→-1 / 前走3着以内近差→-2 / その他→-3
+    OP以上(4+):   前走1着→-2 / 前走3着以内近差→-3 / その他→-5
     ※前走G1勝ちは全クラス免除
     """
     if not recent or not race_distance:
         return 0
-    if race_class <= 0:
+    if race_class <= 2:
         return 0
     prev = recent[0]
     if not prev.distance:
@@ -436,14 +456,14 @@ def check_distance_up(recent: list[PastRace], race_distance: str, race_class: in
     if prev.race_class >= 7 and prev.position == 1:
         return 0
 
-    # クラス別ペナルティ係数
-    if race_class == 1:    # 1勝クラス
+    # クラス別ペナルティ係数（3勝クラス以上のみ到達）
+    if race_class == 3:    # 3勝クラス
         p_win, p_close, p_base = -1, -2, -3
-    else:                    # 2勝以上
+    else:                  # OP以上(4+)
         p_win, p_close, p_base = -2, -3, -5
 
-    # 2勝以上のみ重賞実績で緩和
-    if race_class >= 2:
+    # OP以上のみ重賞実績で緩和
+    if race_class >= 4:
         for p in recent[:3]:
             if p.race_class >= 7 and p.margin <= 1.0:
                 return -2
@@ -460,12 +480,10 @@ def check_distance_up(recent: list[PastRace], race_distance: str, race_class: in
 
 
 def check_promotion(recent: list[PastRace], race_class: int) -> int:
-    """昇級初戦（前走1着 かつ 今回がクラスアップ）"""
-    if not recent:
-        return 0
-    p = recent[0]
-    if p.position == 1 and race_class > p.race_class:
-        return -2
+    """昇級初戦ペナルティ廃止。
+    昇級はポジティブな事象（前走1着の証明）。
+    距離延長ペナルティは check_distance_up で別途評価。
+    """
     return 0
 
 
@@ -697,6 +715,25 @@ def check_prev2_run_bonus(recent: list[PastRace]) -> float:
     return 0.0
 
 
+def check_grade_history(recent: list[PastRace]) -> float:
+    """3・4走前のG1〜OP 1・2着にボーナス加点（前走・前々走は別評価のため除外）
+    G1 1・2着→+3 / G2→+2 / G3→+1.5 / OP→+1
+    """
+    score = 0.0
+    for p in recent[2:4]:
+        if p.position > 2:
+            continue
+        if p.race_class >= 7:
+            score = max(score, 3.0)
+        elif p.race_class >= 6:
+            score = max(score, 2.0)
+        elif p.race_class >= 5:
+            score = max(score, 1.5)
+        elif p.race_class >= 4:
+            score = max(score, 1.0)
+    return score
+
+
 def check_rising_trend(recent: list[PastRace]) -> float:
     """直近3走で着順が連続改善（例: 5→3→1着）の場合 +1"""
     if len(recent) < 3:
@@ -725,11 +762,27 @@ def check_distance_drop(recent: list[PastRace], race_distance: str) -> float:
     return 0.0
 
 
-def check_top_weight(weight_str: str, all_weights: list[str]) -> int:
-    """トップハンデ（自分の斤量が平均より1.5kg以上重い場合のみ）
-    定量戦・別定戦では全馬が同斤量のため差がなく該当しない。
-    ハンデキャップ戦で突出した重量を背負う馬のみに適用。
+def check_place_consistency(recent: list) -> float:
+    """直近5走の3着以内回数に応じてボーナス。
+    4回以上 → +3、3回 → +2
     """
+    if not recent:
+        return 0.0
+    top3 = sum(1 for p in recent[:5] if getattr(p, "position", 99) in (1, 2, 3))
+    if top3 >= 4:
+        return 3.0
+    if top3 >= 3:
+        return 2.0
+    return 0.0
+
+
+def check_light_weight(weight_str: str, all_weights: list[str], race_conditions: str = "") -> int:
+    """軽量馬加点（ハンデ戦のみ適用・平均より1.5kg以上軽い場合のみ+1）
+    定量戦・別定戦の牝馬2kg減等は規定斤量差でありハンデではないため対象外。
+    トップハンデは能力の証明でもあるため減点しない。
+    """
+    if "ハンデ" not in race_conditions:
+        return 0
     try:
         my_w = float(weight_str.replace("kg", ""))
     except (ValueError, AttributeError):
@@ -743,16 +796,19 @@ def check_top_weight(weight_str: str, all_weights: list[str]) -> int:
     if not valid:
         return 0
     avg_w = sum(valid) / len(valid)
-    max_w = max(valid)
-    if my_w == max_w and my_w - avg_w >= 1.5:
-        return -1
+    if avg_w - my_w >= 1.5:
+        return 1
     return 0
 
 
-def check_no_steep_win(recent: list[PastRace], race_venue: str, race_surface: str = "") -> int:
+def check_no_steep_win(recent: list[PastRace], race_venue: str, race_surface: str = "",
+                       race_class: int = 4) -> int:
     """急坂コース（中山・阪神・中京）で好走歴なし（3着以内）
-    芝: -2 / ダート: -1（急坂の影響が芝より小さい）
+    2勝クラス以下は適距離・実績が固まりきっておらず急坂経験が少ないのが普通のため対象外。
+    3勝クラス以上: 芝 -2 / ダート -1
     """
+    if race_class <= 2:
+        return 0
     if race_venue not in STEEP_COURSES:
         return 0
     for p in recent:
@@ -889,19 +945,8 @@ def check_track_condition(past_conds: list[tuple[str, int]], current_condition: 
 
 
 def check_wrong_direction(recent: list[PastRace], race_venue: str) -> int:
-    """今回の回り方向で好走歴なし（3着以内）"""
-    if race_venue in LEFT_TURN:
-        direction = LEFT_TURN
-    elif race_venue in RIGHT_TURN:
-        direction = RIGHT_TURN
-    else:
-        return 0
-    for p in recent:
-        if p.venue in direction and 1 <= p.position <= 3:
-            return 0
-    if not recent:
-        return 0
-    return -1
+    """廃止：近走5走以内しか参照できず4走以前の実績を見落とすため精度が低い"""
+    return 0
 
 
 def check_seasonal_sex(age_sex: str, race_date_str: str) -> int:
@@ -918,19 +963,24 @@ def check_seasonal_sex(age_sex: str, race_date_str: str) -> int:
 
 
 def detect_running_style(recent: list) -> str:
-    """近走の1コーナー通過順位の平均から脚質を推定する。
+    """近走のコーナー通過順位（頭数比）から脚質を推定する。
+    最終コーナー(4角)を優先し、なければ1角で代用。
     データなし → '不明'（手動確認フラグを表示）
-    平均 ≤ 3.5 → '先行'（+3ボーナス対象）
-    平均 ≤ 6.0 → '好位'
-    それ以上  → '差し'
+    平均比率 ≤ 0.35 → '先行'（≒頭数の35%以内）
+    平均比率 ≤ 0.60 → '好位'
+    それ以上        → '差し'
     """
-    corners = [p.first_corner for p in recent if p.first_corner > 0]
-    if not corners:
+    ratios = []
+    for p in recent:
+        corner = p.last_corner if p.last_corner > 0 else p.first_corner
+        if corner > 0 and p.field_size > 0:
+            ratios.append(corner / p.field_size)
+    if not ratios:
         return "不明"
-    avg = sum(corners) / len(corners)
-    if avg <= 5.0:
+    avg_ratio = sum(ratios) / len(ratios)
+    if avg_ratio <= 0.35:
         return "先行"
-    if avg <= 8.0:
+    if avg_ratio <= 0.60:
         return "好位"
     return "差し"
 
@@ -1033,6 +1083,7 @@ def score_all(entries: list, race_info, training_data: dict = None,
             distance_drop          = check_distance_drop(recent, race_distance),
             prev_run_bonus         = check_prev_run_bonus(recent),
             prev2_run_bonus        = check_prev2_run_bonus(recent),
+            grade_history          = check_grade_history(recent),
             bloodline_distance     = check_bloodline_distance(entry.sire, entry.bms, race_distance),
             first_surface          = check_first_surface(recent, race_surface, race_class),
             distance_up            = dist_up,  # promo/dist_upはrace_class渡し済み
@@ -1041,8 +1092,9 @@ def score_all(entries: list, race_info, training_data: dict = None,
             local_prev             = check_local_prev(recent, race_distance, race_surface, race_class),
             long_rest              = check_long_rest(recent, race_date),
             post_surface           = check_post_surface(entry.frame_number, race_surface, race_distance),
-            top_weight             = check_top_weight(entry.weight_carried, all_weights),
-            no_steep_win           = check_no_steep_win(recent, race_venue, race_surface),
+            light_weight           = check_light_weight(entry.weight_carried, all_weights, race_info.conditions),
+            place_consistency      = check_place_consistency(recent),
+            no_steep_win           = check_no_steep_win(recent, race_venue, race_surface, race_class),
             weight_change          = check_weight_change(recent, getattr(entry, "horse_weight", 0),
                                        manual_diff=(weight_diffs or {}).get(entry.horse_name, 0)),
             wrong_direction        = check_wrong_direction(recent, race_venue),
@@ -1068,13 +1120,14 @@ SCORE_LABELS = {
     "prev_high_grade_close":  "前走重賞近差",
     "prev2_high_grade_close": "前々走重賞近差",
     "fastest_3f":             "前走3F最速",
-    "same_course":            "同コース実績",
+    "same_course":            "同コース実績",  # +4=同距離 / +2=近距離（表示はget_labelで分岐）
     "training_rank":          "調教A評価",
     "second_start":           "叩き2戦目",
     "rising_trend":           "近走上昇傾向",
     "distance_drop":          "距離短縮",
     "prev_run_bonus":         "前走好走",
     "prev2_run_bonus":        "前々走好走",
+    "grade_history":          "グレード実績(3-4走前)",
     "bloodline_distance":     "血統距離適性",
     "first_surface":          "初馬場種別",
     "distance_up":            "距離延長",
@@ -1084,13 +1137,21 @@ SCORE_LABELS = {
     "long_rest":              "長期休養明け",
     "post_surface":           "枠番補正",
     "inner_post_senko":       "内枠先行",
-    "top_weight":             "トップハンデ",
+    "light_weight":           "軽量馬加点",
+    "place_consistency":      "複勝安定ボーナス",
     "no_steep_win":           "急坂好走なし",
     "weight_change":          "馬体重変動",
     "wrong_direction":        "回り不適",
     "seasonal_sex":           "季節×性別",
     "track_condition":        "道悪適性",
 }
+
+
+def _get_label(key: str, value: float) -> str:
+    """ラベル取得（same_courseはスコア値で同距離/近距離を区別）"""
+    if key == "same_course":
+        return "同コース近距離実績" if abs(value) == 2 else "同コース実績"
+    return SCORE_LABELS.get(key, key)
 
 
 def _dist_comment(entry, race_distance: str, race_surface: str, race_venue: str) -> str:
@@ -1147,8 +1208,12 @@ def _record_comment(entry) -> str:
 def save_csv(results: list[tuple], race_info, odds_map: dict = None):
     import csv as _csv
     date_str = race_info.date.replace("年", "").replace("月", "").replace("日", "")
+    venue = getattr(race_info, "venue", "") or ""
+    race_num = getattr(race_info, "race_num", 0)
+    rnum = f"{race_num}R" if race_num else ""
     race_name = race_info.name.replace(" ", "_")
-    filename = f"score_{date_str}_{race_name}.csv"
+    parts = [p for p in [date_str, venue, rnum, race_name] if p]
+    filename = f"score_{'_'.join(parts)}.csv"
     sorted_results = sorted(results, key=lambda x: x[1].total, reverse=True)
 
     # 人気順を計算（オッズが低い順）
@@ -1166,8 +1231,8 @@ def save_csv(results: list[tuple], race_info, odds_map: dict = None):
             writer.writerow(["順位", "枠", "馬番", "馬名", "合計スコア",
                              "加点内訳", "減点内訳"])
         for rank, (entry, d) in enumerate(sorted_results, 1):
-            plus_items  = [f"+{getattr(d,k):.1f}{SCORE_LABELS[k]}" for k in SCORE_LABELS if getattr(d,k) > 0]
-            minus_items = [f"{getattr(d,k):.1f}{SCORE_LABELS[k]}" for k in SCORE_LABELS if getattr(d,k) < 0]
+            plus_items  = [f"+{getattr(d,k):.1f}{_get_label(k,getattr(d,k))}" for k in SCORE_LABELS if getattr(d,k) > 0]
+            minus_items = [f"{getattr(d,k):.1f}{_get_label(k,getattr(d,k))}" for k in SCORE_LABELS if getattr(d,k) < 0]
             if odds_map:
                 odds_val = odds_map.get(entry.horse_name, "")
                 pop_val  = f"{popularity.get(entry.horse_name, '')}人気" if entry.horse_name in popularity else ""
@@ -1197,8 +1262,8 @@ def print_scores(results: list[tuple], race_info):
     print("-" * 115)
 
     for rank, (entry, d) in enumerate(sorted_results, 1):
-        plus_items  = [f"+{getattr(d, k):.1f}:{SCORE_LABELS[k]}" for k in SCORE_LABELS if getattr(d, k) > 0]
-        minus_items = [f"{getattr(d, k):.1f}:{SCORE_LABELS[k]}" for k in SCORE_LABELS if getattr(d, k) < 0]
+        plus_items  = [f"+{getattr(d, k):.1f}:{_get_label(k,getattr(d,k))}" for k in SCORE_LABELS if getattr(d, k) > 0]
+        minus_items = [f"{getattr(d, k):.1f}:{_get_label(k,getattr(d,k))}" for k in SCORE_LABELS if getattr(d, k) < 0]
         plus_str  = " ".join(plus_items) or "—"
         minus_str = " ".join(minus_items) or "—"
 
@@ -1320,7 +1385,26 @@ if __name__ == "__main__":
         else:
             race_info, entries = get_entry_list(key)
 
-        if training_url:
+        def _load_kb_training(kb_url: str) -> dict:
+            from keibabook_scraper import scrape as scrape_kb
+            print(f"  [調教] {kb_url} からデータ取得中 (競馬ブック)...")
+            kb_data = scrape_kb(kb_url)
+            result = {
+                r["馬名"]: TD(horse_name=r["馬名"], rank="KB",
+                              comment=r.get("メモ", ""),
+                              score=r["時計スコア(1-5)"] + r["状態スコア(1-5)"])
+                for r in kb_data
+            }
+            for td_obj in result.values():
+                t = td_obj.score
+                td_obj.score = 3 if t >= 9 else 2 if t >= 7 else 1 if t >= 5 else 0 if t >= 3 else -1
+            matched = sum(1 for e in entries if e.horse_name in result)
+            print(f"  [調教] {matched}/{len(entries)}頭マッチ")
+            return result
+
+        if training_url and "keibabook" in training_url:
+            training = _load_kb_training(training_url)
+        elif training_url:
             from umasiru_scraper import scrape as scrape_umasiru
             print(f"  [調教] {training_url} からデータ取得中...")
             umasiru_data = scrape_umasiru(training_url)
@@ -1332,14 +1416,38 @@ if __name__ == "__main__":
             matched = sum(1 for e in entries if e.horse_name in training)
             print(f"  [調教] {matched}/{len(entries)}頭マッチ")
         else:
-            from training_input import generate_template, load_training_input
-            generate_template(entries, race_info)
-            manual = load_training_input(race_info)
-            training = {
-                name: TD(horse_name=name, rank="手動", comment=ti.memo,
-                         score=ti.converted_score)
-                for name, ti in manual.items()
-            }
+            # race_infoから競馬ブックIDを自動取得
+            kb_url = None
+            if race_info.race_num > 0 and race_info.venue and race_info.date:
+                dm = re.match(r"(\d{4})年(\d{1,2})月(\d{1,2})日", race_info.date)
+                if dm:
+                    date_str = f"{dm.group(1)}{int(dm.group(2)):02d}{int(dm.group(3)):02d}"
+                    from keibabook_scraper import find_kb_race_id
+                    kb_id = find_kb_race_id(date_str, race_info.race_num, race_info.venue)
+                    if kb_id:
+                        kb_url = f"https://p.keibabook.co.jp/cyuou/cyokyo/0/0/{kb_id}"
+            if kb_url:
+                try:
+                    training = _load_kb_training(kb_url)
+                except SystemExit:
+                    print("  [調教] 競馬ブックのクッキーが必要です。手動入力に切り替えます。")
+                    from training_input import generate_template, load_training_input
+                    generate_template(entries, race_info)
+                    manual = load_training_input(race_info)
+                    training = {
+                        name: TD(horse_name=name, rank="手動", comment=ti.memo,
+                                 score=ti.converted_score)
+                        for name, ti in manual.items()
+                    }
+            else:
+                from training_input import generate_template, load_training_input
+                generate_template(entries, race_info)
+                manual = load_training_input(race_info)
+                training = {
+                    name: TD(horse_name=name, rank="手動", comment=ti.memo,
+                             score=ti.converted_score)
+                    for name, ti in manual.items()
+                }
 
         # 道悪適性: horse_idをnetkeibaから取得
         horse_ids = {}

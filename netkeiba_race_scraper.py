@@ -14,13 +14,18 @@ netkeiba から全レース（G1〜一般戦）の出馬表を取得するスク
 
 import re
 import time
+import random
 import datetime
 import requests
 from bs4 import BeautifulSoup
 from typing import Optional
 
+def _sleep():
+    time.sleep(random.uniform(1.5, 2.5))
+
 # jra_scraper の型を再利用
 from jra_scraper import RaceInfo, HorseEntry
+from cache_store import cache_get, cache_set
 
 HEADERS = {
     "User-Agent": (
@@ -41,7 +46,11 @@ VENUE_CODE = {
 # レース一覧取得
 # ──────────────────────────────────────────────────────────────
 def _race_list_url(date: datetime.date) -> str:
-    return f"https://race.netkeiba.com/top/race_list_sub.html?kaisai_date={date:%Y%m%d}"
+    # 当日: race_list_sub（出馬表リンクあり）、過去: db.netkeiba レース一覧
+    today = datetime.date.today()
+    if date >= today:
+        return f"https://race.netkeiba.com/top/race_list_sub.html?kaisai_date={date:%Y%m%d}"
+    return f"https://db.netkeiba.com/race/list/{date:%Y%m%d}/"
 
 
 def _this_week_dates() -> list[datetime.date]:
@@ -68,28 +77,35 @@ def get_race_list(dates: list[datetime.date] = None) -> list[dict]:
 
     races = []
     for date in dates:
-        time.sleep(0.4)
+        _sleep()
         r = requests.get(_race_list_url(date), headers=HEADERS, timeout=15)
         if r.status_code != 200:
             continue
         r.encoding = r.apparent_encoding
         soup = BeautifulSoup(r.content, "lxml")
 
+        seen = set()
         for a in soup.find_all("a", href=True):
             href = a["href"]
-            if "shutuba.html?race_id=" not in href:
+            race_id = None
+
+            # 当日: shutuba.html?race_id=XXXX
+            if "shutuba.html?race_id=" in href:
+                race_id = href.split("race_id=")[1].split("&")[0]
+            # 過去: /race/XXXXXXXXXXXX/
+            else:
+                m = re.search(r"/race/(\d{12})/", href)
+                if m:
+                    race_id = m.group(1)
+
+            if not race_id or race_id in seen:
                 continue
-            race_id = href.split("race_id=")[1].split("&")[0]
+            seen.add(race_id)
+
             text = a.get_text(strip=True)
-            if not text:
-                continue
-
-            # テキスト例: "11R安田記念15:40芝1600m17頭"
             rnum_m = re.match(r"(\d+R)(.*)", text)
-            race_num = rnum_m.group(1) if rnum_m else ""
+            race_num = rnum_m.group(1) if rnum_m else f"{int(race_id[10:12])}R"
             rest = rnum_m.group(2) if rnum_m else text
-
-            # レース名は先頭の日本語部分
             name_m = re.match(r"([^\d]+)", rest)
             race_name = name_m.group(1).strip() if name_m else rest
 
@@ -251,6 +267,7 @@ def _parse_race_info(soup: BeautifulSoup, race_id: str) -> RaceInfo:
         date=date_str,
         venue=venue,
         race_number=race_num,
+        race_num=int(race_id[10:12]),
         distance=distance,
         surface=surface,
         conditions=conditions,
@@ -265,7 +282,7 @@ def get_entry_list_netkeiba(race_id: str) -> tuple[RaceInfo, list[HorseEntry]]:
     (RaceInfo, [HorseEntry]) を返す。
     """
     url = f"https://race.netkeiba.com/race/shutuba_past.html?race_id={race_id}"
-    time.sleep(0.5)
+    _sleep()
     r = requests.get(url, headers=HEADERS, timeout=15)
     r.raise_for_status()
     r.encoding = r.apparent_encoding
@@ -278,16 +295,20 @@ def get_entry_list_netkeiba(race_id: str) -> tuple[RaceInfo, list[HorseEntry]]:
         return race_info, []
 
     entries = []
-    for row in tables[0].find_all("tr")[1:]:
+    for row in tables[0].find_all("tr"):
+        # 馬番は tr の id="tr_N" から取得（枠番確定前でもセルが空になるため）
+        tr_id = row.get("id", "")
+        m = re.match(r"tr_(\d+)$", tr_id)
+        if not m:
+            continue
+        horse_num = m.group(1)
+
         cells = row.find_all(["td", "th"])
         if len(cells) < 5:
             continue
 
-        # 枠番・馬番
+        # 枠番（確定前は空の場合あり）
         frame_num = cells[0].get_text(strip=True)
-        horse_num = cells[1].get_text(strip=True)
-        if not horse_num.isdigit():
-            continue
 
         # 馬名 (Horse_Info セル: 父名|馬名|母名|母父名|厩舎|脚質...)
         hi_cell = next((c for c in cells if "Horse_Info" in " ".join(c.get("class", []))), None)
@@ -333,6 +354,236 @@ def get_entry_list_netkeiba(race_id: str) -> tuple[RaceInfo, list[HorseEntry]]:
         ))
 
     return race_info, entries
+
+
+# ──────────────────────────────────────────────────────────────
+# レース結果取得（過去レース検証用）
+# ──────────────────────────────────────────────────────────────
+def classify_race(rd2_text: str, race_name: str) -> str:
+    """RaceData02テキストとレース名からクラスを判定する"""
+    if re.search(r"\(G[123]\)|\(GI+\)", race_name):
+        return "重賞"
+    if "オープン" in rd2_text:
+        if re.search(r"Listed|リステッド", rd2_text + race_name):
+            return "L"
+        return "OP"
+    if "３勝クラス" in rd2_text:
+        return "3勝クラス"
+    if "２勝クラス" in rd2_text:
+        return "2勝クラス"
+    if "１勝クラス" in rd2_text:
+        return "1勝クラス"
+    if "未勝利" in rd2_text:
+        return "未勝利"
+    if "新馬" in rd2_text:
+        return "新馬"
+    return "不明"
+
+
+def fetch_odds(race_id: str) -> dict[str, float]:
+    """
+    netkeibaから単勝オッズを取得する。{馬番str: float} を返す。
+    レース前のリアルタイムオッズ取得用。APIが空の場合はHTMLをパース。
+    """
+    headers = {**HEADERS, "Referer": "https://race.netkeiba.com/"}
+
+    # まずJSON APIを試す
+    api_url = (f"https://race.netkeiba.com/api/api_get_jra_odds.html"
+               f"?race_id={race_id}&type=b1&action=update")
+    try:
+        _sleep()
+        r = requests.get(api_url, headers=headers, timeout=10)
+        r.raise_for_status()
+        data = r.json()
+        if data.get("status") == "OK" and data.get("data"):
+            odds_raw = data["data"]
+            result = {}
+            for item in (odds_raw if isinstance(odds_raw, list) else odds_raw.values()):
+                num  = str(item.get("num") or item.get("horse_num", ""))
+                odds = item.get("odds") or item.get("win_odds")
+                if num and odds:
+                    try:
+                        result[num] = float(odds)
+                    except (ValueError, TypeError):
+                        pass
+            if result:
+                return result
+    except Exception:
+        pass
+
+    # フォールバック: HTMLの単勝オッズページをパース
+    html_url = f"https://race.netkeiba.com/odds/index.html?race_id={race_id}&type=b1"
+    try:
+        _sleep()
+        r = requests.get(html_url, headers=headers, timeout=12)
+        r.raise_for_status()
+        soup = BeautifulSoup(r.content, "lxml")
+        result = {}
+        for tbl in soup.find_all("table"):
+            rows = tbl.find_all("tr")
+            for row in rows[1:]:
+                cells = [td.get_text(strip=True) for td in row.find_all(["td", "th"])]
+                if len(cells) < 3:
+                    continue
+                # 「馬番」「馬名」「オッズ」の列構成を想定
+                num_c  = cells[1] if len(cells) > 1 else ""
+                odds_c = cells[-1]
+                if num_c.isdigit() and re.match(r"\d+\.\d+", odds_c):
+                    try:
+                        result[num_c] = float(odds_c)
+                    except ValueError:
+                        pass
+        if result:
+            return result
+    except Exception:
+        pass
+
+    return {}
+
+
+def fetch_race_result(race_id: str) -> Optional[dict]:
+    """
+    race.netkeiba.com/race/result.html からレース結果を取得する。
+
+    Returns: {
+        "race_id", "race_name", "date", "venue", "surface", "distance",
+        "race_class",  # OP/2勝クラス/重賞 など
+        "conditions",
+        "race_num_int",  # 何R（整数）
+        "entries": [
+            {"rank", "frame", "horse_num", "horse_name", "horse_id",
+             "age_sex", "weight_carried", "jockey"},
+            ...
+        ]
+    }
+    """
+    cached = cache_get("race_result", race_id)
+    if cached is not None:
+        return cached
+    url = f"https://race.netkeiba.com/race/result.html?race_id={race_id}"
+    _sleep()
+    try:
+        r = requests.get(url, headers=HEADERS, timeout=15)
+        if r.status_code != 200:
+            return None
+        r.encoding = r.apparent_encoding
+        soup = BeautifulSoup(r.content, "lxml")
+    except Exception:
+        return None
+
+    # レース名
+    rname_el = soup.find(class_="RaceName")
+    race_name = rname_el.get_text(strip=True) if rname_el else ""
+
+    # コース・距離
+    rd1 = soup.find(class_="RaceData01")
+    rd1_text = rd1.get_text(separator=" ", strip=True) if rd1 else ""
+    ds_m = re.search(r"(芝|ダ)(\d+)m", rd1_text)
+    if not ds_m:
+        return None  # 障害・未対応コース
+    surface  = ds_m.group(1)
+    distance = ds_m.group(2) + "m"
+
+    st_m = re.search(r"(\d+:\d+)発走", rd1_text)
+    start_time = st_m.group(1) if st_m else ""
+
+    # 馬場状態
+    tc_m = re.search(r"(良|稍重|重|不良)", rd1_text)
+    track_condition = tc_m.group(1) if tc_m else ""
+
+    # 開催情報・クラス
+    rd2 = soup.find(class_="RaceData02")
+    rd2_text = rd2.get_text(separator=" ", strip=True) if rd2 else ""
+
+    # 日付・グレード（タイトルタグから取得）
+    title_el = soup.find("title")
+    title_text = title_el.get_text(strip=True) if title_el else ""
+    date_m = re.search(r"(\d{4}年\d{1,2}月\d{1,2}日)", title_text)
+
+    # Icon_GradeType1/2/3 または タイトル内の(G1)(G2)(G3)で重賞判定
+    grade_span = rname_el.find(class_=re.compile(r"Icon_GradeType[123]$")) if rname_el else None
+    grade_in_title = re.search(r"\((G[123])\)", title_text)
+    if grade_span or grade_in_title:
+        race_class = "重賞"
+    else:
+        race_class = classify_race(rd2_text, race_name)
+    venue = VENUE_CODE.get(race_id[4:6], "")
+    date_str = date_m.group(1) if date_m else ""
+
+    # R番号（race_id末尾2桁）
+    race_num_int = int(race_id[10:12])
+
+    # 結果テーブル
+    entries = []
+    for tbl in soup.find_all("table"):
+        ths = [th.get_text(strip=True) for th in tbl.find_all("th")]
+        if "着順" not in ths and "馬番" not in ths:
+            continue
+        rows = tbl.find_all("tr")
+        col_headers = [c.get_text(strip=True) for c in rows[0].find_all(["th", "td"])]
+        def ci(name):
+            try: return col_headers.index(name)
+            except ValueError: return -1
+
+        for row in rows[1:]:
+            cells = row.find_all(["td", "th"])
+            texts = [c.get_text(strip=True) for c in cells]
+            if len(texts) < 5:
+                continue
+            rank_text = texts[ci("着順")] if ci("着順") >= 0 else texts[0]
+            if not rank_text.isdigit():
+                continue
+            # horse_idはリンクから取得
+            horse_id = ""
+            for a in row.find_all("a", href=True):
+                m = re.search(r"/horse/(\d+)", a["href"])
+                if m:
+                    horse_id = m.group(1)
+                    break
+            odds_col = "単勝オッズ" if ci("単勝オッズ") >= 0 else "単勝"
+            odds_text = texts[ci(odds_col)] if ci(odds_col) >= 0 else ""
+            try:
+                odds = float(odds_text)
+            except (ValueError, TypeError):
+                odds = None
+            pop_text = texts[ci("人気")] if ci("人気") >= 0 else ""
+            try:
+                popularity = int(pop_text)
+            except (ValueError, TypeError):
+                popularity = None
+            entries.append({
+                "rank":           int(rank_text),
+                "frame":          texts[ci("枠")] if ci("枠") >= 0 else "",
+                "horse_num":      texts[ci("馬番")] if ci("馬番") >= 0 else "",
+                "horse_name":     texts[ci("馬名")] if ci("馬名") >= 0 else "",
+                "horse_id":       horse_id,
+                "age_sex":        texts[ci("性齢")] if ci("性齢") >= 0 else "",
+                "weight_carried": texts[ci("斤量")] if ci("斤量") >= 0 else "",
+                "jockey":         texts[ci("騎手")] if ci("騎手") >= 0 else "",
+                "odds":           odds,
+                "popularity":     popularity,
+            })
+        break
+
+    if len(entries) < 5:
+        return None
+
+    result = {
+        "race_id":      race_id,
+        "race_name":    race_name,
+        "date":         date_str,
+        "venue":        venue,
+        "surface":      surface,
+        "distance":     distance,
+        "race_class":   race_class,
+        "conditions":   rd2_text,
+        "race_num_int": race_num_int,
+        "start_time":      start_time,
+        "track_condition": track_condition,
+        "entries":         entries,
+    }
+    cache_set("race_result", race_id, result)
+    return result
 
 
 # ──────────────────────────────────────────────────────────────

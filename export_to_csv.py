@@ -97,9 +97,16 @@ def export(race_info, entries, results, output_path: str, actual_rank_map: dict 
 
 
 def _csv_filename(race_info) -> str:
-    date = re.sub(r"[年月]", "", race_info.date).replace("日", "")
-    name = re.sub(r'[\s　/\\:*?"<>|]', "_", race_info.name)
-    return os.path.join(os.path.dirname(__file__), f"score_{date}_{name}.csv")
+    import re as _re
+    from pathlib import Path
+    date = _re.sub(r"[年月]", "", race_info.date).replace("日", "")
+    name = _re.sub(r'[\s　/\\:*?"<>|]', "_", race_info.name)
+    venue = getattr(race_info, "venue", "") or "不明"
+    dm = _re.match(r'(\d{4})年(\d{1,2})月(\d{1,2})日', race_info.date)
+    date_dir = f"{dm.group(1)}-{int(dm.group(2)):02d}-{int(dm.group(3)):02d}" if dm else "不明"
+    save_dir = Path(__file__).parent / "results" / date_dir / venue
+    save_dir.mkdir(parents=True, exist_ok=True)
+    return str(save_dir / f"score_{date}_{name}.csv")
 
 
 if __name__ == "__main__":
