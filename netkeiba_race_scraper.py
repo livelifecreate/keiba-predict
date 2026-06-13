@@ -252,6 +252,11 @@ def _parse_race_info(soup: BeautifulSoup, race_id: str) -> RaceInfo:
         surface  = ds_m.group(1)
         distance = ds_m.group(2) + "m"
 
+    tc_m = re.search(r"馬場:?(良|稍重|重|不良)", rd1_text)
+    if not tc_m:
+        tc_m = re.search(r"[|/\s](良|稍重|重|不良)[|/\s]", rd1_text)
+    track_condition = tc_m.group(1) if tc_m else ""
+
     # RaceData02: 開催情報・条件
     rd2 = soup.find(class_="RaceData02")
     rd2_text = rd2.get_text(separator="|", strip=True) if rd2 else ""
@@ -272,6 +277,7 @@ def _parse_race_info(soup: BeautifulSoup, race_id: str) -> RaceInfo:
         surface=surface,
         conditions=conditions,
         start_time=start_time,
+        track_condition=track_condition,
         url=f"https://race.netkeiba.com/race/shutuba_past.html?race_id={race_id}",
     )
 

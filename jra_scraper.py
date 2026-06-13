@@ -50,6 +50,7 @@ class RaceInfo:
     start_time: str
     url: str
     race_num: int = 0  # 何R（URLから抽出）
+    track_condition: str = ""  # 馬場状態（良/稍重/重/不良）
 
 
 @dataclass
@@ -134,6 +135,13 @@ def parse_race_info(soup: BeautifulSoup, url: str) -> RaceInfo:
 
     conditions = race_name
 
+    # 馬場状態: 「天候 晴 芝 良」「馬場：良」など複数パターン対応
+    tc_match = (
+        re.search(r"(?:芝|ダート|障害)\s*(良|稍重|重|不良)", search_text) or
+        re.search(r"馬場[：:\s]*(良|稍重|重|不良)", search_text)
+    )
+    track_condition = tc_match.group(1) if tc_match else ""
+
     # URLからレース番号（何R）を抽出: pw01dde01{venue:2}{year:4}{kai:2}{nichi:2}{race:2}{date:8}
     race_num = 0
     m = re.search(r'pw01dde01\d{2}\d{4}\d{2}\d{2}(\d{2})\d{8}', url)
@@ -149,6 +157,7 @@ def parse_race_info(soup: BeautifulSoup, url: str) -> RaceInfo:
         surface=surface,
         conditions=conditions,
         start_time=start_time,
+        track_condition=track_condition,
         url=url,
         race_num=race_num,
     )

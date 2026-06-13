@@ -61,6 +61,7 @@ def parse_csv(path: Path) -> dict:
     horse_lines = []
     sign_type = sign_detail = ""
     formb_header = formb_combos = []
+    form10_header = form10_combos = []
     form7_header = form7_combos = []
     eval_comments = []
     race_surface_dist = ""
@@ -86,6 +87,10 @@ def parse_csv(path: Path) -> dict:
             formb_header = parts[1:]
             formb_combos = []
             section = "formb"
+        elif parts[0] == "■三連複10点":
+            form10_header = parts[1:]
+            form10_combos = []
+            section = "form10"
         elif parts[0] == "■三連複7点":
             form7_header = parts[1:]
             form7_combos = []
@@ -96,6 +101,8 @@ def parse_csv(path: Path) -> dict:
             eval_comments.append(parts[1].strip())
         elif section == "formb" and parts[0] == "" and len(parts) > 1 and parts[1].strip():
             formb_combos.append(parts[1].strip())
+        elif section == "form10" and parts[0] == "" and len(parts) > 1 and parts[1].strip():
+            form10_combos.append(parts[1].strip())
         elif section == "form7" and parts[0] == "" and len(parts) > 1 and parts[1].strip():
             form7_combos.append(parts[1].strip())
 
@@ -109,6 +116,8 @@ def parse_csv(path: Path) -> dict:
         "race_surface_dist": race_surface_dist,
         "formb_header": formb_header,
         "formb_combos": formb_combos,
+        "form10_header": form10_header,
+        "form10_combos": form10_combos,
         "form7_header": form7_header,
         "form7_combos": form7_combos,
     }
@@ -260,7 +269,7 @@ if data["eval_comments"]:
     )
 
 # 買い目
-col1, col2 = st.columns(2)
+col1, col2, col3 = st.columns(3)
 
 with col1:
     if data["formb_combos"]:
@@ -268,13 +277,21 @@ with col1:
         st.markdown(f"**■ 三連複フォームB**")
         if h:
             st.caption("  ".join(h))
-        combo_text = "　".join(data["formb_combos"])
-        # 3列表示
         chunks = [data["formb_combos"][i:i+6] for i in range(0, len(data["formb_combos"]), 6)]
         for chunk in chunks:
             st.text("  ".join(chunk))
 
 with col2:
+    if data["form10_combos"]:
+        h = data["form10_header"]
+        st.markdown(f"**■ 三連複10点**")
+        if h:
+            st.caption("  ".join(h))
+        chunks = [data["form10_combos"][i:i+6] for i in range(0, len(data["form10_combos"]), 6)]
+        for chunk in chunks:
+            st.text("  ".join(chunk))
+
+with col3:
     if data["form7_combos"]:
         h = data["form7_header"]
         st.markdown(f"**■ 三連複7点**")

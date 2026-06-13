@@ -1399,6 +1399,13 @@ def save_csv(results: list[tuple], race_info, odds_map: dict = None, training_da
                     form7.add(tuple(sorted([ax0, ax1, b], key=_sort_key)))
             form7_list = sorted(form7, key=lambda c: tuple(_sort_key(x) for x in c))
 
+            from itertools import combinations as _comb
+            pool10 = nums[1:6]  # 2〜6位
+            form10 = sorted(
+                {tuple(sorted([h1, a, b], key=_sort_key)) for a, b in _comb(pool10, 2)},
+                key=lambda c: tuple(_sort_key(x) for x in c)
+            )
+
             a_label = f"2〜{a_end - 1}位"
             b_label = f"2〜{b_end - 1}位"
 
@@ -1416,6 +1423,13 @@ def save_csv(results: list[tuple], race_info, odds_map: dict = None, training_da
                              f"相手B({b_label}):{','.join(nums[1:b_end])}",
                              f"{len(formb_list)}点"])
             for c in formb_list:
+                writer.writerow(["", f"{c[0]}－{c[1]}－{c[2]}"])
+            writer.writerow([])
+            writer.writerow(["■三連複10点",
+                             f"軸:{h1}番{top_entry.horse_name}",
+                             f"相手(2〜6位):{','.join(pool10)}",
+                             f"{len(form10)}点"])
+            for c in form10:
                 writer.writerow(["", f"{c[0]}－{c[1]}－{c[2]}"])
             writer.writerow([])
             writer.writerow(["■三連複7点",

@@ -37,21 +37,23 @@ def _fetch_training(race_id: str) -> dict:
         return {}
 
 
-def _fetch_jra_odds(race_id: str, race_date: datetime.date, entries) -> dict:
-    """JRA公式出馬表から単勝オッズを取得。{馬名: float} を返す。失敗時は {}。"""
+def _fetch_jra_odds(race_id: str, race_date: datetime.date, entries) -> tuple[dict, str]:
+    """JRA公式出馬表から単勝オッズと馬場状態を取得。({馬名: float}, 馬場状態) を返す。失敗時は ({}, "")。"""
     try:
         url = build_jra_url(race_id, race_date)
-        _, jra_entries = get_entry_list_jra(url)
+        jra_race_info, jra_entries = get_entry_list_jra(url)
         if not jra_entries:
-            return {}
+            return {}, ""
         num_to_name = {str(e.horse_number): e.horse_name for e in entries}
-        return {
+        odds_map = {
             num_to_name[je.horse_number]: je.odds
             for je in jra_entries
             if je.odds > 0 and je.horse_number in num_to_name
         }
+        track_condition = jra_race_info.track_condition if jra_race_info else ""
+        return odds_map, track_condition
     except Exception:
-        return {}
+        return {}, ""
 
 # ── サイン判定（scorer_turf.pyのprint_buy_signsと同ロジック）──────────
 
@@ -207,6 +209,7 @@ def main():
     min_class = 0 if args.all_class else args.min_class
 
     # 馬場状態の解析: "良" → 全会場良 / "東京:良,阪神:稍重" → 個別指定
+    # --track 未指定時はレース取得後に race_info.track_condition を自動使用
     track_map: dict[str, str] = {}
     if args.track:
         if ":" in args.track:
@@ -217,27 +220,9 @@ def main():
                     track_map[v.strip()] = tc.strip()
         else:
             track_map["__all__"] = args.track.strip()
-    else:
-        # 当日実行時は馬場を対話で確認
-        today = datetime.date.today()
-        if today in dates:
-            print("馬場状態を入力してください（例: 良 / 稍重 / 重 / 不良）")
-            print("  全会場同じ場合: 良  ← そのまま入力")
-            print("  会場別の場合  : 東京:良,阪神:稍重,函館:良")
-            print("  スキップする場合: Enter キーのみ")
-            user_input = input("馬場 > ").strip()
-            if user_input:
-                if ":" in user_input:
-                    for part in user_input.split(","):
-                        part = part.strip()
-                        if ":" in part:
-                            v, tc = part.split(":", 1)
-                            track_map[v.strip()] = tc.strip()
-                else:
-                    track_map["__all__"] = user_input
 
-    def get_track(venue: str) -> str:
-        return track_map.get(venue) or track_map.get("__all__", "")
+    def get_track(venue: str, auto_tc: str = "") -> str:
+        return track_map.get(venue) or track_map.get("__all__", "") or auto_tc
 
     print(f"\n{'='*65}")
     print(f"  週末レーススキャン  {' / '.join(str(d) for d in dates)}")
@@ -246,9 +231,9 @@ def main():
         print(f"  会場: {args.venue}")
     if track_map:
         tc_str = track_map.get("__all__") or ", ".join(f"{k}:{v}" for k, v in track_map.items())
-        print(f"  馬場状態: {tc_str}")
+        print(f"  馬場状態: {tc_str}（手動指定）")
     else:
-        print(f"  馬場状態: 未指定（スコアに反映なし）")
+        print(f"  馬場状態: レース毎に自動取得")
     print(f"{'='*65}\n")
 
     print("レース一覧取得中...")
@@ -293,11 +278,28 @@ def main():
         n = len(entries)
         print(f"  {race_info.name}  {race_info.distance}({race_info.surface})  {n}頭")
 
-        # 採点（競馬ブックから調教データ自動取得）
+        # 調教データ取得
         training = _fetch_training(race_id)
         if training:
             print(f"  [調教] {len(training)}頭取得")
-        tc = get_track(race_info.venue)
+
+        # オッズ・馬場状態取得（JRA公式優先、失敗時はnetkeiba API）
+        race_date = race.get("date")
+        odds_map = {}
+        jra_track = ""
+        if race_date:
+            odds_map, jra_track = _fetch_jra_odds(race_id, race_date, entries)
+        if not odds_map:
+            odds_raw = fetch_odds(race_id)
+            num_to_name = {str(e.horse_number): e.horse_name for e in entries}
+            odds_map = {num_to_name[k]: v for k, v in odds_raw.items() if k in num_to_name}
+
+        # 馬場状態: --track引数 > JRA公式 > netkeiba shutuba
+        tc = get_track(race_info.venue, jra_track or race_info.track_condition)
+        tc_src = "手動指定" if track_map else ("JRA公式" if jra_track else ("netkeiba" if race_info.track_condition else "未取得"))
+        print(f"  [馬場] {tc or '未取得'}（{tc_src}）")
+
+        # 採点
         try:
             if race_info.surface == "ダ":
                 results = score_dart(entries, race_info, training_data=training, track_condition=tc)
@@ -309,16 +311,6 @@ def main():
             continue
 
         sorted_r = sorted(results, key=lambda x: x[1].total, reverse=True)
-
-        # オッズ取得（JRA公式優先、失敗時はnetkeiba API）
-        race_date = race.get("date")
-        odds_map = {}
-        if race_date:
-            odds_map = _fetch_jra_odds(race_id, race_date, entries)
-        if not odds_map:
-            odds_raw = fetch_odds(race_id)
-            num_to_name = {str(e.horse_number): e.horse_name for e in entries}
-            odds_map = {num_to_name[k]: v for k, v in odds_raw.items() if k in num_to_name}
 
         # サイン判定
         sign_level, sign_text, sign_detail = calc_buy_sign(sorted_r, odds_map, n)
@@ -334,7 +326,16 @@ def main():
         else:
             sign_tag = None
 
-        # CSV出力なし（週次予想では不要）
+        # CSV出力
+        try:
+            if race_info.surface == "ダ":
+                save_csv_dart(sorted_r, race_info, odds_map=odds_map, sign_tag=sign_tag,
+                              eval_comment=eval_comment, race_id=race_id)
+            else:
+                save_csv_turf(sorted_r, race_info, odds_map=odds_map, sign_tag=sign_tag,
+                              eval_comment=eval_comment, race_id=race_id)
+        except Exception as e:
+            print(f"  [CSV] 保存失敗: {e}")
 
         # 上位3頭を表示
         top3 = sorted_r[:3]
