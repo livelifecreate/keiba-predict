@@ -339,7 +339,8 @@ def main():
                   odds_map=odds_map if odds_map else None,
                   training_data=training,
                   sign_tag=sign_tag,
-                  eval_comment=eval_comment)
+                  eval_comment=eval_comment,
+                  race_id=race_id)
         except Exception as e:
             print(f"  [CSV保存失敗] {e}")
 

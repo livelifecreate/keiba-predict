@@ -1233,7 +1233,7 @@ def _record_comment(entry) -> str:
     return "実績不明"
 
 
-def save_csv(results: list[tuple], race_info, odds_map: dict = None, training_data: dict = None, sign_tag: str = None, eval_comment: list = None):
+def save_csv(results: list[tuple], race_info, odds_map: dict = None, training_data: dict = None, sign_tag: str = None, eval_comment: list = None, race_id: str = ""):
     import csv as _csv, re
     from pathlib import Path
     date_str = race_info.date.replace("年", "").replace("月", "").replace("日", "")
@@ -1293,10 +1293,9 @@ def save_csv(results: list[tuple], race_info, odds_map: dict = None, training_da
                                  entry.horse_name, f"{d.total:+.1f}",
                                  " / ".join(plus_items), " / ".join(minus_items), comment])
 
-        # レース情報行（芝/ダート/障害・距離）
-        if surface_label:
-            writer.writerow([])
-            writer.writerow(["■レース情報", surface_label])
+        # レース情報行（芝/ダート/障害・距離・race_id）
+        writer.writerow([])
+        writer.writerow(["■レース情報", surface_label, race_id])
 
         # 買いサイン・買い目セクション
         if len(sorted_results) >= 2:

@@ -1,10 +1,36 @@
 """JRA公式サイトから出馬表を取得するスクレイパー"""
 
+import datetime
 import re
 import requests
 from bs4 import BeautifulSoup
 from dataclasses import dataclass, field
 from typing import Optional
+
+
+def build_jra_url(race_id: str, race_date: datetime.date) -> str:
+    """
+    netkeiba の race_id と開催日から JRA 公式出馬表 URL を生成する。
+
+    CNAME 形式: pw01dde01{venue}{year}{kai}{nichi}{race}{date}/{checksum:02X}
+    checksum = (169 + venue*10 + kai*84 + nichi*48 + race_contrib(race)) % 256
+    race_contrib: race<=9 → race*181 % 256  /  race>=10 → (82+(race-10)*181) % 256
+    """
+    # race_id: YYYY + venue(2) + kai(2) + nichi(2) + race(2) = 12 chars
+    venue = int(race_id[4:6])
+    kai   = int(race_id[6:8])
+    nichi = int(race_id[8:10])
+    race  = int(race_id[10:12])
+    year  = int(race_id[0:4])
+    date_str = race_date.strftime("%Y%m%d")
+
+    r = race
+    race_contrib = (r * 181) % 256 if r <= 9 else (82 + (r - 10) * 181) % 256
+    base = (169 + venue * 10 + kai * 84 + nichi * 48) % 256
+    checksum = (base + race_contrib) % 256
+
+    cname = f"pw01dde01{venue:02d}{year}{kai:02d}{nichi:02d}{race:02d}{date_str}/{checksum:02X}"
+    return f"{BASE_URL}/JRADB/accessD.html?CNAME={cname}"
 
 BASE_URL = "https://www.jra.go.jp"
 HEADERS = {
@@ -41,7 +67,9 @@ class HorseEntry:
     recent_races: list[str] = field(default_factory=list)  # 近走
     sire: str = ""  # 父
     bms:  str = ""  # 母父（ブルードメアサイア―）
-    horse_weight: int = 0  # 馬体重kg（当日発表前は0）
+    horse_weight: int = 0   # 馬体重kg（当日発表前は0）
+    odds: float = 0.0       # 単勝オッズ（取得できない場合は0.0）
+    popularity: int = 0     # 人気順
 
 
 def fetch_html(url: str) -> BeautifulSoup:
@@ -160,6 +188,15 @@ def parse_horse_entry(cells: list) -> Optional[HorseEntry]:
     prize_match = re.search(r"([\d,]+\.?\d*)万円", horse_text)
     prize = prize_match.group(0) if prize_match else ""
 
+    # 馬体重: 「420kg」形式
+    weight_match = re.search(r"(\d{3,4})kg", horse_text)
+    horse_weight = int(weight_match.group(1)) if weight_match else 0
+
+    # 単勝オッズ・人気: 「36.1(6番人気)」形式
+    odds_match = re.search(r"([\d.]+)\((\d+)番人気\)", horse_text)
+    odds       = float(odds_match.group(1)) if odds_match else 0.0
+    popularity = int(odds_match.group(2))   if odds_match else 0
+
     owner = ""
     trainer = ""
     if "万円" in horse_text:
@@ -205,7 +242,113 @@ def parse_horse_entry(cells: list) -> Optional[HorseEntry]:
         weight_carried=weight,
         jockey=jockey,
         recent_races=recent,
+        horse_weight=horse_weight,
+        odds=odds,
+        popularity=popularity,
     )
+
+
+def build_jra_result_url(race_id: str, race_date: datetime.date) -> str:
+    """
+    JRA 公式結果ページ URL を生成する。
+    結果チェックサム = (出馬表チェックサム + 0xBC) % 256
+    """
+    venue = int(race_id[4:6])
+    kai   = int(race_id[6:8])
+    nichi = int(race_id[8:10])
+    race  = int(race_id[10:12])
+    year  = int(race_id[0:4])
+    date_str = race_date.strftime("%Y%m%d")
+
+    r = race
+    race_contrib   = (r * 181) % 256 if r <= 9 else (82 + (r - 10) * 181) % 256
+    base           = (169 + venue * 10 + kai * 84 + nichi * 48) % 256
+    entry_cs       = (base + race_contrib) % 256
+    result_cs      = (entry_cs + 0xBC) % 256
+
+    cname = f"pw01sde01{venue:02d}{year}{kai:02d}{nichi:02d}{race:02d}{date_str}/{result_cs:02X}"
+    return f"{BASE_URL}/JRADB/accessS.html?CNAME={cname}"
+
+
+@dataclass
+class ResultEntry:
+    rank:         int
+    frame_number: str
+    horse_number: str
+    horse_name:   str
+    time:         str
+    margin:       str
+    popularity:   int
+    odds:         float
+    horse_weight: int
+    weight_diff:  int
+
+
+def _parse_result_row(cells: list) -> Optional[ResultEntry]:
+    """結果ページの1行（tr）をパースして ResultEntry を返す"""
+    if not cells:
+        return None
+
+    def _get(cls: str) -> str:
+        c = next((x for x in cells if cls in (x.get("class") or [])), None)
+        return c.get_text(strip=True) if c else ""
+
+    # 着順: class="place"
+    rank_text = _get("place")
+    if not rank_text.isdigit():
+        return None
+    rank = int(rank_text)
+
+    # 枠番: class="waku"（img src から番号）
+    waku_cell = next((c for c in cells if "waku" in (c.get("class") or [])), None)
+    frame_num = ""
+    if waku_cell:
+        img = waku_cell.find("img")
+        if img:
+            m = re.search(r"/waku/(\d+)\.png", img.get("src", ""))
+            frame_num = m.group(1) if m else ""
+
+    horse_num  = _get("num")       # 馬番
+    horse_name = _get("horse")     # 馬名（クリーンなテキスト）
+    time_str   = _get("time")      # タイム: "2:09.9"
+    margin     = _get("margin")    # 着差
+    pop_text   = _get("pop")       # 単勝人気
+
+    # 馬体重（増減）: class="h_weight" → "486(+6)" or "486(-2)"
+    hw_text     = _get("h_weight")
+    wt_m        = re.search(r"(\d{3,4})\(([+-]?\d+)\)", hw_text)
+    horse_weight = int(wt_m.group(1)) if wt_m else 0
+    weight_diff  = int(wt_m.group(2)) if wt_m else 0
+
+    popularity = int(pop_text) if pop_text.isdigit() else 0
+
+    return ResultEntry(
+        rank=rank, frame_number=frame_num, horse_number=horse_num,
+        horse_name=horse_name, time=time_str, margin=margin,
+        popularity=popularity, odds=0.0,
+        horse_weight=horse_weight, weight_diff=weight_diff,
+    )
+
+
+def get_race_result(url: str) -> list[ResultEntry]:
+    """結果ページを取得して ResultEntry のリストを返す。未公開なら空リスト。"""
+    try:
+        soup = fetch_html(url)
+    except Exception:
+        return []
+
+    table = soup.find("table", class_="basic")
+    if not table:
+        return []
+
+    results = []
+    for row in table.find_all("tr")[1:]:
+        cells = row.find_all(["td", "th"])
+        entry = _parse_result_row(cells)
+        if entry:
+            results.append(entry)
+
+    return results
 
 
 def get_entry_list(url: str) -> tuple[RaceInfo, list[HorseEntry]]:
