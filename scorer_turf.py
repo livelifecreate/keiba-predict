@@ -1333,10 +1333,18 @@ def save_csv(results: list[tuple], race_info, odds_map: dict = None, training_da
             def _sort_key(x):
                 return int(x) if str(x).isdigit() else 99
 
+            # 頭数に応じてフォームB相手範囲を調整
+            if n <= 10:
+                a_end, b_end = 4, 7   # A:2〜3位(3頭) B:2〜6位(6頭) → ~12点
+            elif n <= 13:
+                a_end, b_end = 5, 8   # A:2〜4位(4頭) B:2〜7位(7頭) → ~18点
+            else:
+                a_end, b_end = 5, 9   # A:2〜4位(4頭) B:2〜8位(8頭) → ~22点
+
             h1 = nums[0]
             formb = set()
-            for a in nums[1:5]:
-                for b in nums[1:9]:
+            for a in nums[1:a_end]:
+                for b in nums[1:b_end]:
                     if a != b:
                         formb.add(tuple(sorted([h1, a, b], key=_sort_key)))
             formb_list = sorted(formb, key=lambda c: tuple(_sort_key(x) for x in c))
@@ -1348,6 +1356,9 @@ def save_csv(results: list[tuple], race_info, odds_map: dict = None, training_da
                     form7.add(tuple(sorted([ax0, ax1, b], key=_sort_key)))
             form7_list = sorted(form7, key=lambda c: tuple(_sort_key(x) for x in c))
 
+            a_label = f"2〜{a_end - 1}位"
+            b_label = f"2〜{b_end - 1}位"
+
             writer.writerow([])
             writer.writerow(["■買いサイン", sign, sign_detail])
             if eval_comment:
@@ -1358,8 +1369,8 @@ def save_csv(results: list[tuple], race_info, odds_map: dict = None, training_da
             writer.writerow([])
             writer.writerow(["■三連複フォームB",
                              f"軸:{h1}番{top_entry.horse_name}",
-                             f"相手A(2〜5位):{','.join(nums[1:5])}",
-                             f"相手B(2〜9位):{','.join(nums[1:9])}",
+                             f"相手A({a_label}):{','.join(nums[1:a_end])}",
+                             f"相手B({b_label}):{','.join(nums[1:b_end])}",
                              f"{len(formb_list)}点"])
             for c in formb_list:
                 writer.writerow(["", f"{c[0]}－{c[1]}－{c[2]}"])

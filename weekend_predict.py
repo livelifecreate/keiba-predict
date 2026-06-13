@@ -99,10 +99,10 @@ def gen_eval_comment(sorted_results, odds_map, n_horses, sign_level, sign_detail
     elif sign_level == "formb":
         specific = False
         if gap < 1:
-            lines.append(f"上位横並び（乖離{gap:.1f}pt）。広めのフォームB22点で対応。ROI222%ゾーン。")
+            lines.append(f"上位横並び（乖離{gap:.1f}pt）。フォームBで広くカバー。ROI222%ゾーン。")
             specific = True
         elif 14 <= n_horses <= 17:
-            lines.append(f"{n_horses}頭立てで頭数多め。フォームB22点でカバレッジを広げる。ROI164%ゾーン。")
+            lines.append(f"{n_horses}頭立てで頭数多め。フォームBでカバレッジを広げる。ROI164%ゾーン。")
             specific = True
         if odds1 and odds1 >= 15:
             lines.append(f"穴軸{top_entry.horse_name}{odds1:.1f}倍。システムスコア1位の市場過小評価馬。ROI393%ゾーン。")
