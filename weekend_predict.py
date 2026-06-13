@@ -74,8 +74,7 @@ def gen_eval_comment(sorted_results, odds_map, n_horses, sign_level, sign_detail
             lines.append(f"乖離{gap:.1f}ptは見送りゾーン（3〜5pt）。1位と2位の差が小さく軸信頼度が不足。")
         if any("18頭" in r for r in reasons):
             lines.append("18頭フルゲートは荒れやすく軸信頼度が低下。")
-        if any("同コース実績" in r for r in reasons):
-            lines.append("1位の主要加点が同コース実績（過去成績依存）。当日の状態変化に注意。")
+        pass
         if any("8〜14倍" in r for r in reasons):
             lines.append(f"軸{odds1:.1f}倍は期待値が安定しない中穴ゾーン（8〜14倍）。")
 
@@ -129,15 +128,11 @@ def calc_buy_sign(sorted_results, odds_map, n_horses):
     gap    = score1 - score2
     odds1  = odds_map.get(top_entry.horse_name, 0)
     n      = n_horses
-    has_sc = top_d.same_course >= 4
-
     skips = []
     if n == 18:
         skips.append("18頭フルゲート")
     if 3 <= gap < 5:
         skips.append(f"乖離{gap:.1f}pt（3〜5pt）")
-    if has_sc:
-        skips.append("同コース実績主因")
     if odds1 and 8 <= odds1 < 15:
         skips.append(f"軸{odds1:.1f}倍（8〜14倍）")
 

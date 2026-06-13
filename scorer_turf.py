@@ -1342,15 +1342,11 @@ def save_csv(results: list[tuple], race_info, odds_map: dict = None, training_da
             gap   = top_d.total - sec_d.total
             odds1 = (odds_map or {}).get(top_entry.horse_name, 0)
             n     = len(sorted_results)
-            has_sc = top_d.same_course >= 4
-
             skips = []
             if n == 18:
                 skips.append("18頭フルゲート")
             if 3 <= gap < 5:
                 skips.append(f"乖離{gap:.1f}pt（3〜5pt）")
-            if has_sc:
-                skips.append("同コース実績主因")
             if odds1 and 8 <= odds1 < 15:
                 skips.append(f"軸{odds1:.1f}倍（8〜14倍）")
 
@@ -1459,8 +1455,6 @@ def print_buy_signs(sorted_results: list[tuple], race_info, odds_map: dict = Non
         skips.append(f"18頭フルゲート → フォームB/7点ともROI4%以下")
     if 3 <= gap < 5:
         skips.append(f"1〜2位スコア差{gap:.1f}pt（3〜5ptゾーン）→ 両方ROI9%")
-    if has_same_course_top:
-        skips.append(f"同コース実績(+4)が1位の主因 → 両方ROI9%")
     if odds1 and 8 <= odds1 < 15:
         skips.append(f"軸({top_entry.horse_name})が{odds1:.1f}倍（8〜14倍）→ 7点命中率0%・フォームBも0%")
 

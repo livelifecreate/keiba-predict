@@ -1313,15 +1313,11 @@ def save_csv(results: list[tuple], race_info, odds_map: dict = None, training_da
             gap   = top_d.total - sec_d.total
             odds1 = (odds_map or {}).get(top_entry.horse_name, 0)
             n     = len(sorted_results)
-            has_sc = top_d.same_course >= 4
-
             skips = []
             if n == 18:
                 skips.append("18頭フルゲート")
             if 3 <= gap < 5:
                 skips.append(f"乖離{gap:.1f}pt（3〜5pt）")
-            if has_sc:
-                skips.append("同コース実績主因")
             if odds1 and 8 <= odds1 < 15:
                 skips.append(f"軸{odds1:.1f}倍（8〜14倍）")
 
