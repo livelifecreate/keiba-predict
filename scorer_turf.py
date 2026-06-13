@@ -1233,7 +1233,7 @@ def _record_comment(entry) -> str:
     return "実績不明"
 
 
-def save_csv(results: list[tuple], race_info, odds_map: dict = None, training_data: dict = None, sign_tag: str = None):
+def save_csv(results: list[tuple], race_info, odds_map: dict = None, training_data: dict = None, sign_tag: str = None, eval_comment: list = None):
     import csv as _csv, re
     from pathlib import Path
     date_str = race_info.date.replace("年", "").replace("月", "").replace("日", "")
@@ -1350,6 +1350,11 @@ def save_csv(results: list[tuple], race_info, odds_map: dict = None, training_da
 
             writer.writerow([])
             writer.writerow(["■買いサイン", sign, sign_detail])
+            if eval_comment:
+                writer.writerow([])
+                writer.writerow(["■評価コメント"])
+                for line in eval_comment:
+                    writer.writerow(["", line])
             writer.writerow([])
             writer.writerow(["■三連複フォームB",
                              f"軸:{h1}番{top_entry.horse_name}",

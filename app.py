@@ -62,6 +62,7 @@ def parse_csv(path: Path) -> dict:
     sign_type = sign_detail = ""
     formb_header = formb_combos = []
     form7_header = form7_combos = []
+    eval_comments = []
     section = "horses"
 
     for line in lines:
@@ -74,6 +75,9 @@ def parse_csv(path: Path) -> dict:
             sign_type   = parts[1] if len(parts) > 1 else ""
             sign_detail = parts[2] if len(parts) > 2 else ""
             section = "sign"
+        elif parts[0] == "■評価コメント":
+            eval_comments = []
+            section = "eval"
         elif parts[0] == "■三連複フォームB":
             formb_header = parts[1:]
             formb_combos = []
@@ -84,6 +88,8 @@ def parse_csv(path: Path) -> dict:
             section = "form7"
         elif section == "horses":
             horse_lines.append(line)
+        elif section == "eval" and parts[0] == "" and len(parts) > 1 and parts[1].strip():
+            eval_comments.append(parts[1].strip())
         elif section == "formb" and parts[0] == "" and len(parts) > 1 and parts[1].strip():
             formb_combos.append(parts[1].strip())
         elif section == "form7" and parts[0] == "" and len(parts) > 1 and parts[1].strip():
@@ -95,6 +101,7 @@ def parse_csv(path: Path) -> dict:
         "df": df,
         "sign_type": sign_type,
         "sign_detail": sign_detail,
+        "eval_comments": eval_comments,
         "formb_header": formb_header,
         "formb_combos": formb_combos,
         "form7_header": form7_header,
@@ -210,6 +217,17 @@ if not df.empty:
         df[show_cols].set_index("順位"),
         use_container_width=True,
         height=min(50 + len(df) * 38, 520),
+    )
+
+# 評価コメント
+if data["eval_comments"]:
+    box_color = sign_color
+    comment_html = "".join(f"<li>{c}</li>" for c in data["eval_comments"])
+    st.markdown(
+        f"<div style='background:{box_color}18;border-left:4px solid {box_color};"
+        f"padding:10px 14px;border-radius:4px;margin:8px 0'>"
+        f"<ul style='margin:0;padding-left:18px;color:#333'>{comment_html}</ul></div>",
+        unsafe_allow_html=True,
     )
 
 # 買い目
