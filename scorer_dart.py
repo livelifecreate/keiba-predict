@@ -138,7 +138,7 @@ class PastRace:
     surface: str         # "芝" or "ダ"
     last_3f: float       # 上がり3F秒（0=不明）
     race_class: int      # CLASS_RANK の値
-    margin: float        # 勝ち馬との差（1着の場合は2着への着差）秒
+    margin: float        # 勝ち馬との差（1着の場合は2着への着差）秒。不明=-1.0
     horse_weight: int    # 馬体重 kg（0=不明）
     is_overseas: bool    # 海外競馬フラグ
     first_corner: int    # 1コーナー通過順位（0=不明）
@@ -156,9 +156,9 @@ class ScoreBreakdown:
     second_start:           float = 0.0  # +1
     rising_trend:           float = 0.0  # +1（直近3走で着順連続改善）
     distance_drop:          float = 0.0  # +1（前走より200m以上距離短縮）
-    prev_run_bonus:         float = 0.0  # +2/+1（前走好走ボーナス：G2未満1着→+2、2着→+1）
-    prev2_run_bonus:        float = 0.0  # +1/+0.5（前々走好走ボーナス：G2未満1着→+1、2着→+0.5）
-    grade_history:          float = 0.0  # +1〜+3（3・4走前G1〜OP 1・2着）
+    prev_run_bonus:         float = 0.0  # +3/+2/+1（前走好走：1着→+3、0.0秒差→+2、0.1〜0.2秒差→+1）
+    prev2_run_bonus:        float = 0.0  # +2/+1/+0.5（前々走好走：1着→+2、0.0秒差→+1、0.1〜0.2秒差→+0.5）
+    grade_history:          float = 0.0  # +1〜+3（3・4走前G1〜OP 1・2着 or 0.0秒差→+1）
     bloodline_distance:     float = 0.0  # -1.5〜+1.5（血統距離適性）
     # 減点（合計上限 -5.0）
     first_surface:         float = 0.0  # -5
@@ -313,9 +313,10 @@ def parse_past_race(text: str) -> Optional[PastRace]:
     hw_match = re.search(r"(\d{3,4})kg", text)
     horse_weight = int(hw_match.group(1)) if hw_match else 0
 
-    # 勝ち馬との差（テキスト末尾の括弧内数値）
-    margin_match = re.search(r"\(([\d.]+)\)\s*$", text.strip())
-    margin = float(margin_match.group(1)) if margin_match else 0.0
+    # 勝ち馬との差（1角:の前まで、または末尾の括弧内数値）
+    text_for_margin = re.split(r"1角:", text.strip())[0]
+    margin_match = re.search(r"\(([\d.]+)\)\s*$", text_for_margin.strip())
+    margin = float(margin_match.group(1)) if margin_match else -1.0
 
     # コーナー通過順位
     corner_m = re.search(r"1角:(\d+)", text)
@@ -360,7 +361,7 @@ def check_prev_high_grade(recent: list[PastRace]) -> int:
     if 0.2 < p.margin <= 0.5:
         return 3
     # 前走G1で大差（margin>0.5）だが0.5以下ではない → 2走前G2+を減額評価
-    if p.race_class >= 7 and p.margin <= 2.0 and len(recent) > 1:
+    if p.race_class >= 7 and 0 <= p.margin <= 2.0 and len(recent) > 1:
         p2 = recent[1]
         if p2.race_class >= HIGH_GRADE_MIN:
             if p2.position == 1:
@@ -437,7 +438,7 @@ def check_first_surface(recent: list[PastRace], race_surface: str, race_class: i
 def check_distance_up(recent: list[PastRace], race_distance: str, race_class: int = 4) -> int:
     """距離延長1ハロン(200m)以上（クラス別ペナルティ）
     2勝クラス以下: 免除（適距離が定まっていない段階のため）
-    3勝クラス(3): 前走1着→-1 / 前走3着以内近差→-2 / その他→-3
+    3勝クラス(3): 前走1着→0 / 前走3着以内近差→-2 / その他→-3
     OP以上(4+):   前走1着→-2 / 前走3着以内近差→-3 / その他→-5
     ※前走G1勝ちは全クラス免除
     """
@@ -457,24 +458,24 @@ def check_distance_up(recent: list[PastRace], race_distance: str, race_class: in
         return 0
 
     # クラス別ペナルティ係数（3勝クラス以上のみ到達）
-    if race_class == 3:    # 3勝クラス
-        p_win, p_close, p_base = -1, -2, -3
+    if race_class == 3:    # 3勝クラス（前走1着のみ0、他は旧値）
+        p_win, p_close, p_base = 0, -2, -3
     else:                  # OP以上(4+)
         p_win, p_close, p_base = -2, -3, -5
 
     # OP以上のみ重賞実績で緩和
     if race_class >= 4:
         for p in recent[:3]:
-            if p.race_class >= 7 and p.margin <= 1.0:
+            if p.race_class >= 7 and 0 <= p.margin <= 1.0:
                 return -2
-            if p.race_class == 6 and (p.position == 1 or p.margin <= 0.5):
+            if p.race_class == 6 and (p.position == 1 or 0 <= p.margin <= 0.5):
                 return -2
-            if p.race_class == 5 and (p.position == 1 or p.margin <= 0.3):
+            if p.race_class == 5 and (p.position == 1 or 0 <= p.margin <= 0.3):
                 return -3
 
     if prev.position == 1:
         return p_win
-    if prev.position <= 3 and prev.margin <= 0.2:
+    if prev.position <= 3 and 0 <= prev.margin <= 0.2:
         return p_close
     return p_base
 
@@ -668,7 +669,7 @@ def check_bloodline_distance(sire: str, bms: str, race_distance: str) -> float:
 
 
 def check_prev_run_bonus(recent: list[PastRace]) -> float:
-    """前走好走ボーナス（G2未満の場合のみ）：1着→+2、2着→+1
+    """前走好走ボーナス（G2未満）：1着→+2、0.0秒差→+2、0.1〜0.2秒差→+1
     前走重賞近差（prev_high_grade_close）が付く馬には加算しない。
     """
     if not recent:
@@ -678,7 +679,9 @@ def check_prev_run_bonus(recent: list[PastRace]) -> float:
         return 0.0
     if p.position == 1:
         return 2.0
-    if p.position == 2:
+    if p.margin == 0.0:
+        return 2.0
+    if 0.0 < p.margin <= 0.2:
         return 1.0
     return 0.0
 
@@ -700,7 +703,7 @@ def check_prev2_high_grade(recent: list[PastRace]) -> float:
 
 
 def check_prev2_run_bonus(recent: list[PastRace]) -> float:
-    """前々走好走ボーナス（G2未満）：1着→+1、2着→+0.5
+    """前々走好走ボーナス（G2未満）：1着→+1、0.0秒差→+1、0.1〜0.2秒差→+0.5
     前々走G2以上の場合は prev2_high_grade_close で評価済みのため加算しない。
     """
     if len(recent) < 2:
@@ -710,26 +713,39 @@ def check_prev2_run_bonus(recent: list[PastRace]) -> float:
         return 0.0
     if p2.position == 1:
         return 1.0
-    if p2.position == 2:
+    if p2.margin == 0.0:
+        return 1.0
+    if 0.0 < p2.margin <= 0.2:
         return 0.5
     return 0.0
 
 
 def check_grade_history(recent: list[PastRace]) -> float:
-    """3・4走前のG1〜OP 1・2着にボーナス加点（前走・前々走は別評価のため除外）
-    G1 1・2着→+3 / G2→+2 / G3→+1.5 / OP→+1
+    """3・4走前のG1〜OP 1・2着 or 0.0秒差にボーナス加点（前走・前々走は別評価のため除外）
+    1・2着: G1→+3 / G2→+2 / G3→+1.5 / OP→+1
+    0.0秒差（3着以降）: クラス問わず+1
     """
     score = 0.0
     for p in recent[2:4]:
-        if p.position > 2:
-            continue
-        if p.race_class >= 7:
-            score = max(score, 3.0)
-        elif p.race_class >= 6:
-            score = max(score, 2.0)
-        elif p.race_class >= 5:
-            score = max(score, 1.5)
-        elif p.race_class >= 4:
+        if p.position == 1:
+            if p.race_class >= 7:
+                score = max(score, 3.0)
+            elif p.race_class >= 6:
+                score = max(score, 2.0)
+            elif p.race_class >= 5:
+                score = max(score, 1.5)
+            elif p.race_class >= 4:
+                score = max(score, 1.0)
+        elif p.position == 2:
+            if p.race_class >= 7:
+                score = max(score, 3.0)
+            elif p.race_class >= 6:
+                score = max(score, 2.0)
+            elif p.race_class >= 5:
+                score = max(score, 1.5)
+            elif p.race_class >= 4:
+                score = max(score, 1.0)
+        elif p.margin == 0.0 and p.position > 0:
             score = max(score, 1.0)
     return score
 
