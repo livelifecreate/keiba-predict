@@ -1241,7 +1241,11 @@ def save_csv(results: list[tuple], race_info, odds_map: dict = None, training_da
     race_num = getattr(race_info, "race_num", 0)
     rnum = f"{race_num}R" if race_num else ""
     race_name = race_info.name.replace(" ", "_")
-    parts = [p for p in [date_str, venue, rnum, race_name] if p]
+    surface_raw = getattr(race_info, "surface", "") or ""
+    distance_raw = getattr(race_info, "distance", "") or ""
+    surface_full = {"芝": "芝", "ダ": "ダート", "障": "障害"}.get(surface_raw, surface_raw)
+    surface_label = f"{surface_full}{distance_raw}" if surface_full else ""
+    parts = [p for p in [date_str, venue, rnum, surface_label, race_name] if p]
     if sign_tag:
         parts.append(sign_tag)
     filename = f"score_{'_'.join(parts)}.csv"
@@ -1249,9 +1253,10 @@ def save_csv(results: list[tuple], race_info, odds_map: dict = None, training_da
     date_dir = f"{dm.group(1)}-{int(dm.group(2)):02d}-{int(dm.group(3)):02d}" if dm else "不明"
     save_dir = Path(__file__).parent / "results" / date_dir / (venue or "不明")
     save_dir.mkdir(parents=True, exist_ok=True)
-    # 同レースの旧バージョン（サインタグが異なるもの）を削除
-    base_prefix = "score_" + "_".join([p for p in [date_str, venue, rnum, race_name] if p])
-    for old_f in save_dir.glob(f"{base_prefix}*.csv"):
+    # 同レースの旧バージョン（芝/ダート追加前・サインタグ違い）を削除
+    base_new = "score_" + "_".join([p for p in [date_str, venue, rnum, surface_label, race_name] if p])
+    base_old = "score_" + "_".join([p for p in [date_str, venue, rnum, race_name] if p])
+    for old_f in list(save_dir.glob(f"{base_new}*.csv")) + list(save_dir.glob(f"{base_old}*.csv")):
         if old_f.name != filename:
             old_f.unlink()
     filepath = save_dir / filename
@@ -1287,6 +1292,11 @@ def save_csv(results: list[tuple], race_info, odds_map: dict = None, training_da
                 writer.writerow([rank, entry.frame_number, entry.horse_number,
                                  entry.horse_name, f"{d.total:+.1f}",
                                  " / ".join(plus_items), " / ".join(minus_items), comment])
+
+        # レース情報行（芝/ダート/障害・距離）
+        if surface_label:
+            writer.writerow([])
+            writer.writerow(["■レース情報", surface_label])
 
         # 買いサイン・買い目セクション
         if len(sorted_results) >= 2:

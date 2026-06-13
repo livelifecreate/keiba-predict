@@ -63,6 +63,7 @@ def parse_csv(path: Path) -> dict:
     formb_header = formb_combos = []
     form7_header = form7_combos = []
     eval_comments = []
+    race_surface_dist = ""
     section = "horses"
 
     for line in lines:
@@ -75,6 +76,9 @@ def parse_csv(path: Path) -> dict:
             sign_type   = parts[1] if len(parts) > 1 else ""
             sign_detail = parts[2] if len(parts) > 2 else ""
             section = "sign"
+        elif parts[0] == "■レース情報":
+            race_surface_dist = parts[1] if len(parts) > 1 else ""
+            section = "raceinfo"
         elif parts[0] == "■評価コメント":
             eval_comments = []
             section = "eval"
@@ -86,7 +90,7 @@ def parse_csv(path: Path) -> dict:
             form7_header = parts[1:]
             form7_combos = []
             section = "form7"
-        elif section == "horses":
+        elif section == "horses" and not parts[0].startswith("■"):
             horse_lines.append(line)
         elif section == "eval" and parts[0] == "" and len(parts) > 1 and parts[1].strip():
             eval_comments.append(parts[1].strip())
@@ -102,6 +106,7 @@ def parse_csv(path: Path) -> dict:
         "sign_type": sign_type,
         "sign_detail": sign_detail,
         "eval_comments": eval_comments,
+        "race_surface_dist": race_surface_dist,
         "formb_header": formb_header,
         "formb_combos": formb_combos,
         "form7_header": form7_header,
@@ -124,19 +129,29 @@ def load_race_index() -> list[dict]:
         if "★" in fname:
             sign_tag = "★" + fname.split("★", 1)[1]
 
-        # Rナンバー・レース名
-        m = re.search(r'_(\d+)R_(.+?)(?:_★|$)', fname)
-        race_num  = int(m.group(1)) if m else 0
-        race_name = m.group(2).replace("_", " ") if m else fname
+        # Rナンバー・馬場・レース名（新形式: _9R_芝1600m_日野特別 / 旧形式: _9R_日野特別）
+        m_new = re.search(r'_(\d+)R_(芝\d+m|ダート\d+m|障害\d+m)_(.+?)(?:_★|$)', fname)
+        m_old = re.search(r'_(\d+)R_(.+?)(?:_★|$)', fname)
+        if m_new:
+            race_num       = int(m_new.group(1))
+            surface_dist   = m_new.group(2)
+            race_name      = m_new.group(3).replace("_", " ")
+        elif m_old:
+            race_num       = int(m_old.group(1))
+            surface_dist   = ""
+            race_name      = m_old.group(2).replace("_", " ")
+        else:
+            race_num, surface_dist, race_name = 0, "", fname
 
         races.append({
-            "date":      date_dir,
-            "venue":     venue,
-            "race_num":  race_num,
-            "race_name": race_name,
-            "sign_tag":  sign_tag,
-            "path":      p,
-            "label":     f"{venue} {race_num}R {race_name}",
+            "date":          date_dir,
+            "venue":         venue,
+            "race_num":      race_num,
+            "race_name":     race_name,
+            "surface_dist":  surface_dist,
+            "sign_tag":      sign_tag,
+            "path":          p,
+            "label":         f"{venue} {race_num}R {race_name}",
         })
 
     races.sort(key=lambda r: (
@@ -197,9 +212,17 @@ sign_color  = SIGN_COLOR.get(sign_tag, "#7f8c8d")
 sign_label  = SIGN_LABEL.get(sign_tag, "⚠ 見送り")
 sign_detail = data["sign_detail"]
 
+# 馬場・距離（ファイル名優先、なければCSV内■レース情報から）
+surface_dist = race.get("surface_dist") or data.get("race_surface_dist", "")
+surface_badge = (
+    f"<span style='background:#27ae60;color:white;padding:2px 8px;"
+    f"border-radius:4px;font-size:0.8em;margin-left:8px'>{surface_dist}</span>"
+    if surface_dist else ""
+)
+
 # タイトル
 st.markdown(
-    f"<h2 style='margin-bottom:4px'>{race['venue']} {race['race_num']}R　{race['race_name']}</h2>",
+    f"<h2 style='margin-bottom:4px'>{race['venue']} {race['race_num']}R　{race['race_name']}{surface_badge}</h2>",
     unsafe_allow_html=True,
 )
 st.markdown(
