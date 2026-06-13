@@ -214,8 +214,14 @@ sign_detail = data["sign_detail"]
 
 # 馬場・距離（ファイル名優先、なければCSV内■レース情報から）
 surface_dist = race.get("surface_dist") or data.get("race_surface_dist", "")
+if surface_dist.startswith("ダート"):
+    surface_bg = "#a0785a"
+elif surface_dist.startswith("障害"):
+    surface_bg = "#7f8c8d"
+else:
+    surface_bg = "#27ae60"
 surface_badge = (
-    f"<span style='background:#27ae60;color:white;padding:2px 8px;"
+    f"<span style='background:{surface_bg};color:white;padding:2px 8px;"
     f"border-radius:4px;font-size:0.8em;margin-left:8px'>{surface_dist}</span>"
     if surface_dist else ""
 )
