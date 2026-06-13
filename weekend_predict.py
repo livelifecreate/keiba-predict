@@ -332,17 +332,17 @@ def main():
         else:
             sign_tag = None
 
-        # CSV保存（サインタグ・調教コメント・評価コメント・買い目含む）
-        try:
-            _save = save_csv_dart if race_info.surface == "ダ" else save_csv_turf
-            _save(results, race_info,
-                  odds_map=odds_map if odds_map else None,
-                  training_data=training,
-                  sign_tag=sign_tag,
-                  eval_comment=eval_comment,
-                  race_id=race_id)
-        except Exception as e:
-            print(f"  [CSV保存失敗] {e}")
+        # CSV保存（芝のみ）
+        if race_info.surface != "ダ":
+            try:
+                save_csv_turf(results, race_info,
+                              odds_map=odds_map if odds_map else None,
+                              training_data=training,
+                              sign_tag=sign_tag,
+                              eval_comment=eval_comment,
+                              race_id=race_id)
+            except Exception as e:
+                print(f"  [CSV保存失敗] {e}")
 
         # 上位3頭を表示
         top3 = sorted_r[:3]

@@ -177,6 +177,7 @@ class ScoreBreakdown:
     wrong_direction:       float = 0.0  # -1
     seasonal_sex:          float = 0.0  # -1
     track_condition:       float = 0.0  # -2〜+2（道悪適性）
+    pace_fit:              float = 0.0  # -2〜+2（ペース適性：スロー×先行/ハイ×差し）
     # 手動チェック用（自動採点には含めない）
     manual_inner_post: bool = False  # 内枠（1〜3枠）→ 先行確認要
 
@@ -198,6 +199,7 @@ class ScoreBreakdown:
             + self.jockey_bonus
             + max(self.bloodline_distance, 0.0)
             + max(self.track_condition, 0.0)
+            + max(self.pace_fit, 0.0)
         )
         negatives = (
             self.first_surface
@@ -215,6 +217,7 @@ class ScoreBreakdown:
             + self.seasonal_sex
             + min(self.bloodline_distance, 0.0)
             + min(self.track_condition, 0.0)
+            + min(self.pace_fit, 0.0)
         )
         return positives + max(negatives, -5.0)
 
@@ -348,30 +351,7 @@ def parse_past_race(text: str) -> Optional[PastRace]:
 # 個別採点関数
 # -------------------------------------------------------------------
 def check_prev_high_grade(recent: list[PastRace]) -> int:
-    """前走G2以上での惜敗 or 勝利
-    前走G1で近差なし（ただし2.0秒以内）→ 2走前のG2+実績も評価（G1試走パターン）
-    """
-    if not recent:
-        return 0
-    p = recent[0]
-    if p.race_class < HIGH_GRADE_MIN:
-        return 0
-    if p.position == 1:
-        return 5
-    if 0 < p.margin <= 0.2:
-        return 5
-    if 0.2 < p.margin <= 0.5:
-        return 3
-    # 前走G1で大差（margin>0.5）だが0.5以下ではない → 2走前G2+を減額評価
-    if p.race_class >= 7 and 0 <= p.margin <= 2.0 and len(recent) > 1:
-        p2 = recent[1]
-        if p2.race_class >= HIGH_GRADE_MIN:
-            if p2.position == 1:
-                return 3   # 前々走G2+勝ち（皐月賞試走→ダービー など）
-            if 0 < p2.margin <= 0.2:
-                return 3
-            if 0.2 < p2.margin <= 0.5:
-                return 2
+    """廃止: 前走着差評価は check_prev_run_bonus に統合"""
     return 0
 
 
@@ -383,26 +363,39 @@ def check_fastest_3f(my_3f: float, all_3f: list[float], prev_pos: int = 0) -> in
     return 0
 
 
-def check_same_course(recent: list[PastRace], venue: str, distance: str, surface: str) -> int:
-    """近4戦以内に同コース1着（同距離+4 / 距離差400m以内+2）"""
+def check_same_course(recent: list[PastRace], venue: str, distance: str, surface: str) -> float:
+    """近4戦以内に同コース好走（着差ベース）
+    同距離: 1着/0.0秒差→+4、0.1〜0.2秒差→+3、0.3〜0.5秒差→+2
+    距離差400m以内: 1着/0.0秒差→+2、0.1〜0.2秒差→+1.5、0.3〜0.5秒差→+1
+    """
     try:
         dist_m = int(distance.replace("m", ""))
     except ValueError:
         dist_m = 0
-    nearby = 0
+    best = 0.0
     for p in recent[:4]:
-        if p.position != 1 or p.venue != venue or p.surface != surface:
+        if p.venue != venue or p.surface != surface:
             continue
-        if p.distance == distance:
-            return 4
-        if dist_m:
+        exact = (p.distance == distance)
+        near = False
+        if not exact and dist_m:
             try:
-                p_dist = int(p.distance.replace("m", ""))
-                if abs(p_dist - dist_m) <= 400:
-                    nearby = 2
+                if abs(int(p.distance.replace("m", "")) - dist_m) <= 400:
+                    near = True
             except ValueError:
                 pass
-    return nearby
+        if not exact and not near:
+            continue
+        if p.position == 1 or p.margin == 0.0:
+            score = 4.0 if exact else 2.0
+        elif 0.0 < p.margin <= 0.2:
+            score = 3.0 if exact else 1.5
+        elif 0.0 < p.margin <= 0.5:
+            score = 2.0 if exact else 1.0
+        else:
+            continue
+        best = max(best, score)
+    return best
 
 
 def check_second_start(recent: list[PastRace]) -> int:
@@ -438,10 +431,11 @@ def check_first_surface(recent: list[PastRace], race_surface: str, race_class: i
 
 
 def check_distance_up(recent: list[PastRace], race_distance: str, race_class: int = 4) -> int:
-    """距離延長1ハロン(200m)以上（クラス別ペナルティ）
+    """距離延長2ハロン(400m)以上（クラス別ペナルティ）
+    200m以内の延長は誤差範囲として免除。
     2勝クラス以下: 免除（適距離が定まっていない段階のため）
-    3勝クラス(3): 前走1着→0 / 前走3着以内近差→-2 / その他→-3
-    OP以上(4+):   前走1着→-2 / 前走3着以内近差→-3 / その他→-5
+    3勝クラス(3): 前走1着→0 / 前走近差→-2 / その他→-3
+    OP以上(4+):   前走1着→-2 / 前走近差→-3 / その他→-5
     ※前走G1勝ちは全クラス免除
     """
     if not recent or not race_distance:
@@ -453,7 +447,7 @@ def check_distance_up(recent: list[PastRace], race_distance: str, race_class: in
         return 0
     curr_m = int(race_distance.replace("m", ""))
     prev_m = int(prev.distance.replace("m", ""))
-    if curr_m - prev_m < 200:
+    if curr_m - prev_m < 400:
         return 0
     # 前走G1勝ちは免除
     if prev.race_class >= 7 and prev.position == 1:
@@ -477,7 +471,7 @@ def check_distance_up(recent: list[PastRace], race_distance: str, race_class: in
 
     if prev.position == 1:
         return p_win
-    if prev.position <= 3 and 0 <= prev.margin <= 0.2:
+    if 0 <= prev.margin <= 0.2:
         return p_close
     return p_base
 
@@ -670,56 +664,38 @@ def check_bloodline_distance(sire: str, bms: str, race_distance: str) -> float:
     return round(sum(scores) * 2) / 2
 
 
-def check_prev_run_bonus(recent: list[PastRace]) -> float:
-    """前走好走ボーナス（G2未満）：1着→+2、0.0秒差→+2、0.1〜0.2秒差→+1
-    前走重賞近差（prev_high_grade_close）が付く馬には加算しない。
-    """
-    if not recent:
-        return 0.0
-    p = recent[0]
-    if p.race_class >= 6:  # G2以上は prev_high_grade_close で評価済み
-        return 0.0
-    if p.position == 1:
-        return 2.0
-    if p.margin == 0.0:
-        return 2.0
+def _calc_run_bonus(p: PastRace) -> float:
+    """着差×クラスの加点テーブル（前走・前々走共通、上限+3・0.5刻み）"""
+    if p.position == 1 or p.margin == 0.0:
+        if p.race_class >= 7: return 3.0
+        if p.race_class >= 6: return 2.5
+        if p.race_class >= 5: return 2.0
+        return 1.5
     if 0.0 < p.margin <= 0.2:
+        if p.race_class >= 7: return 2.5
+        if p.race_class >= 6: return 2.0
+        if p.race_class >= 5: return 1.5
         return 1.0
     return 0.0
 
 
+def check_prev_run_bonus(recent: list[PastRace]) -> float:
+    """前走好走ボーナス（全クラス・着差×クラスのテーブル）"""
+    if not recent:
+        return 0.0
+    return _calc_run_bonus(recent[0])
+
+
 def check_prev2_high_grade(recent: list[PastRace]) -> float:
-    """前々走G2以上での惜敗 or 勝利（前走の約半分のスコア）
-    勝利/0.2差以内→+3、0.2-0.5差→+2
-    """
-    if len(recent) < 2:
-        return 0.0
-    p2 = recent[1]
-    if p2.race_class < HIGH_GRADE_MIN:
-        return 0.0
-    if p2.position == 1 or (0 < p2.margin <= 0.2):
-        return 3.0
-    if 0.2 < p2.margin <= 0.5:
-        return 2.0
+    """廃止: 前々走着差評価は check_prev2_run_bonus に統合"""
     return 0.0
 
 
 def check_prev2_run_bonus(recent: list[PastRace]) -> float:
-    """前々走好走ボーナス（G2未満）：1着→+1、0.0秒差→+1、0.1〜0.2秒差→+0.5
-    前々走G2以上の場合は prev2_high_grade_close で評価済みのため加算しない。
-    """
+    """前々走好走ボーナス（全クラス・着差×クラスのテーブル、前走と同じ加点）"""
     if len(recent) < 2:
         return 0.0
-    p2 = recent[1]
-    if p2.race_class >= 6:
-        return 0.0
-    if p2.position == 1:
-        return 1.0
-    if p2.margin == 0.0:
-        return 1.0
-    if 0.0 < p2.margin <= 0.2:
-        return 0.5
-    return 0.0
+    return _calc_run_bonus(recent[1])
 
 
 def check_grade_history(recent: list[PastRace]) -> float:
@@ -1003,10 +979,11 @@ def check_seasonal_sex(age_sex: str, race_date_str: str) -> int:
 def detect_running_style(recent: list) -> str:
     """近走のコーナー通過順位（頭数比）から脚質を推定する。
     最終コーナー(4角)を優先し、なければ1角で代用。
-    データなし → '不明'（手動確認フラグを表示）
+    データなし          → '不明'
+    平均比率 ≤ 0.15 → '逃げ'
     平均比率 ≤ 0.35 → '先行'（≒頭数の35%以内）
     平均比率 ≤ 0.60 → '好位'
-    それ以上        → '差し'
+    それ以上            → '差し'
     """
     ratios = []
     for p in recent:
@@ -1016,11 +993,48 @@ def detect_running_style(recent: list) -> str:
     if not ratios:
         return "不明"
     avg_ratio = sum(ratios) / len(ratios)
+    if avg_ratio <= 0.15:
+        return "逃げ"
     if avg_ratio <= 0.35:
         return "先行"
     if avg_ratio <= 0.60:
         return "好位"
     return "差し"
+
+
+def predict_pace(styles: list[str]) -> str:
+    """レース全馬の脚質リストからペース傾向を予測する。
+    不明を除いた有効データが4頭未満の場合は '平均' を返す。
+    逃げ+先行の割合 ≥ 0.40 → 'ハイ'
+    逃げ+先行の割合 ≤ 0.20 → 'スロー'
+    それ以外                → '平均'
+    """
+    valid = [s for s in styles if s != "不明"]
+    if len(valid) < 4:
+        return "平均"
+    front = sum(1 for s in valid if s in ("逃げ", "先行"))
+    ratio = front / len(valid)
+    if ratio >= 0.40:
+        return "ハイ"
+    if ratio <= 0.20:
+        return "スロー"
+    return "平均"
+
+
+def calc_pace_fit(style: str, pace: str) -> float:
+    """脚質×ペースの組み合わせで有利不利スコアを返す。
+    ハイペース:  逃げ-1, 先行-0.5, 好位+0.5, 差し+1
+    スローペース: 逃げ+0.5, 先行+1, 好位+0.5, 差し-0.5
+    平均ペース: すべて0
+    不明: 0
+    """
+    if pace == "平均" or style == "不明":
+        return 0.0
+    table = {
+        "ハイ":   {"逃げ": -1.0, "先行": -0.5, "好位": +0.5, "差し": +1.0},
+        "スロー": {"逃げ": +0.5, "先行": +1.0, "好位": +0.5, "差し": -0.5},
+    }
+    return table.get(pace, {}).get(style, 0.0)
 
 
 def check_inner_post(frame_num: str, recent: list = None,
@@ -1087,16 +1101,22 @@ def score_all(entries: list, race_info, training_data: dict = None,
     all_last3f = []
     all_weights = [e.weight_carried for e in entries]
 
+    # 全馬の過去走データを一度パース（3F/脚質集計で共用）
+    all_recent: list[list] = []
     for entry in entries:
         pasts = [parse_past_race(r) for r in (entry.recent_races or []) if r]
         pasts = [p for p in pasts if p]
+        all_recent.append(pasts)
         all_last3f.append(pasts[0].last_3f if pasts else 0.0)
+
+    # ペース予測（全馬の脚質分布から当レースのペース傾向を判定）
+    all_styles = [detect_running_style(recent) for recent in all_recent]
+    race_pace  = predict_pace(all_styles)
 
     results = []
     for i, entry in enumerate(entries):
-        recent = [parse_past_race(r) for r in (entry.recent_races or []) if r]
-        recent = [p for p in recent if p]
-        my_3f = all_last3f[i]
+        recent = all_recent[i]
+        my_3f  = all_last3f[i]
 
         # 調教スコア（手動入力 CSV 優先、なければ netkeiba A/B/C/D）
         td = training_data.get(entry.horse_name)
@@ -1150,6 +1170,7 @@ def score_all(entries: list, race_info, training_data: dict = None,
                 check_inner_post(entry.frame_number, recent,
                                  force_senko=(entry.horse_name in senko_set))
             )),
+            pace_fit               = calc_pace_fit(all_styles[i], race_pace),
         )
         results.append((entry, d))
 
@@ -1188,6 +1209,7 @@ SCORE_LABELS = {
     "wrong_direction":        "回り不適",
     "seasonal_sex":           "季節×性別",
     "track_condition":        "道悪適性",
+    "pace_fit":               "ペース適性",
 }
 
 
