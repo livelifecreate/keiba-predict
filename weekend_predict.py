@@ -188,12 +188,19 @@ def main():
                         help="馬場状態（例: 良 / 稍重 / 重 / 不良 / 東京:良,阪神:稍重）")
     args = parser.parse_args()
 
-    # 日付設定
+    # 日付設定（今日が土曜→sat=今日、今日が日曜→sun=今日）
     today = datetime.date.today()
     weekday = today.weekday()
-    days_to_sat = (5 - weekday) % 7
-    sat = today if weekday == 5 else today + datetime.timedelta(days=days_to_sat)
-    sun = sat + datetime.timedelta(days=1)
+    if weekday == 6:          # 今日が日曜
+        sun = today
+        sat = today - datetime.timedelta(days=1)
+    elif weekday == 5:        # 今日が土曜
+        sat = today
+        sun = today + datetime.timedelta(days=1)
+    else:                     # 平日→次の土日
+        days_to_sat = (5 - weekday) % 7
+        sat = today + datetime.timedelta(days=days_to_sat)
+        sun = sat + datetime.timedelta(days=1)
 
     if args.sat:
         dates = [sat]
@@ -332,17 +339,7 @@ def main():
         else:
             sign_tag = None
 
-        # CSV保存（芝のみ）
-        if race_info.surface != "ダ":
-            try:
-                save_csv_turf(results, race_info,
-                              odds_map=odds_map if odds_map else None,
-                              training_data=training,
-                              sign_tag=sign_tag,
-                              eval_comment=eval_comment,
-                              race_id=race_id)
-            except Exception as e:
-                print(f"  [CSV保存失敗] {e}")
+        # CSV出力なし（週次予想では不要）
 
         # 上位3頭を表示
         top3 = sorted_r[:3]
