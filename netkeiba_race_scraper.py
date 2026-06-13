@@ -295,13 +295,15 @@ def get_entry_list_netkeiba(race_id: str) -> tuple[RaceInfo, list[HorseEntry]]:
         return race_info, []
 
     entries = []
+    horse_seq = 0
     for row in tables[0].find_all("tr"):
-        # 馬番は tr の id="tr_N" から取得（枠番確定前でもセルが空になるため）
+        # tr_N の ID は netkeiba 内部番号で JRA 公式馬番と異なるため使わない
+        # HTML 出現順（枠順）がそのまま JRA 公式馬番になる
         tr_id = row.get("id", "")
-        m = re.match(r"tr_(\d+)$", tr_id)
-        if not m:
+        if not re.match(r"tr_\d+$", tr_id):
             continue
-        horse_num = m.group(1)
+        horse_seq += 1
+        horse_num = str(horse_seq)
 
         cells = row.find_all(["td", "th"])
         if len(cells) < 5:
@@ -395,10 +397,17 @@ def fetch_odds(race_id: str) -> dict[str, float]:
         r = requests.get(api_url, headers=headers, timeout=10)
         r.raise_for_status()
         data = r.json()
-        if data.get("status") == "OK" and data.get("data"):
-            odds_raw = data["data"]
+        d = data.get("data")
+        if d and data.get("status") not in ("error", "close"):
+            # data が dict の場合は data["odds"] リストを使う（status:"middle" など）
+            if isinstance(d, dict):
+                odds_list = d.get("odds") or []
+            else:
+                odds_list = d if isinstance(d, list) else []
             result = {}
-            for item in (odds_raw if isinstance(odds_raw, list) else odds_raw.values()):
+            for item in odds_list:
+                if not isinstance(item, dict):
+                    continue
                 num  = str(item.get("num") or item.get("horse_num", ""))
                 odds = item.get("odds") or item.get("win_odds")
                 if num and odds:
