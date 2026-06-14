@@ -79,10 +79,10 @@ def gen_eval_comment(sorted_results, odds_map, n_horses, sign_level, sign_detail
         pass
         if any("断然人気" in r for r in reasons):
             lines.append(f"軸{odds1:.1f}倍：断然人気で三連複配当が低く期待値マイナス。")
-        elif any("ROI8%" in r for r in reasons):
-            lines.append(f"軸{odds1:.1f}倍×クラス不足：このクラスの2〜4倍帯はROI8%。3勝クラスのみ買い。")
-        elif any("10倍超" in r for r in reasons):
-            lines.append(f"軸{odds1:.1f}倍：10倍超は的中率が低く期待値マイナス。")
+        elif any("ROI47%" in r for r in reasons):
+            lines.append(f"2勝クラス以下：全オッズ帯でROI47%以下。3勝クラス以上のみ買い。")
+        elif any("ROI17%" in r for r in reasons):
+            lines.append(f"重賞クラス：ROI17%（n=49）。買い条件を満たさない。")
 
         if odds2 and odds2 >= 20:
             lines.append(f"2位{sec_entry.horse_name}{odds2:.1f}倍：相手を絞り込みにくく三連複の期待値も低い。")
@@ -140,11 +140,12 @@ def calc_buy_sign(sorted_results, odds_map, n_horses, race_class=0):
         skips.append(f"乖離{gap:.1f}pt（3〜5pt）")
     if odds1 and odds1 < 2:
         skips.append(f"軸{odds1:.1f}倍（断然人気）")
-    if odds1 and 2 <= odds1 < 5 and race_class < 3:
+    if race_class < 3:
         cls_name = {0: "未勝利", 1: "1勝", 2: "2勝"}.get(race_class, f"class{race_class}")
-        skips.append(f"軸{odds1:.1f}倍×{cls_name}（ROI8%）")
-    if odds1 and odds1 >= 10:
-        skips.append(f"軸{odds1:.1f}倍（10倍超・穴すぎ）")
+        skips.append(f"{cls_name}クラス（ROI47%）")
+    if race_class >= 5:
+        cls_name = {5: "GIII", 6: "GII", 7: "GI"}.get(race_class, "重賞")
+        skips.append(f"{cls_name}（ROI17%）")
 
     if skips:
         return "skip", "⚠ 見送り", " / ".join(skips)
@@ -168,7 +169,9 @@ def calc_buy_sign(sorted_results, odds_map, n_horses, race_class=0):
         notes.append(f"乖離{gap:.1f}pt横並び→ROI222%")
     if 14 <= n <= 17:
         notes.append(f"{n}頭立て→ROI164%")
-    if odds1 and 5 <= odds1 < 10 and race_class >= 4:
+    if odds1 and odds1 >= 10 and race_class >= 3:
+        notes.append(f"3勝以上×{odds1:.1f}倍→高ROI帯（10倍超でも期待値プラス）")
+    elif odds1 and 5 <= odds1 < 10 and race_class >= 4:
         notes.append(f"OP以上×{odds1:.1f}倍→ROI285%")
 
     if notes:
