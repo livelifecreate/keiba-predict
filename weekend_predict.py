@@ -369,21 +369,22 @@ def main():
                     return f"{e.horse_number}番{e.horse_name}"
                 return ""
             sign_summary.append({
-                "label":    label,
-                "race_id":  race_id,
-                "name":     race_info.name,
-                "date":     race["date"],
-                "venue":    race_info.venue,
-                "dist":     f"{race_info.distance}({race_info.surface})",
-                "n":        n,
-                "sign":     sign_text,
-                "detail":   sign_detail,
-                "top1":     horse_label(0),
-                "top2":     horse_label(1),
-                "top3":     horse_label(2),
-                "top4":     horse_label(3),
-                "top5":     horse_label(4),
-                "level":    sign_level,
+                "label":      label,
+                "race_id":    race_id,
+                "name":       race_info.name,
+                "date":       race["date"],
+                "venue":      race_info.venue,
+                "dist":       f"{race_info.distance}({race_info.surface})",
+                "n":          n,
+                "sign":       sign_text,
+                "detail":     sign_detail,
+                "top1":       horse_label(0),
+                "top2":       horse_label(1),
+                "top3":       horse_label(2),
+                "top4":       horse_label(3),
+                "top5":       horse_label(4),
+                "level":      sign_level,
+                "race_class": race_class,
             })
 
     # ── 買いサインまとめ ──────────────────────────────────────────────
@@ -416,10 +417,18 @@ def main():
             print(f"  race_id: {s['race_id']}")
 
     if formbs:
-        print("\n📋 フォームB推奨（ROI82%〜）")
+        print("\n📋 フォームB推奨")
         for s in formbs:
+            rc = s.get("race_class", 0)
+            if rc == 3:
+                buy = "4頭BOX 4点 (ROI466%)"
+            elif rc >= 4:
+                buy = "5頭BOX 10点 (ROI124%)"
+            else:
+                buy = "5頭BOX 10点"
             print(f"  {s['date']} {s['venue']} {s['name']}  {s['dist']}  {s['n']}頭")
             print(f"  軸: {s['top1']}  ({s['detail']})")
+            print(f"  推奨買い目: {buy}")
             print(f"  race_id: {s['race_id']}")
 
     if not sign_summary:
