@@ -1275,7 +1275,7 @@ def _record_comment(entry) -> str:
     return "実績不明"
 
 
-def save_csv(results: list[tuple], race_info, odds_map: dict = None, training_data: dict = None, sign_tag: str = None, eval_comment: list = None, race_id: str = ""):
+def save_csv(results: list[tuple], race_info, odds_map: dict = None, training_data: dict = None, sign_tag: str = None, eval_comment: list = None, race_id: str = "", sign_level: str = None, sign_detail_text: str = None, race_class: int = 0):
     import csv as _csv, re
     from pathlib import Path
     date_str = race_info.date.replace("年", "").replace("月", "").replace("日", "")
@@ -1346,55 +1346,32 @@ def save_csv(results: list[tuple], race_info, odds_map: dict = None, training_da
             gap   = top_d.total - sec_d.total
             odds1 = (odds_map or {}).get(top_entry.horse_name, 0)
             n     = len(sorted_results)
-            skips = []
-            if n == 18:
-                skips.append("18頭フルゲート")
-            if 3 <= gap < 5:
-                skips.append(f"乖離{gap:.1f}pt（3〜5pt）")
-            if odds1 and 8 <= odds1 < 15:
-                skips.append(f"軸{odds1:.1f}倍（8〜14倍）")
 
-            if skips:
-                sign = "見送り"
-                sign_detail = " / ".join(skips)
-            else:
-                is_7pt = (gap >= 5 and n <= 13 and 2 <= odds1 < 8) if odds1 else (gap >= 5 and n <= 13)
-                if is_7pt:
-                    sign = "7pt推奨"
-                    sign_detail = f"乖離{gap:.1f}pt + {n}頭" + (f" + 軸{odds1:.1f}倍" if odds1 else "")
-                else:
-                    notes = []
-                    if gap < 1:
-                        notes.append(f"乖離{gap:.1f}pt横並び→ROI222%")
-                    if 14 <= n <= 17:
-                        notes.append(f"{n}頭立て→ROI164%")
-                    if odds1 and odds1 >= 15:
-                        notes.append(f"穴軸{odds1:.1f}倍→ROI393%")
-                    if odds1 and odds1 < 2:
-                        notes.append(f"断然{odds1:.1f}倍→命中75%")
-                    sign = "フォームB推奨" if notes else "フォームB（標準）"
-                    sign_detail = " / ".join(notes) if notes else f"乖離{gap:.1f}pt {n}頭"
+            # weekend_predict.pyから渡されたサイン情報を優先使用
+            sign        = sign_level or "フォームB（標準）"
+            sign_detail = sign_detail_text or f"乖離{gap:.1f}pt {n}頭"
 
             nums = [e.horse_number for e, _ in sorted_results]
 
             def _sort_key(x):
                 return int(x) if str(x).isdigit() else 99
 
-            # 頭数に応じてフォームB相手範囲を調整
-            if n <= 10:
-                a_end, b_end = 4, 7   # A:2〜3位(3頭) B:2〜6位(6頭) → ~12点
-            elif n <= 13:
-                a_end, b_end = 5, 8   # A:2〜4位(4頭) B:2〜7位(7頭) → ~18点
-            else:
-                a_end, b_end = 5, 9   # A:2〜4位(4頭) B:2〜8位(8頭) → ~22点
+            from itertools import combinations as _comb
 
             h1 = nums[0]
-            formb = set()
-            for a in nums[1:a_end]:
-                for b in nums[1:b_end]:
-                    if a != b:
-                        formb.add(tuple(sorted([h1, a, b], key=_sort_key)))
-            formb_list = sorted(formb, key=lambda c: tuple(_sort_key(x) for x in c))
+
+            # 推奨BOX: 3勝クラス→4頭BOX(4点) ROI466%, OP以上→5頭BOX(10点) ROI124%
+            if race_class == 3:
+                box_pool = nums[:4]
+                box_label = f"4頭BOX ({len(list(_comb(box_pool, 3)))}点) ← ROI466%"
+            else:
+                box_pool = nums[:5]
+                box_label = f"5頭BOX ({len(list(_comb(box_pool, 3)))}点) ← ROI124%"
+
+            formb_list = sorted(
+                [tuple(sorted(c, key=_sort_key)) for c in _comb(box_pool, 3)],
+                key=lambda c: tuple(_sort_key(x) for x in c)
+            )
 
             ax0, ax1 = nums[0], nums[1]
             form7 = set()
@@ -1403,15 +1380,11 @@ def save_csv(results: list[tuple], race_info, odds_map: dict = None, training_da
                     form7.add(tuple(sorted([ax0, ax1, b], key=_sort_key)))
             form7_list = sorted(form7, key=lambda c: tuple(_sort_key(x) for x in c))
 
-            from itertools import combinations as _comb
-            pool10 = nums[1:6]  # 2〜6位
+            pool10 = nums[1:6]
             form10 = sorted(
                 {tuple(sorted([h1, a, b], key=_sort_key)) for a, b in _comb(pool10, 2)},
                 key=lambda c: tuple(_sort_key(x) for x in c)
             )
-
-            a_label = f"2〜{a_end - 1}位"
-            b_label = f"2〜{b_end - 1}位"
 
             writer.writerow([])
             writer.writerow(["■買いサイン", sign, sign_detail])
@@ -1422,23 +1395,22 @@ def save_csv(results: list[tuple], race_info, odds_map: dict = None, training_da
                     writer.writerow(["", line])
             writer.writerow([])
             writer.writerow(["■三連複フォームB",
-                             f"軸:{h1}番{top_entry.horse_name}",
-                             f"相手A({a_label}):{','.join(nums[1:a_end])}",
-                             f"相手B({b_label}):{','.join(nums[1:b_end])}",
+                             box_label,
+                             f"対象馬:{','.join(str(x) for x in box_pool)}",
                              f"{len(formb_list)}点"])
             for c in formb_list:
                 writer.writerow(["", f"{c[0]}－{c[1]}－{c[2]}"])
             writer.writerow([])
             writer.writerow(["■三連複10点",
                              f"軸:{h1}番{top_entry.horse_name}",
-                             f"相手(2〜6位):{','.join(pool10)}",
+                             f"相手(2〜6位):{','.join(str(x) for x in pool10)}",
                              f"{len(form10)}点"])
             for c in form10:
                 writer.writerow(["", f"{c[0]}－{c[1]}－{c[2]}"])
             writer.writerow([])
             writer.writerow(["■三連複7点",
                              f"軸:{ax0}番{top_entry.horse_name}×{ax1}番{sec_entry.horse_name}",
-                             f"相手(3〜9位):{','.join(nums[2:9])}",
+                             f"相手(3〜9位):{','.join(str(x) for x in nums[2:9])}",
                              f"{len(form7_list)}点"])
             for c in form7_list:
                 writer.writerow(["", f"{c[0]}－{c[1]}－{c[2]}"])
