@@ -71,6 +71,10 @@ def get_race_list(dates: list[datetime.date] = None) -> list[dict]:
     指定した日付リストの全レースを返す。
     省略時は今週の土日。
     戻り値: [{"race_id", "race_name", "race_num", "venue", "label"}, ...]
+
+    netkeiba の race_list_sub はメインレース（10R前後）しかリンクしない場合がある。
+    取得できた race_id の接頭部（venue×series×day の10桁）を使って、
+    1R〜12R を全て試み、存在するレースを追加する。
     """
     if dates is None:
         dates = _this_week_dates()
@@ -85,6 +89,8 @@ def get_race_list(dates: list[datetime.date] = None) -> list[dict]:
         soup = BeautifulSoup(r.content, "lxml")
 
         seen = set()
+        prefixes = set()  # 10桁の接頭部（venue×series×day）
+
         for a in soup.find_all("a", href=True):
             href = a["href"]
             race_id = None
@@ -98,9 +104,10 @@ def get_race_list(dates: list[datetime.date] = None) -> list[dict]:
                 if m:
                     race_id = m.group(1)
 
-            if not race_id or race_id in seen:
+            if not race_id or len(race_id) != 12 or race_id in seen:
                 continue
             seen.add(race_id)
+            prefixes.add(race_id[:10])
 
             text = a.get_text(strip=True)
             rnum_m = re.match(r"(\d+R)(.*)", text)
@@ -120,6 +127,25 @@ def get_race_list(dates: list[datetime.date] = None) -> list[dict]:
                 "date":      date,
                 "label":     f"{date} {venue} {race_num} {race_name}",
             })
+
+        # 接頭部から1R〜9Rを補完（race_list_subに載らないレースをカバー）
+        for prefix in prefixes:
+            venue_code = prefix[4:6]
+            venue = VENUE_CODE.get(venue_code, "?")
+            for rnum in range(1, 10):
+                cand_id = f"{prefix}{rnum:02d}"
+                if cand_id in seen:
+                    continue
+                seen.add(cand_id)
+                race_num_str = f"{rnum}R"
+                races.append({
+                    "race_id":   cand_id,
+                    "race_name": "",        # shutuba取得時に判明
+                    "race_num":  race_num_str,
+                    "venue":     venue,
+                    "date":      date,
+                    "label":     f"{date} {venue} {race_num_str}",
+                })
 
     return races
 
