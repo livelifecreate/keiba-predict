@@ -171,6 +171,7 @@ class ScoreBreakdown:
     inner_post_senko:      float = 0.0  # +3 内枠先行ボーナス（脚質自動検出）
     light_weight:          float = 0.0  # +1
     place_consistency:     float = 0.0  # +2/+3（直近5走で3着以内3回以上）
+    win_count:             float = 0.0  # +1/+2（直近5走で1着1回→+1、2回以上→+2）
     jockey_bonus:          float = 0.0  # +1/+2（重賞限定騎手ボーナス）
     no_steep_win:          float = 0.0  # -2
     weight_change:         float = 0.0  # -2
@@ -197,6 +198,7 @@ class ScoreBreakdown:
             + self.grade_history
             + self.inner_post_senko
             + self.jockey_bonus
+            + self.win_count
             + max(self.bloodline_distance, 0.0)
             + max(self.track_condition, 0.0)
             + max(self.pace_fit, 0.0)
@@ -530,8 +532,11 @@ def check_local_prev(recent: list[PastRace], race_distance: str = "", race_surfa
         return -3
 
 
-def check_long_rest(recent: list[PastRace], race_date_str: str) -> int:
-    """6ヶ月以上の休み明け（前走→今回が180日以上）"""
+def check_long_rest(recent: list[PastRace], race_date_str: str) -> float:
+    """6ヶ月以上の休み明け（前走→今回が180日以上）
+    前走1着で休養 → 0（勝って状態良好のまま休ませた＝免除）
+    それ以外 → -1.0
+    """
     if not recent:
         return 0
     today = parse_date(race_date_str)
@@ -539,7 +544,9 @@ def check_long_rest(recent: list[PastRace], race_date_str: str) -> int:
     if today and prev_date:
         gap = (today - prev_date).days
         if gap >= 180:
-            return -3
+            if recent[0].position == 1:
+                return 0.0   # 前走1着なら免除
+            return -1.0
     return 0
 
 
@@ -789,6 +796,21 @@ def check_place_consistency(recent: list) -> float:
         return 3.0
     if top3 >= 3:
         return 2.0
+    return 0.0
+
+
+def check_win_count(recent: list) -> float:
+    """直近5走の1着回数に応じてボーナス（勝利実績）
+    2勝以上 → +2.0、1勝 → +1.0
+    複勝安定ボーナスとは独立した「勝てる馬」の評価
+    """
+    if not recent:
+        return 0.0
+    wins = sum(1 for p in recent[:5] if getattr(p, "position", 99) == 1)
+    if wins >= 2:
+        return 2.0
+    if wins >= 1:
+        return 1.0
     return 0.0
 
 
@@ -1158,6 +1180,7 @@ def score_all(entries: list, race_info, training_data: dict = None,
             post_surface           = check_post_surface(entry.frame_number, race_surface, race_distance),
             light_weight           = check_light_weight(entry.weight_carried, all_weights, race_info.conditions),
             place_consistency      = check_place_consistency(recent),
+            win_count              = check_win_count(recent),
             jockey_bonus           = check_jockey_bonus(entry.jockey, race_class >= 5),
             no_steep_win           = check_no_steep_win(recent, race_venue, race_surface, race_class),
             weight_change          = check_weight_change(recent, getattr(entry, "horse_weight", 0),
@@ -1205,6 +1228,7 @@ SCORE_LABELS = {
     "inner_post_senko":       "内枠先行",
     "light_weight":           "軽量馬加点",
     "place_consistency":      "複勝安定ボーナス",
+    "win_count":              "勝利数ボーナス",
     "jockey_bonus":           "騎手ボーナス(重賞)",
     "no_steep_win":           "急坂好走なし",
     "weight_change":          "馬体重変動",
