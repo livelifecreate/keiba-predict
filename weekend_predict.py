@@ -57,7 +57,7 @@ def _fetch_jra_odds(race_id: str, race_date: datetime.date, entries) -> tuple[di
 
 # ── サイン判定（scorer_turf.pyのprint_buy_signsと同ロジック）──────────
 
-def gen_eval_comment(sorted_results, odds_map, n_horses, sign_level, sign_detail) -> list[str]:
+def gen_eval_comment(sorted_results, odds_map, n_horses, sign_level, sign_detail, race_class=0) -> list[str]:
     """買いサイン評価コメントを生成して list[str] で返す"""
     if len(sorted_results) < 2:
         return []
@@ -77,18 +77,22 @@ def gen_eval_comment(sorted_results, odds_map, n_horses, sign_level, sign_detail
         if any("18頭" in r for r in reasons):
             lines.append("18頭フルゲートは荒れやすく軸信頼度が低下。")
         pass
-        if any("8〜14倍" in r for r in reasons):
-            lines.append(f"軸{odds1:.1f}倍は期待値が安定しない中穴ゾーン（8〜14倍）。")
-
-        if odds1 and odds1 < 2:
-            lines.append(f"1位{top_entry.horse_name}{odds1:.1f}倍：複勝命中率75%超も控除率約20%で単勝は期待値マイナス。")
-        elif odds1 and odds1 < 4:
-            lines.append(f"1位{top_entry.horse_name}{odds1:.1f}倍：人気集中で三連複の配当も低くなりやすい。")
+        if any("断然人気" in r for r in reasons):
+            lines.append(f"軸{odds1:.1f}倍：断然人気で三連複配当が低く期待値マイナス。")
+        elif any("ROI8%" in r for r in reasons):
+            lines.append(f"軸{odds1:.1f}倍×クラス不足：このクラスの2〜4倍帯はROI8%。3勝クラスのみ買い。")
+        elif any("10倍超" in r for r in reasons):
+            lines.append(f"軸{odds1:.1f}倍：10倍超は的中率が低く期待値マイナス。")
 
         if odds2 and odds2 >= 20:
             lines.append(f"2位{sec_entry.horse_name}{odds2:.1f}倍：相手を絞り込みにくく三連複の期待値も低い。")
         elif odds2:
             lines.append(f"2位{sec_entry.horse_name}{odds2:.1f}倍（スコア差{gap:.1f}pt）。")
+
+    elif sign_level == "tierce":
+        lines.append(f"3勝クラス×{odds1:.1f}倍：三連単A+Bフォーメーション推奨（ROI241%・ヒット率24%）。")
+        lines.append(f"[A] {top_entry.horse_name}（1着固定）× 紐4頭（2-3着）12点")
+        lines.append(f"[B] 紐4頭（1着）× {top_entry.horse_name}（2着固定）× 紐4頭（3着）12点")
 
     elif sign_level == "7pt":
         lines.append(f"乖離{gap:.1f}ptで1位{top_entry.horse_name}の軸信頼度が高い（5pt以上推奨ゾーン）。")
@@ -105,20 +109,19 @@ def gen_eval_comment(sorted_results, odds_map, n_horses, sign_level, sign_detail
         elif 14 <= n_horses <= 17:
             lines.append(f"{n_horses}頭立てで頭数多め。フォームBでカバレッジを広げる。ROI164%ゾーン。")
             specific = True
-        if odds1 and odds1 >= 15:
-            lines.append(f"穴軸{top_entry.horse_name}{odds1:.1f}倍。システムスコア1位の市場過小評価馬。ROI393%ゾーン。")
-        elif odds1 and odds1 < 2:
-            lines.append(f"断然{odds1:.1f}倍。スコア1位かつ見送り条件なし。命中率重視の少額購入で対応。")
+        if odds1 and 5 <= odds1 < 10 and race_class >= 4:
+            lines.append(f"{top_entry.horse_name}{odds1:.1f}倍（OP以上）。5〜9倍帯OP→ROI285%ゾーン。")
         elif not specific:
             lines.append(f"乖離{gap:.1f}pt・{n_horses}頭・軸{odds1:.1f}倍。標準フォームBゾーン。")
 
     return lines
 
 
-def calc_buy_sign(sorted_results, odds_map, n_horses):
+def calc_buy_sign(sorted_results, odds_map, n_horses, race_class=0):
     """
     Returns: (sign_level, sign_text, detail_text)
-      sign_level: "7pt" / "formb" / "skip" / "neutral"
+      sign_level: "tierce" / "7pt" / "formb" / "skip" / "neutral"
+      race_class: 0=未勝利 1=1勝 2=2勝 3=3勝 4=OP 5=GIII 6=GII 7=GI
     """
     if len(sorted_results) < 2:
         return "neutral", "", ""
@@ -135,11 +138,21 @@ def calc_buy_sign(sorted_results, odds_map, n_horses):
         skips.append("18頭フルゲート")
     if 3 <= gap < 5:
         skips.append(f"乖離{gap:.1f}pt（3〜5pt）")
-    if odds1 and 8 <= odds1 < 15:
-        skips.append(f"軸{odds1:.1f}倍（8〜14倍）")
+    if odds1 and odds1 < 2:
+        skips.append(f"軸{odds1:.1f}倍（断然人気）")
+    if odds1 and 2 <= odds1 < 5 and race_class < 3:
+        cls_name = {0: "未勝利", 1: "1勝", 2: "2勝"}.get(race_class, f"class{race_class}")
+        skips.append(f"軸{odds1:.1f}倍×{cls_name}（ROI8%）")
+    if odds1 and odds1 >= 10:
+        skips.append(f"軸{odds1:.1f}倍（10倍超・穴すぎ）")
 
     if skips:
         return "skip", "⚠ 見送り", " / ".join(skips)
+
+    # 三連単 A+B フォーメーション: 3勝クラス × 2〜4.9倍（ROI241%・ヒット率24%）
+    if race_class == 3 and odds1 and 2 <= odds1 < 5:
+        detail = f"3勝クラス×{odds1:.1f}倍 / 乖離{gap:.1f}pt {n}頭 / A+B 24点"
+        return "tierce", "🏇 三連単A+B推奨", detail
 
     if odds1:
         is_7pt = gap >= 5 and n <= 13 and 2 <= odds1 < 8
@@ -155,10 +168,8 @@ def calc_buy_sign(sorted_results, odds_map, n_horses):
         notes.append(f"乖離{gap:.1f}pt横並び→ROI222%")
     if 14 <= n <= 17:
         notes.append(f"{n}頭立て→ROI164%")
-    if odds1 and odds1 >= 15:
-        notes.append(f"穴軸{odds1:.1f}倍→ROI393%")
-    if odds1 and odds1 < 2:
-        notes.append(f"断然{odds1:.1f}倍→命中75%")
+    if odds1 and 5 <= odds1 < 10 and race_class >= 4:
+        notes.append(f"OP以上×{odds1:.1f}倍→ROI285%")
 
     if notes:
         return "formb", "📋 フォームB推奨", " / ".join(notes)
@@ -313,10 +324,10 @@ def main():
         sorted_r = sorted(results, key=lambda x: x[1].total, reverse=True)
 
         # サイン判定
-        sign_level, sign_text, sign_detail = calc_buy_sign(sorted_r, odds_map, n)
+        sign_level, sign_text, sign_detail = calc_buy_sign(sorted_r, odds_map, n, race_class)
 
         # 評価コメント生成
-        eval_comment = gen_eval_comment(sorted_r, odds_map, n, sign_level, sign_detail)
+        eval_comment = gen_eval_comment(sorted_r, odds_map, n, sign_level, sign_detail, race_class)
 
         # ファイル名タグ（買いサインのみ付与）
         if sign_level == "7pt":
@@ -346,7 +357,12 @@ def main():
 
         print(f"  → {sign_text}  {sign_detail}")
 
-        if sign_level in ("7pt", "formb"):
+        if sign_level in ("tierce", "7pt", "formb"):
+            def horse_label(i):
+                if len(sorted_r) > i:
+                    e = sorted_r[i][0]
+                    return f"{e.horse_number}番{e.horse_name}"
+                return ""
             sign_summary.append({
                 "label":    label,
                 "race_id":  race_id,
@@ -357,8 +373,11 @@ def main():
                 "n":        n,
                 "sign":     sign_text,
                 "detail":   sign_detail,
-                "top1":     f"{sorted_r[0][0].horse_number}番{sorted_r[0][0].horse_name}",
-                "top2":     f"{sorted_r[1][0].horse_number}番{sorted_r[1][0].horse_name}" if len(sorted_r)>1 else "",
+                "top1":     horse_label(0),
+                "top2":     horse_label(1),
+                "top3":     horse_label(2),
+                "top4":     horse_label(3),
+                "top5":     horse_label(4),
                 "level":    sign_level,
             })
 
@@ -367,8 +386,22 @@ def main():
     print(f"  買いサインまとめ  ({len(sign_summary)}件)")
     print(f"{'='*65}")
 
+    tierces = [s for s in sign_summary if s["level"] == "tierce"]
     sevens  = [s for s in sign_summary if s["level"] == "7pt"]
     formbs  = [s for s in sign_summary if s["level"] == "formb"]
+
+    if tierces:
+        print("\n🏇 三連単A+Bフォーメーション推奨（ROI241%ゾーン）")
+        for s in tierces:
+            axis  = s["top1"]
+            himo  = "・".join(h for h in [s.get("top2",""), s.get("top3",""), s.get("top4",""), s.get("top5","")] if h)
+            print(f"  {s['date']} {s['venue']} {s['name']}  {s['dist']}  {s['n']}頭")
+            print(f"  軸: {axis}")
+            print(f"  紐: {himo}")
+            print(f"  [A] 1着固定: {axis} → 2-3着: {himo}  12点")
+            print(f"  [B] 1着: {himo} → 2着固定: {axis} → 3着: {himo}  12点")
+            print(f"  合計 24点  ({s['detail']})")
+            print(f"  race_id: {s['race_id']}")
 
     if sevens:
         print("\n🎯 7点推奨（ROI193%ゾーン）")
