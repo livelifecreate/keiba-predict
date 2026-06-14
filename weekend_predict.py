@@ -314,11 +314,12 @@ def main():
         print(f"  [馬場] {tc or '未取得'}（{tc_src}）")
 
         # 採点
+        horse_ids = {e.horse_name: e.horse_id for e in entries if getattr(e, "horse_id", "")}
         try:
             if race_info.surface == "ダ":
-                results = score_dart(entries, race_info, training_data=training, track_condition=tc)
+                results = score_dart(entries, race_info, training_data=training, track_condition=tc, horse_ids=horse_ids)
             else:
-                results = score_turf(entries, race_info, training_data=training, track_condition=tc)
+                results = score_turf(entries, race_info, training_data=training, track_condition=tc, horse_ids=horse_ids)
         except Exception as e:
             print(f"  → 採点失敗: {e}")
             errors.append(label)

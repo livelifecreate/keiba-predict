@@ -357,6 +357,14 @@ def get_entry_list_netkeiba(race_id: str) -> tuple[RaceInfo, list[HorseEntry]]:
         sire       = hi_parts[0].strip() if len(hi_parts) > 0 else ""
         bms        = hi_parts[3].strip() if len(hi_parts) > 3 else ""
         trainer    = hi_parts[4].strip() if len(hi_parts) > 4 else ""
+        # horse_id (道悪実績取得用)
+        horse_id = ""
+        if hi_cell:
+            for a in hi_cell.find_all("a", href=True):
+                m = re.search(r"/horse/(\d+)", a["href"])
+                if m:
+                    horse_id = m.group(1)
+                    break
 
         # 性齢・騎手・斤量 (Jockey セル: 性齢毛色|騎手|斤量)
         jk_cell = next((c for c in cells if "Jockey" in " ".join(c.get("class", []))), None)
@@ -391,6 +399,7 @@ def get_entry_list_netkeiba(race_id: str) -> tuple[RaceInfo, list[HorseEntry]]:
             recent_races   = recent_races,
             sire           = sire,
             bms            = bms,
+            horse_id       = horse_id,
         ))
 
     return race_info, entries

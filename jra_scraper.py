@@ -71,6 +71,7 @@ class HorseEntry:
     horse_weight: int = 0   # 馬体重kg（当日発表前は0）
     odds: float = 0.0       # 単勝オッズ（取得できない場合は0.0）
     popularity: int = 0     # 人気順
+    horse_id: str = ""      # netkeiba 馬ID（道悪実績取得用）
 
 
 def fetch_html(url: str) -> BeautifulSoup:
