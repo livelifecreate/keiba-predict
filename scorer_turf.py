@@ -318,10 +318,12 @@ def parse_past_race(text: str) -> Optional[PastRace]:
     hw_match = re.search(r"(\d{3,4})kg", text)
     horse_weight = int(hw_match.group(1)) if hw_match else 0
 
-    # 勝ち馬との差（1角:の前まで、または末尾の括弧内数値）
+    # 勝ち馬との差（1角:の前、最初の括弧内数値が着差。末尾は別指標なので$アンカー不使用）
     text_for_margin = re.split(r"1角:", text.strip())[0]
-    margin_match = re.search(r"\(([\d.]+)\)\s*$", text_for_margin.strip())
-    margin = float(margin_match.group(1)) if margin_match else -1.0
+    brackets = re.findall(r"\(([\d.]+)\)", text_for_margin)
+    margin = float(brackets[0]) if brackets else -1.0
+    if position == 1:
+        margin = 0.0  # 1着は着差0.0確定
 
     # コーナー通過順位
     corner_m = re.search(r"1角:(\d+)", text)
@@ -364,9 +366,9 @@ def check_fastest_3f(my_3f: float, all_3f: list[float], prev_pos: int = 0) -> in
 
 
 def check_same_course(recent: list[PastRace], venue: str, distance: str, surface: str) -> float:
-    """近4戦以内に同コース好走（着差ベース）
-    同距離: 1着/0.0秒差→+4、0.1〜0.2秒差→+3、0.3〜0.5秒差→+2
-    距離差400m以内: 1着/0.0秒差→+2、0.1〜0.2秒差→+1.5、0.3〜0.5秒差→+1
+    """近4戦以内に同コース好走（着差ベース・着順不問）
+    同距離: 1着/0.0秒差→+3、0.1〜0.2秒差→+2、0.3秒差以内→+1、0.3超→なし
+    距離差400m以内: 1着/0.0秒差→+1.5、0.1〜0.2秒差→+1、0.3秒差以内→+0.5、0.3超→なし
     """
     try:
         dist_m = int(distance.replace("m", ""))
@@ -387,11 +389,11 @@ def check_same_course(recent: list[PastRace], venue: str, distance: str, surface
         if not exact and not near:
             continue
         if p.position == 1 or p.margin == 0.0:
-            score = 4.0 if exact else 2.0
-        elif 0.0 < p.margin <= 0.2:
             score = 3.0 if exact else 1.5
-        elif 0.0 < p.margin <= 0.5:
+        elif 0.0 < p.margin <= 0.2:
             score = 2.0 if exact else 1.0
+        elif 0.0 < p.margin <= 0.3:
+            score = 1.0 if exact else 0.5
         else:
             continue
         best = max(best, score)
