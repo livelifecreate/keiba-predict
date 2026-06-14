@@ -1185,9 +1185,11 @@ SCORE_LABELS = {
 
 
 def _get_label(key: str, value: float) -> str:
-    """ラベル取得（same_courseはスコア値で同距離/近距離を区別）"""
+    """ラベル取得（same_course・training_rankはスコア値で分岐）"""
     if key == "same_course":
         return "同コース近距離実績" if abs(value) == 2 else "同コース実績"
+    if key == "training_rank":
+        return {3: "調教A評価", 2: "調教B評価", 1: "調教C評価"}.get(int(value), "調教評価")
     return SCORE_LABELS.get(key, key)
 
 
