@@ -143,6 +143,7 @@ class PastRace:
     is_overseas: bool    # 海外競馬フラグ
     first_corner: int    # 1コーナー通過順位（0=不明）
     last_corner: int = 0 # 最終コーナー通過順位（0=不明）
+    popularity: int = 0  # 人気順（0=不明）
 
 
 @dataclass
@@ -172,6 +173,7 @@ class ScoreBreakdown:
     light_weight:          float = 0.0  # +1
     place_consistency:     float = 0.0  # +2/+3（直近5走で3着以内3回以上）
     win_count:             float = 0.0  # +1/+2（直近5走で1着1回→+1、2回以上→+2）
+    content_score:         float = 0.0  # 0〜+6（過去走の内容評価：着差・上がり・脚質・人気乖離）
     no_steep_win:          float = 0.0  # -2
     weight_change:         float = 0.0  # -2
     wrong_direction:       float = 0.0  # -1
@@ -197,6 +199,7 @@ class ScoreBreakdown:
             + self.grade_history
             + self.inner_post_senko
             + self.win_count
+            + self.content_score
             + max(self.bloodline_distance, 0.0)
             + max(self.track_condition, 0.0)
             + max(self.pace_fit, 0.0)
@@ -331,6 +334,10 @@ def parse_past_race(text: str) -> Optional[PastRace]:
     last_corner_m = re.search(r"4角:(\d+)", text)
     last_corner = int(last_corner_m.group(1)) if last_corner_m else 0
 
+    # 人気
+    pop_m = re.search(r"(\d+)番人気", text)
+    popularity = int(pop_m.group(1)) if pop_m else 0
+
     return PastRace(
         date=date,
         venue=venue,
@@ -346,6 +353,7 @@ def parse_past_race(text: str) -> Optional[PastRace]:
         is_overseas=overseas,
         first_corner=first_corner,
         last_corner=last_corner,
+        popularity=popularity,
     )
 
 
@@ -783,6 +791,66 @@ def check_win_count(recent: list) -> float:
     return 0.0
 
 
+def check_content_score(recent: list) -> float:
+    """過去走の内容評価スコア（直近3走 weighted sum、最大6pt）
+    ①着順 ②着差 ④上がり3F ⑤脚質×位置取り ⑥人気乖離
+    """
+    if not recent:
+        return 0.0
+
+    total = 0.0
+    weights = [1.0, 0.6, 0.3]
+
+    for i, p in enumerate(recent[:3]):
+        w = weights[i]
+        s = 0.0
+        pos = getattr(p, "position", 99)
+        lf  = getattr(p, "last_3f", 0.0)
+        fc  = getattr(p, "first_corner", 0)
+
+        # ① 着順
+        if pos == 1:        s += 3.0
+        elif pos == 2:      s += 2.0
+        elif pos == 3:      s += 1.5
+        elif pos <= 5:      s += 0.5
+
+        # ② 着差（2着以下）
+        margin = getattr(p, "margin", -1.0)
+        if pos > 1 and 0 <= margin <= 0.5:
+            if margin <= 0.0:    s += 2.0
+            elif margin <= 0.1:  s += 1.5
+            elif margin <= 0.3:  s += 1.0
+            else:                 s += 0.5
+
+        # ④ 上がり3F
+        if 0 < lf < 40:
+            if lf < 33.5:    s += 2.0
+            elif lf < 34.0:  s += 1.5
+            elif lf < 34.5:  s += 1.0
+            elif lf < 35.0:  s += 0.5
+
+        # ⑤ 脚質×位置取り補正
+        if fc > 0 and 0 < lf < 40:
+            if fc <= 3 and lf < 34.5 and pos <= 3:
+                s += 1.0
+            elif fc >= 6 and lf < 34.0:
+                s += 1.5
+            elif fc >= 4 and lf < 33.5:
+                s += 1.0
+
+        # ⑥ 人気乖離
+        pop = getattr(p, "popularity", 0)
+        if pop > 0:
+            if pop >= 7 and pos <= 3:    s += 2.0
+            elif pop >= 5 and pos <= 3:  s += 1.5
+            elif pop >= 4 and pos <= 2:  s += 1.0
+            elif pop >= 3 and pos == 1:  s += 0.5
+
+        total += s * w
+
+    return round(min(total, 6.0), 1)
+
+
 def check_light_weight(weight_str: str, all_weights: list[str], race_conditions: str = "") -> int:
     """軽量馬加点（ハンデ戦のみ適用・平均より1.5kg以上軽い場合のみ+1）
     定量戦・別定戦の牝馬2kg減等は規定斤量差でありハンデではないため対象外。
@@ -1145,6 +1213,7 @@ def score_all(entries: list, race_info, training_data: dict = None,
             light_weight           = 0.0,   # ダート: 逆効果のため無効
             place_consistency      = check_place_consistency(recent),
             win_count              = check_win_count(recent),
+            content_score          = check_content_score(recent),
             no_steep_win           = check_no_steep_win(recent, race_venue, race_surface, race_class),
             weight_change          = check_weight_change(recent, getattr(entry, "horse_weight", 0),
                                        manual_diff=(weight_diffs or {}).get(entry.horse_name, 0)),
@@ -1192,6 +1261,7 @@ SCORE_LABELS = {
     "light_weight":           "軽量馬加点",
     "place_consistency":      "複勝安定ボーナス",
     "win_count":              "勝利数ボーナス",
+    "content_score":          "内容評価スコア",
     "no_steep_win":           "急坂好走なし",
     "weight_change":          "馬体重変動",
     "wrong_direction":        "回り不適",
