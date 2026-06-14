@@ -330,7 +330,9 @@ def main():
         eval_comment = gen_eval_comment(sorted_r, odds_map, n, sign_level, sign_detail, race_class)
 
         # ファイル名タグ（買いサインのみ付与）
-        if sign_level == "7pt":
+        if sign_level == "tierce":
+            sign_tag = "★三連単A+B"
+        elif sign_level == "7pt":
             sign_tag = "★7pt推奨"
         elif sign_level == "formb":
             sign_tag = "★フォームB推奨" if "推奨" in sign_text else "★フォームB"
@@ -340,11 +342,11 @@ def main():
         # CSV出力
         try:
             if race_info.surface == "ダ":
-                save_csv_dart(sorted_r, race_info, odds_map=odds_map, sign_tag=sign_tag,
-                              eval_comment=eval_comment, race_id=race_id)
+                save_csv_dart(sorted_r, race_info, odds_map=odds_map, training_data=training,
+                              sign_tag=sign_tag, eval_comment=eval_comment, race_id=race_id)
             else:
-                save_csv_turf(sorted_r, race_info, odds_map=odds_map, sign_tag=sign_tag,
-                              eval_comment=eval_comment, race_id=race_id)
+                save_csv_turf(sorted_r, race_info, odds_map=odds_map, training_data=training,
+                              sign_tag=sign_tag, eval_comment=eval_comment, race_id=race_id)
         except Exception as e:
             print(f"  [CSV] 保存失敗: {e}")
 
