@@ -303,13 +303,19 @@ def get_entry_list_netkeiba(race_id: str) -> tuple[RaceInfo, list[HorseEntry]]:
     entries = []
     horse_seq = 0
     for row in tables[0].find_all("tr"):
-        # tr_N の ID は netkeiba 内部番号で JRA 公式馬番と異なるため使わない
-        # HTML 出現順（枠順）がそのまま JRA 公式馬番になる
         tr_id = row.get("id", "")
         if not re.match(r"tr_\d+$", tr_id):
             continue
         horse_seq += 1
-        horse_num = str(horse_seq)
+
+        # 取り消し馬がHTMLから除外されると連番がずれるため、
+        # cells[1](馬番列)または tr_id の数字を馬番として使う
+        cells_peek = row.find_all(["td", "th"])
+        horse_num_cell = cells_peek[1].get_text(strip=True) if len(cells_peek) > 1 else ""
+        if re.match(r"^\d+$", horse_num_cell):
+            horse_num = horse_num_cell
+        else:
+            horse_num = re.sub(r"\D", "", tr_id) or str(horse_seq)
 
         cells = row.find_all(["td", "th"])
         if len(cells) < 5:
