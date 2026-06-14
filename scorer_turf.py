@@ -499,37 +499,29 @@ def check_special_condition(recent: list[PastRace]) -> int:
 
 
 def check_local_prev(recent: list[PastRace], race_distance: str = "", race_surface: str = "",
-                     race_class: int = 4) -> int:
-    """前走がローカル競馬場（クラス別ペナルティ）
+                     race_class: int = 4) -> float:
+    """前走がローカル競馬場（緩和版：一律-0.5）
     2着以内 → 0（好走免除）
     3着以下 かつ 同距離・同馬場で過去3着以内実績あり → 0（免除）
-    3着以下 かつ 実績なし:
-      未勝利(0)  : 0
-      1勝クラス(1): -1
-      2勝・3勝(2-3): -2
-      OP以上(4+) : -3
+    3着以下 かつ 実績なし かつ 1勝クラス以上 → -0.5
+    OP・人気馬に-2〜-3は過剰ペナルティのため緩和
     """
     if not recent:
-        return 0
+        return 0.0
     p = recent[0]
     if p.venue not in LOCAL:
-        return 0
+        return 0.0
     if p.position <= 2:
-        return 0
+        return 0.0
     if race_distance and race_surface:
         for past in recent[:5]:
             if (past.distance == race_distance and
                     past.surface == race_surface and
                     1 <= past.position <= 3):
-                return 0
+                return 0.0
     if race_class <= 0:
-        return 0
-    elif race_class == 1:
-        return -1
-    elif race_class <= 3:
-        return -2
-    else:
-        return -3
+        return 0.0
+    return -0.5
 
 
 def check_long_rest(recent: list[PastRace], race_date_str: str) -> float:
