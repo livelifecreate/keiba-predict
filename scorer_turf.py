@@ -42,6 +42,17 @@ CENTRAL = {"東京", "中山", "京都", "阪神", "中京"}
 LOCAL   = {"福島", "新潟", "小倉", "函館", "札幌"}
 ALL_VENUES = CENTRAL | LOCAL
 
+# -------------------------------------------------------------------
+# スコア項目 係数（グリッドサーチ最良値 2026-06-17）
+# 変更する場合は A案→B案 の数値に書き換えるだけ
+#   A案（現行）: 訓練1-4月 900組み合わせ探索の最良値
+#   B案（保守）: 統計的に安全な控えめ値
+# -------------------------------------------------------------------
+_COEFF_WIN    = 2.50   # A案: 2.50 / B案: 1.75
+_COEFF_PREV   = 0.25   # A案: 0.25 / B案: 0.50
+_COEFF_RISING = 1.25   # A案: 1.25 / B案: 1.25（共通）
+_COEFF_PLACE  = 0.75   # A案: 0.75 / B案: 0.75（共通）
+
 STEEP_COURSES  = {"中山", "阪神", "中京"}
 LEFT_TURN      = {"東京", "中京", "新潟", "函館"}
 RIGHT_TURN     = {"中山", "阪神", "京都", "福島", "小倉", "札幌"}
@@ -151,11 +162,11 @@ class ScoreBreakdown:
     # 加点
     prev_high_grade_close:  float = 0.0  # +5 or +3（前走G2以上惜敗/勝利）
     prev2_high_grade_close: float = 0.0  # +3 or +2（前々走G2以上惜敗/勝利）
-    fastest_3f:             float = 0.0  # +4/+2（前走3F最速：3着以内→+4、3着外→+2）
+    fastest_3f:             float = 0.0  # +2/0（前走3F最速：3着以内→+2、3着外→0）
     same_course:            float = 0.0  # +4
     training_rank:          float = 0.0  # +3（調教A評価）
     second_start:           float = 0.0  # +1
-    rising_trend:           float = 0.0  # +1（直近3走で着順連続改善）
+    rising_trend:           float = 0.0  # 0〜+3（3着以内接近トレンド：線形回帰傾きベース）
     distance_drop:          float = 0.0  # +1（前走より200m以上距離短縮）
     prev_run_bonus:         float = 0.0  # +3/+2/+1（前走好走：1着→+3、0.0秒差→+2、0.1〜0.2秒差→+1）
     prev2_run_bonus:        float = 0.0  # +2/+1/+0.5（前々走好走：1着→+2、0.0秒差→+1、0.1〜0.2秒差→+0.5）
@@ -169,13 +180,13 @@ class ScoreBreakdown:
     local_prev:            float = 0.0  # -3/-1/0
     long_rest:             float = 0.0  # -3
     post_surface:          float = 0.0  # 枠番補正（実データ基準）芝1400/1600は±0.5、ダ内枠-2.0
-    inner_post_senko:      float = 0.0  # +3 内枠先行ボーナス（脚質自動検出）
+    inner_post_senko:      float = 0.0  # +1 内枠先行ボーナス（脚質自動検出）
     light_weight:          float = 0.0  # +1
     place_consistency:     float = 0.0  # +2/+3（直近5走で3着以内3回以上）
     win_count:             float = 0.0  # +1/+2（直近5走で1着1回→+1、2回以上→+2）
     content_score:         float = 0.0  # 0〜+6（過去走の内容評価：着差・上がり・脚質・人気乖離）
     jockey_bonus:          float = 0.0  # +1/+2（重賞限定騎手ボーナス）
-    no_steep_win:          float = 0.0  # -2
+    steep_power:           float = 0.0  # +1/+2（急坂好走ボーナス：パワー評価）
     weight_change:         float = 0.0  # -2
     wrong_direction:       float = 0.0  # -1
     seasonal_sex:          float = 0.0  # -1
@@ -201,7 +212,6 @@ class ScoreBreakdown:
             + self.inner_post_senko
             + self.jockey_bonus
             + self.win_count
-            + self.content_score
             + max(self.bloodline_distance, 0.0)
             + max(self.track_condition, 0.0)
             + max(self.pace_fit, 0.0)
@@ -216,7 +226,7 @@ class ScoreBreakdown:
             + self.post_surface
             + self.light_weight
             + self.place_consistency
-            + self.no_steep_win
+            + self.steep_power
             + self.weight_change
             + self.wrong_direction
             + self.seasonal_sex
@@ -367,18 +377,19 @@ def check_prev_high_grade(recent: list[PastRace]) -> int:
     return 0
 
 
-def check_fastest_3f(my_3f: float, all_3f: list[float], prev_pos: int = 0) -> int:
-    """前走上がり3F最速：3着以内→+4、3着外→+2"""
+def check_fastest_3f(my_3f: float, all_3f: list[float], prev_pos: int = 0) -> float:
+    """前走上がり3F最速：着順・着差不問で一律+2"""
     valid = [t for t in all_3f if t > 0]
     if valid and my_3f > 0 and my_3f == min(valid):
-        return 4 if (prev_pos > 0 and prev_pos <= 3) else 2
-    return 0
+        return 2.0
+    return 0.0
 
 
 def check_same_course(recent: list[PastRace], venue: str, distance: str, surface: str) -> float:
     """近4戦以内に同コース好走（着差ベース・着順不問）
     同距離: 1着/0.0秒差→+3、0.1〜0.2秒差→+2、0.3秒差以内→+1、0.3超→なし
-    距離差400m以内: 1着/0.0秒差→+1.5、0.1〜0.2秒差→+1、0.3秒差以内→+0.5、0.3超→なし
+    距離差±200m: 上記スコア+1.0ボーナス
+    距離差±201〜400m: 1着/0.0秒差→+1.5、0.1〜0.2秒差→+1、0.3秒差以内→+0.5、0.3超→なし
     """
     try:
         dist_m = int(distance.replace("m", ""))
@@ -389,23 +400,28 @@ def check_same_course(recent: list[PastRace], venue: str, distance: str, surface
         if p.venue != venue or p.surface != surface:
             continue
         exact = (p.distance == distance)
-        near = False
+        near200 = False
+        near400 = False
         if not exact and dist_m:
             try:
-                if abs(int(p.distance.replace("m", "")) - dist_m) <= 400:
-                    near = True
+                diff = abs(int(p.distance.replace("m", "")) - dist_m)
+                if diff <= 200:
+                    near200 = True
+                elif diff <= 400:
+                    near400 = True
             except ValueError:
                 pass
-        if not exact and not near:
+        if not exact and not near200 and not near400:
             continue
         if p.position == 1 or p.margin == 0.0:
-            score = 3.0 if exact else 1.5
+            base = 3.0 if exact else 1.5
         elif 0.0 < p.margin <= 0.2:
-            score = 2.0 if exact else 1.0
+            base = 2.0 if exact else 1.0
         elif 0.0 < p.margin <= 0.3:
-            score = 1.0 if exact else 0.5
+            base = 1.0 if exact else 0.5
         else:
             continue
+        score = base + (1.0 if near200 else 0.0)
         best = max(best, score)
     return best
 
@@ -738,13 +754,40 @@ def check_grade_history(recent: list[PastRace]) -> float:
 
 
 def check_rising_trend(recent: list[PastRace]) -> float:
-    """直近3走で着順が連続改善（例: 5→3→1着）の場合 +1"""
-    if len(recent) < 3:
+    """過去5走の「3着以内接近スコア」の線形回帰傾きで加点。
+    着順→接近スコア: 1着→3.0, 2着→2.5, 3着→2.0, 4着→1.0, 5-6着→0.5, 7着以下→0.0
+    傾き>0.40→+3, >0.20→+2, >0.08→+1, >0→+0.5, ≤0→0
+    """
+    def pos_score(pos: int):
+        if pos <= 0: return None
+        if pos == 1: return 3.0
+        if pos == 2: return 2.5
+        if pos == 3: return 2.0
+        if pos == 4: return 1.0
+        if pos <= 6: return 0.5
         return 0.0
-    p1, p2, p3 = recent[0], recent[1], recent[2]
-    if p1.position > 0 and p2.position > 0 and p3.position > 0:
-        if p1.position < p2.position < p3.position:
-            return 1.0
+
+    data = []
+    for p in reversed(recent[:5]):  # 古い順
+        s = pos_score(p.position)
+        if s is not None:
+            data.append(s)
+    if len(data) < 3:
+        return 0.0
+
+    n = len(data)
+    x_mean = (n - 1) / 2.0
+    y_mean = sum(data) / n
+    num = sum((i - x_mean) * (data[i] - y_mean) for i in range(n))
+    den = sum((i - x_mean) ** 2 for i in range(n))
+    if den == 0:
+        return 0.0
+    slope = num / den
+
+    if slope > 0.40: return 3.0
+    if slope > 0.20: return 2.0
+    if slope > 0.08: return 1.0
+    if slope > 0.00: return 0.5
     return 0.0
 
 
@@ -815,13 +858,14 @@ def check_win_count(recent: list) -> float:
 
 
 def check_content_score(recent: list[PastRace]) -> float:
-    """過去走の内容評価スコア（直近3走 weighted sum、最大6pt）
+    """過去走の内容評価スコア（直近3走 weighted sum、キャップなし）
 
-    ① 着順: 1着+3 / 2着+2 / 3着+1.5 / 4-5着+0.5
-    ② 着差: 2着以下で勝ち馬との差が0.3秒以内 → 接戦評価
-    ④ 上がり3F: 33.5秒未満+2 / 34.0未満+1.5 / 34.5未満+1.0 / 35.0未満+0.5
-    ⑤ 脚質×位置取り: 前々で止まらず or 後方から差し = 内容が強い
-    ⑥ 人気乖離: 人気薄で好走した実績を評価
+    ① 着順: 1着+3 / 2着+2 / 3着+1.5 / 4-5着+0.5  ← 基準、係数なし
+    ② 着差: ×0.5係数（着順と重複するため過大にならないよう調整）
+    ④ 上がり3F: ×0.5係数（毎回積み重なりやすいため調整）
+    ⑤ 脚質×位置取り: 係数なし（条件付き加点なので過大になりにくい）
+    ⑥ 人気乖離: ×0.5係数（穴馬ボーナスが過大に積み重なるため調整）
+    キャップ撤廃 → 自然な分布で上位馬の差がつくようにする
     """
     if not recent:
         return 0.0
@@ -836,46 +880,46 @@ def check_content_score(recent: list[PastRace]) -> float:
         lf  = p.last_3f
         fc  = p.first_corner
 
-        # ① 着順
+        # ① 着順（基準）
         if pos == 1:        s += 3.0
         elif pos == 2:      s += 2.0
         elif pos == 3:      s += 1.5
         elif pos <= 5:      s += 0.5
 
-        # ② 着差（2着以下：勝ち馬との差が小さいほど内容が良い）
+        # ② 着差 ×0.5
         if pos > 1 and 0 <= p.margin <= 0.5:
-            if p.margin <= 0.0:    s += 2.0
-            elif p.margin <= 0.1:  s += 1.5
-            elif p.margin <= 0.3:  s += 1.0
-            else:                   s += 0.5
+            if p.margin <= 0.0:    s += 2.0 * 0.5
+            elif p.margin <= 0.1:  s += 1.5 * 0.5
+            elif p.margin <= 0.3:  s += 1.0 * 0.5
+            else:                   s += 0.5 * 0.5
 
-        # ④ 上がり3F（時計で評価。順位不明のため閾値で近似）
+        # ④ 上がり3F ×0.5
         if 0 < lf < 40:
-            if lf < 33.5:    s += 2.0
-            elif lf < 34.0:  s += 1.5
-            elif lf < 34.5:  s += 1.0
-            elif lf < 35.0:  s += 0.5
+            if lf < 33.5:    s += 2.0 * 0.5
+            elif lf < 34.0:  s += 1.5 * 0.5
+            elif lf < 34.5:  s += 1.0 * 0.5
+            elif lf < 35.0:  s += 0.5 * 0.5
 
-        # ⑤ 脚質×位置取り補正
+        # ⑤ 脚質×位置取り補正（係数なし）
         if fc > 0 and 0 < lf < 40:
             if fc <= 3 and lf < 34.5 and pos <= 3:
-                s += 1.0   # 前々で崩れず速い上がり
+                s += 1.0
             elif fc >= 6 and lf < 34.0:
-                s += 1.5   # 後方から鋭い差し
+                s += 1.5
             elif fc >= 4 and lf < 33.5:
-                s += 1.0   # 中団から最速上がり
+                s += 1.0
 
-        # ⑥ 人気乖離（穴馬の好走）
+        # ⑥ 人気乖離 ×0.5
         pop = p.popularity
         if pop > 0:
-            if pop >= 7 and pos <= 3:    s += 2.0
-            elif pop >= 5 and pos <= 3:  s += 1.5
-            elif pop >= 4 and pos <= 2:  s += 1.0
-            elif pop >= 3 and pos == 1:  s += 0.5
+            if pop >= 7 and pos <= 3:    s += 2.0 * 0.5
+            elif pop >= 5 and pos <= 3:  s += 1.5 * 0.5
+            elif pop >= 4 and pos <= 2:  s += 1.0 * 0.5
+            elif pop >= 3 and pos == 1:  s += 0.5 * 0.5
 
         total += s * w
 
-    return round(min(total, 6.0), 1)
+    return round(total, 1)
 
 
 def check_light_weight(weight_str: str, all_weights: list[str], race_conditions: str = "") -> int:
@@ -903,20 +947,37 @@ def check_light_weight(weight_str: str, all_weights: list[str], race_conditions:
     return 0
 
 
-def check_no_steep_win(recent: list[PastRace], race_venue: str, race_surface: str = "",
-                       race_class: int = 4) -> int:
-    """急坂コース（中山・阪神・中京）で好走歴なし（3着以内）
-    2勝クラス以下は適距離・実績が固まりきっておらず急坂経験が少ないのが普通のため対象外。
-    3勝クラス以上: 芝 -2 / ダート -1
+def check_steep_power(recent: list[PastRace], race_venue: str) -> float:
+    """急坂コース（中山・阪神・中京）での上がり3F×好走の組み合わせでパワー評価
+    急坂レース時のみ適用。好走（3着内）＋速い上がりで強さを確認する。
+
+    スコアリング（直近3走分、重み1.0/0.6/0.3）:
+      3着内 + 上がり<33.5: +3.0  ← 坂で鋭く伸びた = 本物のパワー
+      3着内 + 上がり<34.0: +2.0
+      3着内 + 上がり<35.0: +1.0  ← 好走は好走
+      3着内 + 上がり不明 : +0.5
+      上がり<33.5のみ(圏外): +1.0 ← 負けても坂で速い上がりなら評価
     """
-    if race_class <= 2:
-        return 0
     if race_venue not in STEEP_COURSES:
-        return 0
-    for p in recent:
-        if p.venue in STEEP_COURSES and 1 <= p.position <= 3:
-            return 0
-    return -1 if race_surface == "ダ" else -2
+        return 0.0
+    weights = [1.0, 0.6, 0.3]
+    total = 0.0
+    for i, p in enumerate(recent[:3]):
+        if p.venue not in STEEP_COURSES:
+            continue
+        w = weights[i]
+        s = 0.0
+        placed = 1 <= p.position <= 3
+        lf = p.last_3f
+        if placed:
+            if 0 < lf < 33.5:   s = 3.0
+            elif lf < 34.0:      s = 2.0
+            elif lf < 35.0:      s = 1.0
+            else:                s = 0.5
+        elif 0 < lf < 33.5:
+            s = 1.0
+        total += s * w
+    return round(min(total, 4.0), 1)
 
 
 def check_weight_change(recent: list[PastRace], current_weight: int = 0,
@@ -1093,8 +1154,8 @@ def detect_running_style(recent: list) -> str:
 def predict_pace(styles: list[str]) -> str:
     """レース全馬の脚質リストからペース傾向を予測する。
     不明を除いた有効データが4頭未満の場合は '平均' を返す。
-    逃げ+先行の割合 ≥ 0.40 → 'ハイ'
-    逃げ+先行の割合 ≤ 0.20 → 'スロー'
+    逃げ+先行の割合 ≥ 0.35 → 'ハイ'  (旧0.40より感度UP)
+    逃げ+先行の割合 ≤ 0.22 → 'スロー' (旧0.20より感度UP)
     それ以外                → '平均'
     """
     valid = [s for s in styles if s != "不明"]
@@ -1102,35 +1163,38 @@ def predict_pace(styles: list[str]) -> str:
         return "平均"
     front = sum(1 for s in valid if s in ("逃げ", "先行"))
     ratio = front / len(valid)
-    if ratio >= 0.40:
+    if ratio >= 0.35:
         return "ハイ"
-    if ratio <= 0.20:
+    if ratio <= 0.22:
         return "スロー"
     return "平均"
 
 
 def calc_pace_fit(style: str, pace: str) -> float:
     """脚質×ペースの組み合わせで有利不利スコアを返す。
-    ハイペース:  逃げ-1, 先行-0.5, 好位+0.5, 差し+1
-    スローペース: 逃げ+0.5, 先行+1, 好位+0.5, 差し-0.5
+    スコア幅を-2〜+2に拡大し、中団(好位)×ハイペースを強化。
+    溢れ馬分析で「中団馬が53%」と判明したため中団の評価を重点強化。
+
+    ハイペース:  逃げ-2, 先行-1, 好位+1.5, 差し+2
+    スローペース: 逃げ+1, 先行+2, 好位+0.5, 差し-1
     平均ペース: すべて0
     不明: 0
     """
     if pace == "平均" or style == "不明":
         return 0.0
     table = {
-        "ハイ":   {"逃げ": -1.0, "先行": -0.5, "好位": +0.5, "差し": +1.0},
-        "スロー": {"逃げ": +0.5, "先行": +1.0, "好位": +0.5, "差し": -0.5},
+        "ハイ":   {"逃げ": -2.0, "先行": -1.0, "好位": +1.5, "差し": +2.0},
+        "スロー": {"逃げ": +1.0, "先行": +2.0, "好位": +0.5, "差し": -1.0},
     }
     return table.get(pace, {}).get(style, 0.0)
 
 
 def check_inner_post(frame_num: str, recent: list = None,
                      force_senko: bool = False) -> tuple[bool, float]:
-    """内枠（1〜3枠）かつ先行タイプなら +3 を自動適用。
+    """内枠（1〜3枠）かつ先行タイプなら +1 を自動適用。
     戻り値: (手動確認フラグ, 自動ボーナス点)
-    - force_senko=True     → (False, +3.0) if 内枠 else (False, 0.0)
-    - 脚質データあり＆先行 → (False, +3.0)
+    - force_senko=True     → (False, +1.0) if 内枠 else (False, 0.0)
+    - 脚質データあり＆先行 → (False, +1.0)
     - 脚質データなし       → (True,   0.0)  ★先行確認を表示
     - 脚質データあり＆非先行 → (False,  0.0)
     """
@@ -1141,10 +1205,10 @@ def check_inner_post(frame_num: str, recent: list = None,
     if fn > 3:
         return False, 0.0
     if force_senko:
-        return False, 3.0
+        return False, 1.0
     style = detect_running_style(recent or [])
     if style == "先行":
-        return False, 3.0
+        return False, 1.0
     if style == "不明":
         return True, 0.0   # 手動確認が必要
     return False, 0.0
@@ -1229,10 +1293,10 @@ def score_all(entries: list, race_info, training_data: dict = None,
             same_course            = check_same_course(recent, race_venue, race_distance, race_surface),
             training_rank          = t_score,
             second_start           = check_second_start(recent),
-            rising_trend           = check_rising_trend(recent),
+            rising_trend           = check_rising_trend(recent) * _COEFF_RISING,
             distance_drop          = check_distance_drop(recent, race_distance),
-            prev_run_bonus         = check_prev_run_bonus(recent),
-            prev2_run_bonus        = check_prev2_run_bonus(recent),
+            prev_run_bonus         = check_prev_run_bonus(recent) * _COEFF_PREV,
+            prev2_run_bonus        = check_prev2_run_bonus(recent) * _COEFF_PREV,
             grade_history          = check_grade_history(recent),
             bloodline_distance     = check_bloodline_distance(entry.sire, entry.bms, race_distance),
             first_surface          = check_first_surface(recent, race_surface, race_class),
@@ -1243,11 +1307,11 @@ def score_all(entries: list, race_info, training_data: dict = None,
             long_rest              = check_long_rest(recent, race_date),
             post_surface           = check_post_surface(entry.frame_number, race_surface, race_distance),
             light_weight           = check_light_weight(entry.weight_carried, all_weights, race_info.conditions),
-            place_consistency      = check_place_consistency(recent),
-            win_count              = check_win_count(recent),
-            content_score          = check_content_score(recent),
+            place_consistency      = check_place_consistency(recent) * _COEFF_PLACE,
+            win_count              = check_win_count(recent) * _COEFF_WIN,
+            content_score          = 0.0,  # 廃止（2026-06-14）
             jockey_bonus           = check_jockey_bonus(entry.jockey, race_class >= 5),
-            no_steep_win           = check_no_steep_win(recent, race_venue, race_surface, race_class),
+            steep_power            = check_steep_power(recent, race_venue),
             weight_change          = check_weight_change(recent, getattr(entry, "horse_weight", 0),
                                        manual_diff=(weight_diffs or {}).get(entry.horse_name, 0)),
             wrong_direction        = check_wrong_direction(recent, race_venue),
@@ -1296,7 +1360,7 @@ SCORE_LABELS = {
     "win_count":              "勝利数ボーナス",
     "content_score":          "内容評価スコア",
     "jockey_bonus":           "騎手ボーナス(重賞)",
-    "no_steep_win":           "急坂好走なし",
+    "steep_power":            "急坂パワー",
     "weight_change":          "馬体重変動",
     "wrong_direction":        "回り不適",
     "seasonal_sex":           "季節×性別",
@@ -1438,7 +1502,7 @@ def save_csv(results: list[tuple], race_info, odds_map: dict = None, training_da
             n     = len(sorted_results)
 
             # weekend_predict.pyから渡されたサイン情報を優先使用
-            sign        = sign_level or "フォームB（標準）"
+            sign        = sign_level or "三連複5頭BOX (10点)"
             sign_detail = sign_detail_text or f"乖離{gap:.1f}pt {n}頭"
 
             nums = [e.horse_number for e, _ in sorted_results]
@@ -1484,7 +1548,7 @@ def save_csv(results: list[tuple], race_info, odds_map: dict = None, training_da
                 for line in eval_comment:
                     writer.writerow(["", line])
             writer.writerow([])
-            writer.writerow(["■三連複フォームB",
+            writer.writerow(["■三連複BOX",
                              box_label,
                              f"対象馬:{','.join(str(x) for x in box_pool)}",
                              f"{len(formb_list)}点"])
@@ -1509,7 +1573,7 @@ def save_csv(results: list[tuple], race_info, odds_map: dict = None, training_da
 
 
 def print_buy_signs(sorted_results: list[tuple], race_info, odds_map: dict = None):
-    """買いサイン・見送りサインを表示。デフォルト買い方はフォームB（22点）"""
+    """買いサイン・見送りサインを表示（参考用・実運用はweekend_predict.py）"""
     if len(sorted_results) < 2:
         return
 
@@ -1521,33 +1585,24 @@ def print_buy_signs(sorted_results: list[tuple], race_info, odds_map: dict = Non
     gap    = score1 - score2
     odds1  = odds_map.get(top_entry.horse_name, 0)
     n      = len(sorted_results)
-    has_same_course_top = top_d.same_course >= 4
-
-    # ── 7点推奨条件（乖離5pt以上 + 13頭以下 + 軸2〜7倍台）──
-    if odds1:
-        recommend_7pt = gap >= 5 and n <= 13 and 2 <= odds1 < 8
-    else:
-        recommend_7pt = gap >= 5 and n <= 13
 
     # ── 見送り条件 ──────────────────────────────────────────
     skips = []
     if n == 18:
-        skips.append(f"18頭フルゲート → フォームB/7点ともROI4%以下")
+        skips.append(f"18頭フルゲート")
     if 3 <= gap < 5:
-        skips.append(f"1〜2位スコア差{gap:.1f}pt（3〜5ptゾーン）→ 両方ROI9%")
-    if odds1 and 8 <= odds1 < 15:
-        skips.append(f"軸({top_entry.horse_name})が{odds1:.1f}倍（8〜14倍）→ 7点命中率0%・フォームBも0%")
+        skips.append(f"1〜2位スコア差{gap:.1f}pt（3〜5ptゾーン）")
 
-    # ── フォームB有利の追加サイン ────────────────────────────
-    formb_notes = []
+    # ── 状況メモ ─────────────────────────────────────────────
+    notes = []
     if gap < 1:
-        formb_notes.append(f"乖離{gap:.1f}pt（横並び）→ フォームBが特に有利（ROI222%ゾーン）")
+        notes.append(f"横並び乖離{gap:.1f}pt")
     if 14 <= n <= 17:
-        formb_notes.append(f"{n}頭立て → フォームBが有利（ROI164%ゾーン）")
+        notes.append(f"{n}頭立て")
     if odds1 and odds1 >= 15:
-        formb_notes.append(f"軸({top_entry.horse_name})が{odds1:.1f}倍（穴軸）→ フォームBで期待値大（ROI393%ゾーン）")
+        notes.append(f"軸{odds1:.1f}倍（大穴帯）")
     if odds1 and odds1 < 2:
-        formb_notes.append(f"軸({top_entry.horse_name})が{odds1:.1f}倍（断然人気）→ フォームB命中率75%")
+        notes.append(f"軸{odds1:.1f}倍（断然人気・複勝率87.9%）")
 
     print()
     print("─ 買い判断サイン ─")
@@ -1555,21 +1610,12 @@ def print_buy_signs(sorted_results: list[tuple], race_info, odds_map: dict = Non
     if skips:
         for s in skips:
             print(f"  ⚠  見送り推奨: {s}")
-
-    if recommend_7pt:
-        print(f"  🎯 7点推奨（2頭軸流し）: "
-              f"乖離{gap:.1f}pt + {n}頭立て"
-              + (f" + 軸{odds1:.1f}倍" if odds1 else "")
-              + f" → ROI193%ゾーン")
-        print(f"     ┗ 1位({top_entry.horse_name}) × 2位({sec_entry.horse_name}) × 3〜9位の1頭")
     elif not skips:
-        # 見送りサインがない時のみフォームB推奨を表示
-        print(f"  📋 フォームB推奨（22点）: デフォルト買い方（全体ROI82%）")
-        print(f"     ┗ 1位({top_entry.horse_name}) × 2〜5位の1頭 × 2〜9位の1頭")
-        for note in formb_notes:
+        buy = "三連複4頭BOX (4点)" if getattr(race_info, "race_class", 0) == 3 else "三連複5頭BOX (10点)"
+        print(f"  買い目: {buy}")
+        print(f"     ┗ 対象: 1位({top_entry.horse_name})〜上位{'4' if '4頭' in buy else '5'}頭BOX")
+        for note in notes:
             print(f"  ✅ {note}")
-        if not formb_notes:
-            print("  ─ 特記なし（フォームBベースライン ROI82%）")
 
 
 def print_scores(results: list[tuple], race_info, odds_map: dict = None):
