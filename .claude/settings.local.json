@@ -2,7 +2,20 @@
   "permissions": {
     "allow": [
       "Bash(wait)",
-      "Bash(CLAUDE_CODE_TMPDIR=/var/folders grep -n \"grade_history\\\\|check_grade\" /Users/du/Documents/競馬予想システム/scorer.py)"
+      "Bash(CLAUDE_CODE_TMPDIR=/var/folders grep -n \"grade_history\\\\|check_grade\" /Users/du/Documents/競馬予想システム/scorer.py)",
+      "Bash(git config *)",
+      "Bash(git push *)",
+      "Bash(gh repo *)",
+      "Bash(tee /tmp/weekend_predict_0613.txt)",
+      "Bash(tee /tmp/weekend_predict_0613b.txt)",
+      "Bash(tee /tmp/weekend_predict_final.txt)",
+      "Bash(export TMPDIR=/tmp)",
+      "Bash(CLAUDE_CODE_TMPDIR=/tmp python3 weekend_predict.py --sun --venue 函館)",
+      "Bash(tee /tmp/takarazuka_out.txt)",
+      "Bash(tee /tmp/repredict_new.txt)",
+      "Bash(git -C /Users/du/Documents/競馬予想システム diff --stat)",
+      "Bash(git -C /Users/du/Documents/競馬予想システム log --oneline -5)",
+      "Bash(git *)"
     ]
   }
 }
