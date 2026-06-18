@@ -56,6 +56,8 @@ SEME_POS = {
     "重め感のない": 1, "太め感はない": 1, "硬さもない": 1,
     "上積み": 1, "上向き": 1, "ダメージは特になさそう": 1,
     "及第点以上": 1, "ひと追い毎に": 1,
+    "良化": 1, "元気": 1, "順調": 1,
+    "上昇気配": 1, "活気十分": 1, "気配良好": 1,
 }
 SEME_NEG = {
     # -2（明確に悪い・否定文でPOSが誤ヒットするものを相殺）
@@ -159,8 +161,7 @@ def scrape(url: str) -> list[dict]:
 
     tables = soup.find_all("table", id=re.compile(r"^cyokyo\d+$"))
     if not tables:
-        print("[ERROR] 調教データが見つかりません。ログイン状態を確認してください。")
-        sys.exit(1)
+        return []  # ログイン切れ or データなし（バッチ処理では空リストで続行）
 
     results = []
     for tbl in tables:
@@ -267,13 +268,22 @@ def find_kb_race_id(date: str, race_number: int, venue: str = "") -> str | None:
     date       : "20260418" 形式
     race_number: 11（R番号の数字）
     venue      : "阪神" などの競馬場名（同日複数会場の絞り込み用・省略可）
+    過去ページはログインcookieが必要なため、cookie_fileを自動使用する。
     """
-    headers = {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"}
+    session = requests.Session()
+    session.headers["User-Agent"] = "Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36"
+    if COOKIE_FILE.exists():
+        cookie_str = COOKIE_FILE.read_text(encoding="utf-8").strip()
+        for item in cookie_str.split(";"):
+            item = item.strip()
+            if "=" in item:
+                k, v = item.split("=", 1)
+                session.cookies.set(k.strip(), v.strip(), domain="p.keibabook.co.jp")
     url = f"https://p.keibabook.co.jp/cyuou/nittei/{date}/"
-    r = requests.get(url, headers=headers, timeout=15)
+    r = session.get(url, timeout=15)
     if r.status_code != 200:
         return None
-    soup = BeautifulSoup(r.text, "lxml")
+    soup = BeautifulSoup(r.content, "lxml")
     target_rr = f"{race_number:02d}"  # IDの末尾2桁がR番号
     for tbl in soup.find_all("table", class_="kaisai"):
         th = tbl.find("th")

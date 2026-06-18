@@ -35,17 +35,17 @@ if not st.session_state.authenticated:
 
 RESULTS_DIR = Path(__file__).parent / "results"
 
-SIGN_ORDER = {"★7pt推奨": 0, "★フォームB推奨": 1, "★フォームB": 2, "": 3}
+SIGN_ORDER = {"★三連単A+B": 0, "★三連複4頭BOX": 1, "★三連複5頭BOX": 2, "": 3}
 SIGN_COLOR = {
-    "★7pt推奨":    "#c0392b",
-    "★フォームB推奨": "#e67e22",
-    "★フォームB":   "#2980b9",
+    "★三連単A+B":   "#c0392b",
+    "★三連複4頭BOX": "#e67e22",
+    "★三連複5頭BOX": "#2980b9",
     "":            "#7f8c8d",
 }
 SIGN_LABEL = {
-    "★7pt推奨":    "🎯 7pt推奨",
-    "★フォームB推奨": "📋 フォームB推奨",
-    "★フォームB":   "📋 フォームB",
+    "★三連単A+B":   "🏇 三連単A+B (24点)",
+    "★三連複4頭BOX": "三連複4頭BOX (4点)",
+    "★三連複5頭BOX": "三連複5頭BOX (10点)",
     "":            "⚠ 見送り",
 }
 
@@ -83,7 +83,7 @@ def parse_csv(path: Path) -> dict:
         elif parts[0] == "■評価コメント":
             eval_comments = []
             section = "eval"
-        elif parts[0] == "■三連複フォームB":
+        elif parts[0] in ("■三連複BOX", "■三連複フォームB"):  # 旧CSV互換
             formb_header = parts[1:]
             formb_combos = []
             section = "formb"
@@ -129,7 +129,7 @@ def parse_csv(path: Path) -> dict:
 def load_race_index() -> list[dict]:
     races = []
     for p in sorted(RESULTS_DIR.glob("*/*/score_*.csv"), reverse=True):
-        fname = p.stem  # score_2026613_函館_11R_函館スプリントS_★フォームB
+        fname = p.stem  # score_2026613_函館_11R_函館スプリントS_★三連複5頭BOX
         date_dir = p.parent.parent.name   # 2026-06-13
         venue    = p.parent.name          # 函館
 
@@ -274,7 +274,7 @@ col1, col2, col3 = st.columns(3)
 with col1:
     if data["formb_combos"]:
         h = data["formb_header"]
-        st.markdown(f"**■ 三連複フォームB**")
+        st.markdown(f"**■ 三連複BOX**")
         if h:
             st.caption("  ".join(h))
         chunks = [data["formb_combos"][i:i+6] for i in range(0, len(data["formb_combos"]), 6)]

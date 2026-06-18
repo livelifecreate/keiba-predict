@@ -26,7 +26,7 @@ VENUE_TO_CODE = {
 }
 
 # 評価ランク → スコア（+3: 調教自己ベスト水準の proxy）
-RANK_SCORE = {"A": 3, "B": 0, "C": 0, "D": -1}
+RANK_SCORE = {"A": 3, "B": 2, "C": 1, "D": 0}
 
 
 @dataclass

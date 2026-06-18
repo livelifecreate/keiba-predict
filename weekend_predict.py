@@ -76,10 +76,7 @@ def gen_eval_comment(sorted_results, odds_map, n_horses, sign_level, sign_detail
             lines.append(f"乖離{gap:.1f}ptは見送りゾーン（3〜5pt）。1位と2位の差が小さく軸信頼度が不足。")
         if any("18頭" in r for r in reasons):
             lines.append("18頭フルゲートは荒れやすく軸信頼度が低下。")
-        pass
-        if any("断然人気" in r for r in reasons):
-            lines.append(f"軸{odds1:.1f}倍：断然人気で三連複配当が低く期待値マイナス。")
-        elif any("ROI47%" in r for r in reasons):
+        if any("ROI47%" in r for r in reasons):
             lines.append(f"2勝クラス以下：全オッズ帯でROI47%以下。3勝クラス以上のみ買い。")
         elif any("ROI17%" in r for r in reasons):
             lines.append(f"重賞クラス：ROI17%（n=49）。買い条件を満たさない。")
@@ -94,25 +91,19 @@ def gen_eval_comment(sorted_results, odds_map, n_horses, sign_level, sign_detail
         lines.append(f"[A] {top_entry.horse_name}（1着固定）× 紐4頭（2-3着）12点")
         lines.append(f"[B] 紐4頭（1着）× {top_entry.horse_name}（2着固定）× 紐4頭（3着）12点")
 
-    elif sign_level == "7pt":
-        lines.append(f"乖離{gap:.1f}ptで1位{top_entry.horse_name}の軸信頼度が高い（5pt以上推奨ゾーン）。")
-        if odds1:
-            lines.append(f"軸{odds1:.1f}倍は期待値プラスの推奨帯（2〜7倍）。三連複7点買いを推奨。")
-        if odds2:
-            lines.append(f"2位{sec_entry.horse_name}{odds2:.1f}倍との2頭軸も選択肢。")
-
-    elif sign_level == "formb":
-        specific = False
+    elif sign_level in ("box4", "box5"):
+        buy_n = 4 if sign_level == "box4" else 5
+        buy_pts = 4 if buy_n == 4 else 10
+        if odds1 and odds1 < 2:
+            lines.append(f"断然人気{odds1:.1f}倍：複勝率87.9%・三連複{buy_n}頭BOX回収率141%（バックテスト33R）。")
         if gap < 1:
-            lines.append(f"上位横並び（乖離{gap:.1f}pt）。フォームBで広くカバー。ROI222%ゾーン。")
-            specific = True
+            lines.append(f"上位横並び（乖離{gap:.1f}pt）。三連複{buy_n}頭BOX({buy_pts}点)で広くカバー。")
         elif 14 <= n_horses <= 17:
-            lines.append(f"{n_horses}頭立てで頭数多め。フォームBでカバレッジを広げる。ROI164%ゾーン。")
-            specific = True
+            lines.append(f"{n_horses}頭立て。三連複{buy_n}頭BOX({buy_pts}点)でカバレッジを確保。")
         if odds1 and 5 <= odds1 < 10 and race_class >= 4:
-            lines.append(f"{top_entry.horse_name}{odds1:.1f}倍（OP以上）。5〜9倍帯OP→ROI285%ゾーン。")
-        elif not specific:
-            lines.append(f"乖離{gap:.1f}pt・{n_horses}頭・軸{odds1:.1f}倍。標準フォームBゾーン。")
+            lines.append(f"OP以上×{odds1:.1f}倍帯。三連複{buy_n}頭BOX推奨。")
+        if not lines:
+            lines.append(f"乖離{gap:.1f}pt・{n_horses}頭。三連複{buy_n}頭BOX({buy_pts}点)推奨。")
 
     return lines
 
@@ -120,7 +111,7 @@ def gen_eval_comment(sorted_results, odds_map, n_horses, sign_level, sign_detail
 def calc_buy_sign(sorted_results, odds_map, n_horses, race_class=0):
     """
     Returns: (sign_level, sign_text, detail_text)
-      sign_level: "tierce" / "7pt" / "formb" / "skip" / "neutral"
+      sign_level: "tierce" / "box4" / "box5" / "skip" / "neutral"
       race_class: 0=未勝利 1=1勝 2=2勝 3=3勝 4=OP 5=GIII 6=GII 7=GI
     """
     if len(sorted_results) < 2:
@@ -138,8 +129,6 @@ def calc_buy_sign(sorted_results, odds_map, n_horses, race_class=0):
         skips.append("18頭フルゲート")
     if 3 <= gap < 5:
         skips.append(f"乖離{gap:.1f}pt（3〜5pt）")
-    if odds1 and odds1 < 2:
-        skips.append(f"軸{odds1:.1f}倍（断然人気）")
     if race_class < 3:
         cls_name = {0: "未勝利", 1: "1勝", 2: "2勝"}.get(race_class, f"class{race_class}")
         skips.append(f"{cls_name}クラス（ROI47%）")
@@ -155,29 +144,27 @@ def calc_buy_sign(sorted_results, odds_map, n_horses, race_class=0):
         detail = f"3勝クラス×{odds1:.1f}倍 / 乖離{gap:.1f}pt {n}頭 / A+B 24点"
         return "tierce", "🏇 三連単A+B推奨", detail
 
-    if odds1:
-        is_7pt = gap >= 5 and n <= 13 and 2 <= odds1 < 8
-    else:
-        is_7pt = gap >= 5 and n <= 13
+    # 買い目: 3勝クラス→4頭BOX(4点)、OP以上→5頭BOX(10点)
+    # ※ 乖離≥5ptの高信頼7点推奨は廃止（バックテスト: 単勝ROI50%・5BOX ROI40%）
+    is_box4 = (race_class == 3)
 
-    if is_7pt:
-        detail = f"乖離{gap:.1f}pt + {n}頭" + (f" + 軸{odds1:.1f}倍" if odds1 else "")
-        return "7pt", "🎯 7点推奨", detail
-
-    notes = []
+    ctx = []
+    if odds1 and odds1 < 2:
+        ctx.append(f"断然人気{odds1:.1f}倍(複勝87.9%/5BOX回収141%)")
     if gap < 1:
-        notes.append(f"乖離{gap:.1f}pt横並び→ROI222%")
+        ctx.append(f"横並び乖離{gap:.1f}pt")
     if 14 <= n <= 17:
-        notes.append(f"{n}頭立て→ROI164%")
+        ctx.append(f"{n}頭立て")
     if odds1 and odds1 >= 10 and race_class >= 3:
-        notes.append(f"3勝以上×{odds1:.1f}倍→高ROI帯（10倍超でも期待値プラス）")
+        ctx.append(f"軸{odds1:.1f}倍(高配当帯)")
     elif odds1 and 5 <= odds1 < 10 and race_class >= 4:
-        notes.append(f"OP以上×{odds1:.1f}倍→ROI285%")
+        ctx.append(f"OP×{odds1:.1f}倍")
+    ctx.append(f"乖離{gap:.1f}pt/{n}頭")
+    detail = " / ".join(ctx)
 
-    if notes:
-        return "formb", "📋 フォームB推奨", " / ".join(notes)
-
-    return "formb", "📋 フォームB（標準）", f"乖離{gap:.1f}pt {n}頭"
+    if is_box4:
+        return "box4", "三連複4頭BOX (4点)", detail
+    return "box5", "三連複5頭BOX (10点)", detail
 
 
 # ── クラス判定 ─────────────────────────────────────────────────────────
@@ -336,10 +323,10 @@ def main():
         # ファイル名タグ（買いサインのみ付与）
         if sign_level == "tierce":
             sign_tag = "★三連単A+B"
-        elif sign_level == "7pt":
-            sign_tag = "★7pt推奨"
-        elif sign_level == "formb":
-            sign_tag = "★フォームB推奨" if "推奨" in sign_text else "★フォームB"
+        elif sign_level == "box4":
+            sign_tag = "★三連複4頭BOX"
+        elif sign_level == "box5":
+            sign_tag = "★三連複5頭BOX"
         else:
             sign_tag = None
 
@@ -365,7 +352,7 @@ def main():
 
         print(f"  → {sign_text}  {sign_detail}")
 
-        if sign_level in ("tierce", "7pt", "formb"):
+        if sign_level in ("tierce", "box4", "box5"):
             def horse_label(i):
                 if len(sorted_r) > i:
                     e = sorted_r[i][0]
@@ -396,42 +383,38 @@ def main():
     print(f"{'='*65}")
 
     tierces = [s for s in sign_summary if s["level"] == "tierce"]
-    sevens  = [s for s in sign_summary if s["level"] == "7pt"]
-    formbs  = [s for s in sign_summary if s["level"] == "formb"]
+    box4s   = [s for s in sign_summary if s["level"] == "box4"]
+    box5s   = [s for s in sign_summary if s["level"] == "box5"]
 
     if tierces:
-        print("\n🏇 三連単A+Bフォーメーション推奨（ROI241%ゾーン）")
+        print("\n🏇 三連単A+Bフォーメーション（24点）")
         for s in tierces:
-            axis  = s["top1"]
-            himo  = "・".join(h for h in [s.get("top2",""), s.get("top3",""), s.get("top4",""), s.get("top5","")] if h)
+            axis = s["top1"]
+            himo = "・".join(h for h in [s.get("top2",""), s.get("top3",""), s.get("top4",""), s.get("top5","")] if h)
             print(f"  {s['date']} {s['venue']} {s['name']}  {s['dist']}  {s['n']}頭")
-            print(f"  軸: {axis}")
-            print(f"  紐: {himo}")
             print(f"  [A] 1着固定: {axis} → 2-3着: {himo}  12点")
             print(f"  [B] 1着: {himo} → 2着固定: {axis} → 3着: {himo}  12点")
-            print(f"  合計 24点  ({s['detail']})")
+            print(f"  ({s['detail']})")
             print(f"  race_id: {s['race_id']}")
 
-    if sevens:
-        print("\n🎯 7点推奨（ROI193%ゾーン）")
-        for s in sevens:
+    if box4s:
+        print("\n三連複4頭BOX (4点) ── 3勝クラス")
+        for s in box4s:
+            horses = "・".join(h for h in [s.get(f"top{i}","") for i in range(1, 5)] if h)
             print(f"  {s['date']} {s['venue']} {s['name']}  {s['dist']}  {s['n']}頭")
-            print(f"  軸: {s['top1']} / {s['top2']}  ({s['detail']})")
+            print(f"  BOX: {horses}")
+            print(f"  馬連: {s['top1']} × {s['top2']}")
+            print(f"  ({s['detail']})")
             print(f"  race_id: {s['race_id']}")
 
-    if formbs:
-        print("\n📋 フォームB推奨")
-        for s in formbs:
-            rc = s.get("race_class", 0)
-            if rc == 3:
-                buy = "4頭BOX 4点 (ROI466%)"
-            elif rc >= 4:
-                buy = "5頭BOX 10点 (ROI124%)"
-            else:
-                buy = "5頭BOX 10点"
+    if box5s:
+        print("\n三連複5頭BOX (10点) ── OP以上")
+        for s in box5s:
+            horses = "・".join(h for h in [s.get(f"top{i}","") for i in range(1, 6)] if h)
             print(f"  {s['date']} {s['venue']} {s['name']}  {s['dist']}  {s['n']}頭")
-            print(f"  軸: {s['top1']}  ({s['detail']})")
-            print(f"  推奨買い目: {buy}")
+            print(f"  BOX: {horses}")
+            print(f"  馬連: {s['top1']} × {s['top2']}")
+            print(f"  ({s['detail']})")
             print(f"  race_id: {s['race_id']}")
 
     if not sign_summary:

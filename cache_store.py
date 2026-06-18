@@ -43,6 +43,48 @@ def cache_exists(namespace: str, key: str) -> bool:
     return _path(namespace, key).exists()
 
 
+def cache_get_before(namespace: str, horse_id: str, cutoff_date: str, max_days_back: int = 7):
+    """horse_id に対応するキャッシュの中で cutoff_date 以前の最新のものを返す。
+    cutoff_date 形式: 'YYYY/MM/DD'
+    exact matchがあればそれを、なければ max_days_back 日以内のものをフォールバック。
+    """
+    import re as _re
+    from datetime import datetime, timedelta
+    exact = _path(namespace, f"{horse_id}_{cutoff_date}")
+    if exact.exists():
+        with open(exact, encoding="utf-8") as f:
+            return json.load(f)
+
+    # フォールバック: max_days_back 日以内の最新キャッシュを探す
+    try:
+        cutoff_dt = datetime.strptime(cutoff_date, "%Y/%m/%d")
+        earliest_dt = cutoff_dt - timedelta(days=max_days_back)
+        earliest_safe = earliest_dt.strftime("%Y_%m_%d")
+    except ValueError:
+        return None
+
+    cutoff_safe = cutoff_date.replace("/", "_")  # YYYY_MM_DD
+    ns_dir = CACHE_DIR / namespace
+    if not ns_dir.exists():
+        return None
+
+    pattern = _re.compile(r"^" + _re.escape(str(horse_id)) + r"_(\d{4}_\d{2}_\d{2})\.json$")
+    candidates = []
+    for p in ns_dir.glob(f"{horse_id}_*.json"):
+        m = pattern.match(p.name)
+        if m:
+            d = m.group(1)  # YYYY_MM_DD
+            if earliest_safe <= d <= cutoff_safe:
+                candidates.append((d, p))
+
+    if not candidates:
+        return None
+
+    best = max(candidates, key=lambda x: x[0])
+    with open(best[1], encoding="utf-8") as f:
+        return json.load(f)
+
+
 def cache_stats() -> dict:
     if not CACHE_DIR.exists():
         return {}
