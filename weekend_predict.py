@@ -55,6 +55,24 @@ def _fetch_jra_odds(race_id: str, race_date: datetime.date, entries) -> tuple[di
     except Exception:
         return {}, ""
 
+# ── 事前確認チェック ──────────────────────────────────────────────────────
+
+def pre_output_check(sorted_results, odds_map, race_class, n_horses, race_name) -> list[str]:
+    """出力前の品質チェック。問題があれば警告メッセージリストを返す"""
+    warnings = []
+    if not odds_map:
+        warnings.append(f"⚠ オッズ未取得: {race_name} — 買いサイン判定でオッズを使用できません")
+    else:
+        missing = [e.horse_name for e, _ in sorted_results if e.horse_name not in odds_map]
+        if missing:
+            warnings.append(f"⚠ オッズ欠損馬: {', '.join(missing[:5])}")
+    if race_class == 0:
+        warnings.append(f"⚠ クラス判定不明: {race_name} — race_class=0")
+    if n_horses == 0:
+        warnings.append(f"⚠ 頭数0: {race_name}")
+    return warnings
+
+
 # ── サイン判定（scorer_turf.pyのprint_buy_signsと同ロジック）──────────
 
 def gen_eval_comment(sorted_results, odds_map, n_horses, sign_level, sign_detail, race_class=0) -> list[str]:
@@ -284,16 +302,24 @@ def main():
         if training:
             print(f"  [調教] {len(training)}頭取得")
 
-        # オッズ・馬場状態取得（JRA公式優先、失敗時はnetkeiba API）
+        # オッズ取得: JRA公式出馬表（第1優先）→ netkeiba API（フォールバック）
         race_date = race.get("date")
         odds_map = {}
         jra_track = ""
         if race_date:
-            odds_map, jra_track = _fetch_jra_odds(race_id, race_date, entries)
+            jra_odds_map, jra_track = _fetch_jra_odds(race_id, race_date, entries)
+            if jra_odds_map:
+                odds_map = jra_odds_map
+                print(f"  [オッズ] JRA公式から{len(odds_map)}頭取得")
         if not odds_map:
             odds_raw = fetch_odds(race_id)
-            num_to_name = {str(e.horse_number): e.horse_name for e in entries}
-            odds_map = {num_to_name[k]: v for k, v in odds_raw.items() if k in num_to_name}
+            if odds_raw:
+                num_to_name = {str(e.horse_number): e.horse_name for e in entries}
+                odds_map = {num_to_name[k]: v for k, v in odds_raw.items() if k in num_to_name}
+                if odds_map:
+                    print(f"  [オッズ] netkeiba APIから{len(odds_map)}頭取得")
+        if not odds_map:
+            print(f"  [オッズ] 取得失敗（発走後またはAPI不応答）")
 
         # 馬場状態: --track引数 > JRA公式 > netkeiba shutuba
         tc = get_track(race_info.venue, jra_track or race_info.track_condition)
@@ -316,6 +342,11 @@ def main():
 
         # サイン判定
         sign_level, sign_text, sign_detail = calc_buy_sign(sorted_r, odds_map, n, race_class)
+
+        # 事前確認チェック
+        check_warns = pre_output_check(sorted_r, odds_map, race_class, n, race_info.name)
+        for w in check_warns:
+            print(f"  {w}")
 
         # 評価コメント生成
         eval_comment = gen_eval_comment(sorted_r, odds_map, n, sign_level, sign_detail, race_class)
@@ -414,6 +445,7 @@ def main():
             print(f"  {s['date']} {s['venue']} {s['name']}  {s['dist']}  {s['n']}頭")
             print(f"  BOX: {horses}")
             print(f"  馬連: {s['top1']} × {s['top2']}")
+            print(f"  ワイド3点: {s['top1']}×{s['top2']} / {s['top1']}×{s['top3']} / {s['top2']}×{s['top3']}")
             print(f"  ({s['detail']})")
             print(f"  race_id: {s['race_id']}")
 

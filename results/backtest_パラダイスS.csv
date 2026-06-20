@@ -1,0 +1,14 @@
+﻿予想順位,枠,馬番,馬名,合計スコア,スコア差(1位比),人気,オッズ,脚質,実際の着順,加点内訳,減点内訳
+1,5,8,カンシン,+11.4,0.0,2人気,4.5,差し,5,+3.8rising_trend / +0.2prev_run_bonus / +0.4prev2_run_bonus / +1.0bloodline_distance / +0.5post_surface / +1.5place_consistency / +2.5win_count / +0.5pace_fit,
+2,7,11,マイネルチケット,+10.5,0.9,1人気,2.7,差し,1,+3.0same_course / +0.2prev2_run_bonus / +1.0grade_history / +2.2place_consistency / +2.5win_count / +2.0pace_fit,-0.5post_surface
+3,5,7,イミグラントソング,+9.5,1.9,4人気,8.4,差し,12,+2.0same_course / +1.0distance_drop / +2.0grade_history / +0.5post_surface / +1.5place_consistency / +2.5win_count / +0.5pace_fit,-0.5local_prev
+4,6,10,グロリアラウス,+7.0,4.4,3人気,6.9,先行,10,+2.0same_course / +0.5post_surface / +2.5win_count / +2.0pace_fit,
+5,7,12,レッドシュヴェルト,+6.0,5.4,8人気,22.5,追い込み,6,+3.0same_course / +1.0grade_history / +2.5win_count,-0.5post_surface / -1.0pace_fit
+6,4,6,マサノカナリア,+4.0,7.4,9人気,22.6,差し,7,+2.5win_count / +0.5pace_fit,
+7,8,13,アクートゥス,+2.8,8.6,7人気,17.5,差し,3,+0.2prev_run_bonus / +2.5win_count / +0.5pace_fit,-0.5bloodline_distance
+8,4,5,クルゼイロドスル,+2.0,9.4,5人気,8.6,追い込み,4,+2.0fastest_3f / +1.0distance_drop,-1.0pace_fit
+9,3,4,ショウナンザナドゥ,+1.5,9.9,10人気,41.6,追い込み,2,+1.0distance_drop,-0.5bloodline_distance / -1.0pace_fit
+10,1,1,ラケマーダ,+1.5,9.9,6人気,15.7,追い込み,8,+1.5same_course / +1.0distance_drop,-1.0pace_fit
+11,6,9,カリボール,+0.5,10.9,12人気,51.1,差し,11,+0.5post_surface / +0.5pace_fit,-0.5bloodline_distance
+12,2,2,バグラダス,-0.5,11.9,11人気,47.9,追い込み,13,,-0.5post_surface / -1.0pace_fit
+13,3,3,グレイイングリーン,-2.0,13.4,13人気,80.7,追い込み,9,,-0.5bloodline_distance / -0.5local_prev / -1.0pace_fit

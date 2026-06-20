@@ -432,11 +432,84 @@ def classify_race(rd2_text: str, race_name: str) -> str:
 def fetch_odds(race_id: str) -> dict[str, float]:
     """
     netkeibaから単勝オッズを取得する。{馬番str: float} を返す。
-    レース前のリアルタイムオッズ取得用。APIが空の場合はHTMLをパース。
+    レース前のリアルタイムオッズ取得用。
+
+    取得元の優先順位:
+    1. shutuba.html の Shutuba_Table（オッズ・人気列を直接パース）
+    2. odds_get_form.html の RaceOdds_HorseList_Table
+    3. JSON API（api_get_jra_odds.html）
+    いずれも ---.- / 空の場合は {} を返す（未公表またはレース後）
     """
     headers = {**HEADERS, "Referer": "https://race.netkeiba.com/"}
 
-    # まずJSON APIを試す
+    def _parse_num_odds(rows, num_idx, odds_idx):
+        result = {}
+        for row in rows[1:]:
+            cells = [td.get_text(strip=True) for td in row.find_all(["td", "th"])]
+            if len(cells) <= max(num_idx, odds_idx):
+                continue
+            num_c  = cells[num_idx]
+            odds_c = cells[odds_idx]
+            if num_c.isdigit() and re.match(r"^\d+\.\d+$", odds_c):
+                try:
+                    result[num_c] = float(odds_c)
+                except ValueError:
+                    pass
+        return result
+
+    # ① shutuba.html の Shutuba_Table からオッズ列を取得
+    shutuba_url = f"https://race.netkeiba.com/race/shutuba.html?race_id={race_id}"
+    try:
+        _sleep()
+        r = requests.get(shutuba_url, headers=headers, timeout=12)
+        r.raise_for_status()
+        soup = BeautifulSoup(r.content, "lxml")
+        for tbl in soup.find_all("table", class_="Shutuba_Table"):
+            rows = tbl.find_all("tr")
+            if not rows:
+                continue
+            hdr = [th.get_text(strip=True) for th in rows[0].find_all(["td", "th"])]
+            # 「オッズ」が無い場合は「馬体重(増減)」の次列をオッズとみなす
+            if "オッズ" in hdr:
+                odds_idx = hdr.index("オッズ")
+            elif "馬体重(増減)" in hdr:
+                odds_idx = hdr.index("馬体重(増減)") + 1
+            else:
+                continue
+            if "馬番" in hdr:
+                num_idx = hdr.index("馬番")
+            else:
+                num_idx = 1
+            result = _parse_num_odds(rows, num_idx, odds_idx)
+            if result:
+                return result
+    except Exception:
+        pass
+
+    # ② odds_get_form.html の RaceOdds_HorseList_Table
+    html_url = f"https://race.netkeiba.com/odds/odds_get_form.html?type=b1&race_id={race_id}"
+    try:
+        _sleep()
+        r = requests.get(html_url, headers=headers, timeout=12)
+        r.raise_for_status()
+        soup = BeautifulSoup(r.content, "lxml")
+        for tbl in soup.find_all("table", class_="RaceOdds_HorseList_Table"):
+            rows = tbl.find_all("tr")
+            if not rows:
+                continue
+            hdr = [th.get_text(strip=True) for th in rows[0].find_all(["td", "th"])]
+            try:
+                num_idx  = hdr.index("馬番")
+                odds_idx = hdr.index("オッズ")
+            except ValueError:
+                continue
+            result = _parse_num_odds(rows, num_idx, odds_idx)
+            if result:
+                return result
+    except Exception:
+        pass
+
+    # ③ JSON API（api_get_jra_odds.html）
     api_url = (f"https://race.netkeiba.com/api/api_get_jra_odds.html"
                f"?race_id={race_id}&type=b1&action=update")
     try:
@@ -446,11 +519,7 @@ def fetch_odds(race_id: str) -> dict[str, float]:
         data = r.json()
         d = data.get("data")
         if d and data.get("status") not in ("error", "close"):
-            # data が dict の場合は data["odds"] リストを使う（status:"middle" など）
-            if isinstance(d, dict):
-                odds_list = d.get("odds") or []
-            else:
-                odds_list = d if isinstance(d, list) else []
+            odds_list = d.get("odds", []) if isinstance(d, dict) else (d if isinstance(d, list) else [])
             result = {}
             for item in odds_list:
                 if not isinstance(item, dict):
@@ -466,31 +535,6 @@ def fetch_odds(race_id: str) -> dict[str, float]:
                 return result
     except Exception:
         pass
-
-    # フォールバック: HTMLの単勝オッズページをパース
-    html_url = f"https://race.netkeiba.com/odds/index.html?race_id={race_id}&type=b1"
-    try:
-        _sleep()
-        r = requests.get(html_url, headers=headers, timeout=12)
-        r.raise_for_status()
-        soup = BeautifulSoup(r.content, "lxml")
-        result = {}
-        for tbl in soup.find_all("table"):
-            rows = tbl.find_all("tr")
-            for row in rows[1:]:
-                cells = [td.get_text(strip=True) for td in row.find_all(["td", "th"])]
-                if len(cells) < 3:
-                    continue
-                # 「馬番」「馬名」「オッズ」の列構成を想定
-                num_c  = cells[1] if len(cells) > 1 else ""
-                odds_c = cells[-1]
-                if num_c.isdigit() and re.match(r"\d+\.\d+", odds_c):
-                    try:
-                        result[num_c] = float(odds_c)
-                    except ValueError:
-                        pass
-        if result:
-            return result
     except Exception:
         pass
 

@@ -24,8 +24,7 @@ def build_jra_url(race_id: str, race_date: datetime.date) -> str:
     year  = int(race_id[0:4])
     date_str = race_date.strftime("%Y%m%d")
 
-    r = race
-    race_contrib = (r * 181) % 256 if r <= 9 else (82 + (r - 10) * 181) % 256
+    race_contrib = (race * 16) % 256
     base = (169 + venue * 10 + kai * 84 + nichi * 48) % 256
     checksum = (base + race_contrib) % 256
 
@@ -270,8 +269,7 @@ def build_jra_result_url(race_id: str, race_date: datetime.date) -> str:
     year  = int(race_id[0:4])
     date_str = race_date.strftime("%Y%m%d")
 
-    r = race
-    race_contrib   = (r * 181) % 256 if r <= 9 else (82 + (r - 10) * 181) % 256
+    race_contrib   = (race * 16) % 256
     base           = (169 + venue * 10 + kai * 84 + nichi * 48) % 256
     entry_cs       = (base + race_contrib) % 256
     result_cs      = (entry_cs + 0xBC) % 256
