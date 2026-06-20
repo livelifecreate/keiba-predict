@@ -376,11 +376,13 @@ def main():
             if race_info.surface == "ダ":
                 save_csv_dart(sorted_r, race_info, odds_map=odds_map, training_data=training,
                               sign_tag=sign_tag, eval_comment=eval_comment, race_id=race_id,
-                              sign_level=sign_text, sign_detail_text=sign_detail, race_class=race_class)
+                              sign_level=sign_text, sign_detail_text=sign_detail, race_class=race_class,
+                              track_condition=tc)
             else:
                 save_csv_turf(sorted_r, race_info, odds_map=odds_map, training_data=training,
                               sign_tag=sign_tag, eval_comment=eval_comment, race_id=race_id,
-                              sign_level=sign_text, sign_detail_text=sign_detail, race_class=race_class)
+                              sign_level=sign_text, sign_detail_text=sign_detail, race_class=race_class,
+                              track_condition=tc)
         except Exception as e:
             print(f"  [CSV] 保存失敗: {e}")
 
