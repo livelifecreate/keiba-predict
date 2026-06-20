@@ -13,8 +13,9 @@ def build_jra_url(race_id: str, race_date: datetime.date) -> str:
     netkeiba の race_id と開催日から JRA 公式出馬表 URL を生成する。
 
     CNAME 形式: pw01dde01{venue}{year}{kai}{nichi}{race}{date}/{checksum:02X}
-    checksum = (169 + venue*10 + kai*84 + nichi*48 + race_contrib(race)) % 256
-    race_contrib: race<=9 → race*181 % 256  /  race>=10 → (82+(race-10)*181) % 256
+    checksum = (base + race_contrib) % 256
+    base = (169 + venue*10 + kai*84 + nichi*48) % 256
+    race_contrib = (94 + (race-1)*181 + (64 if race>=10 else 0)) % 256
     """
     # race_id: YYYY + venue(2) + kai(2) + nichi(2) + race(2) = 12 chars
     venue = int(race_id[4:6])
@@ -24,7 +25,7 @@ def build_jra_url(race_id: str, race_date: datetime.date) -> str:
     year  = int(race_id[0:4])
     date_str = race_date.strftime("%Y%m%d")
 
-    race_contrib = (race * 16) % 256
+    race_contrib = (94 + (race - 1) * 181 + (64 if race >= 10 else 0)) % 256
     base = (169 + venue * 10 + kai * 84 + nichi * 48) % 256
     checksum = (base + race_contrib) % 256
 
@@ -269,7 +270,7 @@ def build_jra_result_url(race_id: str, race_date: datetime.date) -> str:
     year  = int(race_id[0:4])
     date_str = race_date.strftime("%Y%m%d")
 
-    race_contrib   = (race * 16) % 256
+    race_contrib   = (94 + (race - 1) * 181 + (64 if race >= 10 else 0)) % 256
     base           = (169 + venue * 10 + kai * 84 + nichi * 48) % 256
     entry_cs       = (base + race_contrib) % 256
     result_cs      = (entry_cs + 0xBC) % 256
