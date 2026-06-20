@@ -380,6 +380,53 @@ def get_entry_list(url: str) -> tuple[RaceInfo, list[HorseEntry]]:
     return race_info, entries
 
 
+VENUE_CODE_MAP = {
+    "01": "札幌", "02": "函館", "03": "福島", "04": "新潟",
+    "05": "東京", "06": "中山", "07": "中京", "08": "阪神",
+    "09": "小倉", "10": "阪神",
+}
+
+
+def fetch_track_condition(venue_name: str) -> dict[str, str]:
+    """
+    /keiba/baba/ から指定会場の馬場状態を取得する。
+    venue_name: '東京' / '阪神' / '函館' 等
+    戻り値: {'turf': '良', 'dirt': '稍重'} — 取得できなければ空文字
+    """
+    result = {"turf": "", "dirt": ""}
+    try:
+        # 会場が複数のとき index2.html / index3.html が追加される場合があるため
+        # まず index なし、次に index2/3 を試みる
+        for path in ["/keiba/baba/", "/keiba/baba/index2.html", "/keiba/baba/index3.html"]:
+            r = requests.get(f"{BASE_URL}{path}", headers=HEADERS, timeout=10)
+            r.encoding = r.apparent_encoding
+            if r.status_code != 200:
+                continue
+            soup = BeautifulSoup(r.text, "html.parser")
+            baba = soup.find(id="baba")
+            if not baba:
+                continue
+            for unit in baba.find_all("div", class_="unit", recursive=False):
+                h2 = unit.find("h2")
+                if not h2 or venue_name not in h2.get_text():
+                    continue
+                for cell in unit.find_all("div", class_=lambda c: c and "cell" in c):
+                    cls = cell.get("class", [])
+                    content = cell.find("div", class_="content") or cell.find("p")
+                    if not content:
+                        continue
+                    val = content.get_text(strip=True)
+                    if "turf" in cls:
+                        result["turf"] = val
+                    elif "dirt" in cls:
+                        result["dirt"] = val
+                if result["turf"] or result["dirt"]:
+                    return result
+    except Exception:
+        pass
+    return result
+
+
 def get_thisweek_g1_urls() -> list[str]:
     """今週のG1レース出馬表URLリストを返す"""
     soup = fetch_html(f"{BASE_URL}/keiba/thisweek/")

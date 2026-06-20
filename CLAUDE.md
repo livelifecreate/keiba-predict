@@ -63,7 +63,7 @@
 | **バックテスト（過去データ）** | `cache/race_result/*.json` の `entries[].odds` / `entries[].popularity` | キャッシュ直読み・外部取得禁止 |
 | **当日予想 オッズ（第1優先）** | JRA公式出馬表 `pw01dde01...` → `HorseEntry.odds` / `HorseEntry.popularity` | `_fetch_jra_odds()` |
 | **当日予想 オッズ（フォールバック）** | netkeiba `odds_get_form.html?type=b1&race_id=XXX` | `fetch_odds()` |
-| **当日予想 馬場状態** | JRA公式出馬表 `pw01dde01...` → `RaceInfo.track_condition` | `_fetch_jra_odds()` |
+| **当日予想 馬場状態** | JRA馬場情報 `https://www.jra.go.jp/keiba/baba/` → `class='cell turf/dirt'` | `fetch_track_condition(venue)` |
 
 ### バックテスト時のオッズ使い方（外部アクセス不要）
 
@@ -84,8 +84,11 @@ else:
     odds_raw = fetch_odds(race_id)   # netkeibaフォールバック
 ```
 
-- **発走前**: JRA公式出馬表からオッズ・馬場状態が取得できる
-- **発走後**: JRA出馬表URL（`accessD.html`）がパラメータエラーを返す → オッズ取得不可（正常）
+- **発走前**: JRA公式出馬表からオッズ取得できる。馬場状態は `/keiba/baba/` から別途取得
+- **発走後（当日中）**: JRA出馬表URLで16頭のエントリーは取得できるがオッズは `0.0`（発走後は数値なし）
+- JRA出馬表HTML（`accessD.html`）には**馬場状態は含まれない**（過去走の馬場状態のみ）
+- 馬場状態は専用ページ `/keiba/baba/` の `id='baba'` → `div.unit` → `div.cell.turf/dirt` → `div.content` から取得
+- 複数開催: `/keiba/baba/` が第1会場、`index2.html` が第2会場、`index3.html` が第3会場
 - netkeiba `odds_get_form.html` は全オッズが `---.-` (JSプレースホルダー) → 実質使えない
 
 ### JRA URL生成（jra_scraper.py）の注意点

@@ -25,7 +25,7 @@ from netkeiba_race_scraper import get_race_list, get_entry_list_netkeiba, fetch_
 from scorer_turf import score_all as score_turf, parse_race_class, save_csv as save_csv_turf
 from scorer_dart import score_all as score_dart, save_csv as save_csv_dart
 from netkeiba_scraper import TrainingData as TD, fetch_training_data
-from jra_scraper import build_jra_url, get_entry_list as get_entry_list_jra
+from jra_scraper import build_jra_url, get_entry_list as get_entry_list_jra, fetch_track_condition
 
 
 def _fetch_training(race_id: str) -> dict:
@@ -38,7 +38,7 @@ def _fetch_training(race_id: str) -> dict:
 
 
 def _fetch_jra_odds(race_id: str, race_date: datetime.date, entries) -> tuple[dict, str]:
-    """JRA公式出馬表から単勝オッズと馬場状態を取得。({馬名: float}, 馬場状態) を返す。失敗時は ({}, "")。"""
+    """JRA公式出馬表から単勝オッズ、/keiba/baba/ から馬場状態を取得。({馬名: float}, 馬場状態) を返す。失敗時は ({}, "")。"""
     try:
         url = build_jra_url(race_id, race_date)
         jra_race_info, jra_entries = get_entry_list_jra(url)
@@ -50,9 +50,19 @@ def _fetch_jra_odds(race_id: str, race_date: datetime.date, entries) -> tuple[di
             for je in jra_entries
             if je.odds > 0 and je.horse_number in num_to_name
         }
-        track_condition = jra_race_info.track_condition if jra_race_info else ""
+        # 馬場状態は /keiba/baba/ から取得（出馬表ページには含まれていない）
+        track_condition = ""
+        if jra_race_info and jra_race_info.venue:
+            baba = fetch_track_condition(jra_race_info.venue)
+            if jra_race_info.surface in ("芝", "障"):
+                track_condition = baba.get("turf", "")
+            else:
+                track_condition = baba.get("dirt", "")
+            if track_condition:
+                print(f"  [馬場] {jra_race_info.venue} {'芝' if jra_race_info.surface in ('芝','障') else 'ダート'}: {track_condition}（JRA /keiba/baba/）")
         return odds_map, track_condition
-    except Exception:
+    except Exception as e:
+        print(f"  [_fetch_jra_odds エラー] {e}")
         return {}, ""
 
 # ── 事前確認チェック ──────────────────────────────────────────────────────
