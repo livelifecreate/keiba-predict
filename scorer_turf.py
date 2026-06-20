@@ -1466,28 +1466,19 @@ def save_csv(results: list[tuple], race_info, odds_map: dict = None, training_da
 
     with open(filepath, "w", newline="", encoding="utf-8-sig") as f:
         writer = _csv.writer(f)
-        if odds_map:
-            writer.writerow(["順位", "枠", "馬番", "馬名", "合計スコア",
-                             "単勝オッズ", "人気", "加点内訳", "減点内訳", "調教コメント"])
-        else:
-            writer.writerow(["順位", "枠", "馬番", "馬名", "合計スコア",
-                             "加点内訳", "減点内訳", "調教コメント"])
+        writer.writerow(["順位", "枠", "馬番", "馬名", "合計スコア",
+                         "単勝オッズ", "人気", "加点内訳", "減点内訳", "調教コメント"])
         for rank, (entry, d) in enumerate(sorted_results, 1):
             plus_items  = [f"+{getattr(d,k):.1f}{_get_label(k,getattr(d,k))}" for k in SCORE_LABELS if getattr(d,k) > 0]
             minus_items = [f"{getattr(d,k):.1f}{_get_label(k,getattr(d,k))}" for k in SCORE_LABELS if getattr(d,k) < 0]
             td_obj = training_data.get(entry.horse_name)
             comment = td_obj.comment if td_obj else ""
-            if odds_map:
-                odds_val = odds_map.get(entry.horse_name, "")
-                pop_val  = f"{popularity.get(entry.horse_name, '')}人気" if entry.horse_name in popularity else ""
-                writer.writerow([rank, entry.frame_number, entry.horse_number,
-                                 entry.horse_name, f"{d.total:+.1f}",
-                                 odds_val, pop_val,
-                                 " / ".join(plus_items), " / ".join(minus_items), comment])
-            else:
-                writer.writerow([rank, entry.frame_number, entry.horse_number,
-                                 entry.horse_name, f"{d.total:+.1f}",
-                                 " / ".join(plus_items), " / ".join(minus_items), comment])
+            odds_val = odds_map.get(entry.horse_name, "") if odds_map else ""
+            pop_val  = f"{popularity.get(entry.horse_name, '')}人気" if (odds_map and entry.horse_name in popularity) else ""
+            writer.writerow([rank, entry.frame_number, entry.horse_number,
+                             entry.horse_name, f"{d.total:+.1f}",
+                             odds_val, pop_val,
+                             " / ".join(plus_items), " / ".join(minus_items), comment])
 
         # レース情報行（芝/ダート/障害・距離・race_id）
         writer.writerow([])
