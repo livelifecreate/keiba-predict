@@ -106,8 +106,8 @@ def gen_eval_comment(sorted_results, odds_map, n_horses, sign_level, sign_detail
             lines.append("18頭フルゲートは荒れやすく軸信頼度が低下。")
         if any("ROI47%" in r for r in reasons):
             lines.append(f"2勝クラス以下：全オッズ帯でROI47%以下。3勝クラス以上のみ買い。")
-        elif any("ROI17%" in r for r in reasons):
-            lines.append(f"重賞クラス：ROI17%（n=49）。買い条件を満たさない。")
+        elif any("ROI6%" in r for r in reasons):
+            lines.append(f"重賞クラス：三連複ROI6%以下（n=92）。買い条件を満たさない。")
 
         if odds2 and odds2 >= 20:
             lines.append(f"2位{sec_entry.horse_name}{odds2:.1f}倍：相手を絞り込みにくく三連複の期待値も低い。")
@@ -162,7 +162,7 @@ def calc_buy_sign(sorted_results, odds_map, n_horses, race_class=0):
         skips.append(f"{cls_name}クラス（ROI47%）")
     if race_class >= 5:
         cls_name = {5: "GIII", 6: "GII", 7: "GI"}.get(race_class, "重賞")
-        skips.append(f"{cls_name}（ROI17%）")
+        skips.append(f"{cls_name}（三連複ROI6%以下・n=92）")
 
     if skips:
         return "skip", "⚠ 見送り", " / ".join(skips)
