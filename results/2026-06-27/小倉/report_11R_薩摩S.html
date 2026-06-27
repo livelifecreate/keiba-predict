@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>小倉11R 薩摩ステークス — レースレポート</title>
+<style>
+:root {
+    --turf:    #2A1F0E;
+    --turf2:   #352610;
+    --turf3:   #3D2C12;
+    --turf4:   #473215;
+    --gold:    #C9A227;
+    --gold2:   #E6C060;
+    --cream:   #F2EDE4;
+    --muted:   #B8A88E;
+    --red:     #E74C3C;
+    --green:   #27AE60;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--turf); color: var(--cream); font-family: 'Helvetica Neue', Arial, sans-serif; font-size: 14px; line-height: 1.6; }
+a { color: var(--gold2); }
+
+/* ── HERO ── */
+.hero {
+    background: linear-gradient(135deg, #1A1208 0%, #2A1F0E 50%, #3D2C12 100%);
+    border-bottom: 2px solid var(--gold);
+    padding: 36px 24px 28px;
+    text-align: center;
+}
+.hero-badge { display: inline-block; background: var(--gold); color: #1A1208; font-size: 11px; font-weight: 700; letter-spacing: 2px; padding: 3px 10px; border-radius: 3px; margin-bottom: 10px; text-transform: uppercase; }
+.hero-title { font-size: 52px; font-weight: 900; letter-spacing: -1px; color: var(--gold2); line-height: 1.1; }
+.hero-sub { color: var(--muted); font-size: 15px; margin-top: 6px; letter-spacing: 1px; }
+.hero-sign { margin-top: 18px; display: inline-block; background: #7f8c8d; color: white; padding: 7px 22px; border-radius: 6px; font-weight: 700; font-size: 15px; }
+
+/* ── INFO STRIP ── */
+.info-strip {
+    background: var(--turf2);
+    display: flex; flex-wrap: wrap; gap: 0;
+    border-bottom: 1px solid #473215;
+}
+.info-item {
+    flex: 1 1 120px;
+    padding: 12px 16px;
+    border-right: 1px solid #473215;
+    text-align: center;
+}
+.info-item:last-child { border-right: none; }
+.info-label { font-size: 10px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
+.info-value { font-size: 18px; font-weight: 700; color: var(--gold2); margin-top: 2px; }
+.info-value.bad  { color: #E74C3C; }
+.info-value.warn { color: #E67E22; }
+.info-value.ok   { color: #27AE60; }
+
+/* ── SECTION ── */
+.section { padding: 20px 20px; border-bottom: 1px solid var(--turf4); }
+.section-title {
+    font-size: 11px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase;
+    color: var(--gold); border-left: 3px solid var(--gold); padding-left: 10px;
+    margin-bottom: 14px;
+}
+
+/* ── バックテスト収支 ── */
+.bt-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }
+.bt-card { background: var(--turf3); border-radius: 6px; padding: 12px; text-align: center; border: 1px solid var(--turf4); }
+.bt-label { font-size: 11px; color: var(--muted); }
+.bt-value { font-size: 22px; font-weight: 800; margin: 2px 0; }
+.bt-value.hot  { color: #27AE60; }
+.bt-value.warn { color: #E67E22; }
+.bt-value.cold { color: #E74C3C; }
+.bt-sub { font-size: 11px; color: var(--muted); }
+
+/* ── 採点ランキング ── */
+.rank-row {
+    display: grid;
+    grid-template-columns: 36px 36px 1fr auto auto;
+    gap: 8px;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--turf4);
+}
+.rank-row:last-child { border-bottom: none; }
+.rank-pos { font-size: 18px; font-weight: 800; color: var(--gold2); text-align: center; width: 28px; }
+.rank-pos.top { color: var(--gold); }
+.waku-badge {
+    width: 28px; height: 28px; border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700; flex-shrink: 0;
+}
+.waku-1 { background: #FFFFFF; color: #000; }
+.waku-2 { background: #000000; color: #FFF; border: 1px solid #333; }
+.waku-3 { background: #CC0000; color: #FFF; }
+.waku-4 { background: #0000CC; color: #FFF; }
+.waku-5 { background: #CCCC00; color: #000; }
+.waku-6 { background: #00AA00; color: #FFF; }
+.waku-7 { background: #FF8800; color: #FFF; }
+.waku-8 { background: #FF69B4; color: #000; }
+.rank-name { }
+.rank-horse { font-size: 15px; font-weight: 700; color: var(--cream); }
+.rank-meta { font-size: 11px; color: var(--muted); margin-top: 1px; }
+.rank-score-wrap { text-align: right; min-width: 60px; }
+.rank-score { font-size: 18px; font-weight: 800; color: var(--gold2); }
+.rank-score.neg { color: var(--muted); }
+.score-bar-bg { background: var(--turf4); border-radius: 3px; height: 5px; margin-top: 4px; }
+.score-bar {
+    height: 5px; border-radius: 3px; background: var(--gold);
+    width: 0%;
+    animation: fillBar 1.2s ease-out forwards;
+}
+@keyframes fillBar { from { width: 0% } to { width: var(--pct) } }
+.rank-odds { text-align: right; min-width: 70px; }
+.odds-val { font-size: 13px; font-weight: 700; color: var(--cream); }
+.pop-val  { font-size: 11px; color: var(--muted); }
+.umaban-badge {
+    display: inline-block; width: 22px; height: 22px; border-radius: 50%;
+    background: var(--turf4); border: 1px solid var(--gold);
+    text-align: center; line-height: 22px; font-size: 11px; font-weight: 700;
+    color: var(--gold2); margin-right: 4px;
+}
+
+/* ── 調教テーブル ── */
+.training-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.training-table th { background: var(--turf4); color: var(--muted); font-size: 10px; letter-spacing: 1px; text-transform: uppercase; padding: 7px 10px; text-align: center; }
+.training-table td { padding: 8px 10px; border-bottom: 1px solid var(--turf4); vertical-align: middle; }
+.training-table tr:last-child td { border-bottom: none; }
+.rank-badge { display: inline-block; padding: 2px 7px; border-radius: 3px; font-size: 11px; font-weight: 700; }
+.rank-A { background: #27AE60; color: white; }
+.rank-B { background: #2980B9; color: white; }
+.rank-C { background: #7F8C8D; color: white; }
+.rank-D { background: #4A4A4A; color: #AAA; }
+.status-badge { font-size: 10px; color: var(--muted); background: var(--turf4); padding: 2px 6px; border-radius: 3px; }
+
+/* ── ペース可視化 ── */
+.pace-grid { display: flex; gap: 10px; flex-wrap: wrap; }
+.pace-group { flex: 1 1 140px; background: var(--turf3); border-radius: 6px; padding: 12px; border: 1px solid var(--turf4); }
+.pace-group-label { font-size: 10px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
+.pace-horse { font-size: 12px; color: var(--cream); padding: 2px 0; }
+.pace-bar-row { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+.pace-bar-label { font-size: 10px; color: var(--muted); width: 80px; }
+.pace-bar-bg { flex: 1; background: var(--turf4); border-radius: 3px; height: 8px; }
+.pace-bar-fill { height: 8px; border-radius: 3px; background: var(--gold); }
+.pace-scenario { background: var(--turf3); border-radius: 6px; padding: 14px; margin-top: 12px; border: 1px solid var(--turf4); }
+.pace-scenario-title { font-size: 11px; color: var(--gold); font-weight: 700; margin-bottom: 6px; }
+.pace-scenario-text { font-size: 13px; color: var(--cream); line-height: 1.6; }
+.key-horse { color: var(--gold2); font-weight: 700; }
+
+/* ── 加減点ブレークダウン ── */
+.breakdown-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px; }
+.bd-card { background: var(--turf3); border-radius: 6px; padding: 12px; border: 1px solid var(--turf4); }
+.bd-header { font-size: 13px; font-weight: 700; color: var(--cream); margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+.bd-plus  { color: #27AE60; font-size: 11px; margin-top: 2px; line-height: 1.5; }
+.bd-minus { color: #E74C3C; font-size: 11px; margin-top: 4px; line-height: 1.5; }
+
+/* ── 買い目 ── */
+.form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; }
+.form-card { background: var(--turf3); border-radius: 8px; padding: 14px; border: 1px solid var(--turf4); }
+.form-title { font-size: 11px; color: var(--gold); font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px; }
+.form-combos { font-size: 13px; color: var(--cream); line-height: 2.0; }
+.form-note { font-size: 11px; color: var(--muted); margin-top: 8px; }
+
+/* ── 見送り強調 ── */
+.pass-banner {
+    background: rgba(127,140,141,0.15);
+    border: 1px solid #7f8c8d;
+    border-radius: 6px;
+    padding: 12px 16px;
+    margin-bottom: 14px;
+    font-size: 13px;
+    color: var(--muted);
+}
+
+/* ── mobile ── */
+@media (max-width: 640px) {
+    .hero-title { font-size: 32px; }
+    .rank-row { grid-template-columns: 28px 28px 1fr auto; }
+    .rank-odds { display: none; }
+    .info-item { flex: 1 1 80px; padding: 8px 10px; }
+    .info-value { font-size: 14px; }
+    .bt-grid { grid-template-columns: repeat(2, 1fr); }
+    .breakdown-grid { grid-template-columns: 1fr; }
+    .form-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- ① HERO -->
+<div class="hero">
+    <div class="hero-badge">Race Report · 2026-06-27</div>
+    <div class="hero-title">薩摩ステークス</div>
+    <div class="hero-sub">小倉11R · ダート1700m · OP · 15頭</div>
+    <div class="hero-sign">⚠ 見送り（乖離4.0pt：3〜5pt見送りゾーン）</div>
+</div>
+
+<!-- ② INFO STRIP -->
+<div class="info-strip">
+    <div class="info-item">
+        <div class="info-label">馬場</div>
+        <div class="info-value bad">不良</div>
+    </div>
+    <div class="info-item">
+        <div class="info-label">天候</div>
+        <div class="info-value">—</div>
+    </div>
+    <div class="info-item">
+        <div class="info-label">ペース予測</div>
+        <div class="info-value warn">ハイP</div>
+    </div>
+    <div class="info-item">
+        <div class="info-label">スコア乖離</div>
+        <div class="info-value warn">4.0pt</div>
+    </div>
+    <div class="info-item">
+        <div class="info-label">見送り理由</div>
+        <div class="info-value" style="font-size:13px">乖離3〜5pt</div>
+    </div>
+    <div class="info-item">
+        <div class="info-label">頭数</div>
+        <div class="info-value">15頭</div>
+    </div>
+    <div class="info-item">
+        <div class="info-label">距離</div>
+        <div class="info-value">D1700m</div>
+    </div>
+    <div class="info-item">
+        <div class="info-label">クラス</div>
+        <div class="info-value">OP</div>
+    </div>
+</div>
+
+<!-- ③ バックテスト収支 -->
+<div class="section">
+    <div class="section-title">バックテスト収支 — OP クラス</div>
+    <div class="pass-banner">⚠ このレースは見送り対象（乖離4.0pt）。以下は参考として過去のOP全体ROIを表示。</div>
+    <div class="bt-grid">
+        <div class="bt-card">
+            <div class="bt-label">単勝</div>
+            <div class="bt-value warn">111.7%</div>
+            <div class="bt-sub">OP全体 ROI</div>
+        </div>
+        <div class="bt-card">
+            <div class="bt-label">馬連1-2</div>
+            <div class="bt-value hot">256.7%</div>
+            <div class="bt-sub">OP全体 ROI</div>
+        </div>
+        <div class="bt-card">
+            <div class="bt-label">三連複5頭BOX</div>
+            <div class="bt-value hot">177.7%</div>
+            <div class="bt-sub">OP全体 ROI</div>
+        </div>
+        <div class="bt-card">
+            <div class="bt-label">三連複1軸4頭</div>
+            <div class="bt-value hot">147.6%</div>
+            <div class="bt-sub">OP全体 ROI</div>
+        </div>
+        <div class="bt-card">
+            <div class="bt-label">馬連3点BOX</div>
+            <div class="bt-value hot">185.7%</div>
+            <div class="bt-sub">OP全体 ROI</div>
+        </div>
+        <div class="bt-card">
+            <div class="bt-label">OP×ダ 3頭BOX</div>
+            <div class="bt-value warn">665%</div>
+            <div class="bt-sub">n=39（実装禁止）</div>
+        </div>
+    </div>
+</div>
+
+<!-- ④ 採点ランキング -->
+<div class="section">
+    <div class="section-title">採点ランキング — 全15頭</div>
+
+    <!-- 1位 パフ -->
+    <div class="rank-row">
+        <div class="rank-pos top">1</div>
+        <div class="waku-badge waku-8">⑧</div>
+        <div class="rank-name">
+            <div class="rank-horse"><span class="umaban-badge">15</span>パフ</div>
+            <div class="rank-meta">同コース実績 / 叩き2戦目 / 道悪適性 / 好位差し</div>
+            <div class="score-bar-bg"><div class="score-bar" style="--pct:100%"></div></div>
+        </div>
+        <div class="rank-score-wrap"><div class="rank-score">+13.4</div></div>
+        <div class="rank-odds"><div class="odds-val">10.1倍</div><div class="pop-val">7人気</div></div>
+    </div>
+
+    <!-- 2位 ストップヤーニング -->
+    <div class="rank-row">
+        <div class="rank-pos top">2</div>
+        <div class="waku-badge waku-6">⑥</div>
+        <div class="rank-name">
+            <div class="rank-horse"><span class="umaban-badge">11</span>ストップヤーニング</div>
+            <div class="rank-meta">同コース近距離実績 / 距離短縮 / 好位差し</div>
+            <div class="score-bar-bg"><div class="score-bar" style="--pct:70%"></div></div>
+        </div>
+        <div class="rank-score-wrap"><div class="rank-score">+9.4</div></div>
+        <div class="rank-odds"><div class="odds-val">7.5倍</div><div class="pop-val">4人気</div></div>
+    </div>
+
+    <!-- 3位 ゴッドブルービー -->
+    <div class="rank-row">
+        <div class="rank-pos top">3</div>
+        <div class="waku-badge waku-5">⑤</div>
+        <div class="rank-name">
+            <div class="rank-horse"><span class="umaban-badge">9</span>ゴッドブルービー</div>
+            <div class="rank-meta">同コース実績 / 叩き2戦目 / グレード実績 / 好位差し</div>
+            <div class="score-bar-bg"><div class="score-bar" style="--pct:56%"></div></div>
+        </div>
+        <div class="rank-score-wrap"><div class="rank-score">+7.5</div></div>
+        <div class="rank-odds"><div class="odds-val">6.6倍</div><div class="pop-val">3人気</div></div>
+    </div>
+
+    <!-- 4位 ハリーケーン -->
+    <div class="rank-row">
+        <div class="rank-pos">4</div>
+        <div class="waku-badge waku-3">③</div>
+        <div class="rank-name">
+            <div class="rank-horse"><span class="umaban-badge">4</span>ハリーケーン</div>
+            <div class="rank-meta">前走好走 / 複勝安定 / 差し脚質</div>
+            <div class="score-bar-bg"><div class="score-bar" style="--pct:55%"></div></div>
+        </div>
+        <div class="rank-score-wrap"><div class="rank-score">+7.4</div></div>
+        <div class="rank-odds"><div class="odds-val">9.8倍</div><div class="pop-val">6人気</div></div>
+    </div>
+
+    <!-- 5位 マッシャーブルム -->
+    <div class="rank-row">
+        <div class="rank-pos">5</div>
+        <div class="waku-badge waku-6">⑥</div>
+        <div class="rank-name">
+            <div class="rank-horse"><span class="umaban-badge">10</span>マッシャーブルム</div>
+            <div class="rank-meta">同コース実績 / 叩き2戦目 / グレード実績 / 道悪適性 / 先行</div>
+            <div class="score-bar-bg"><div class="score-bar" style="--pct:52%"></div></div>
+        </div>
+        <div class="rank-score-wrap"><div class="rank-score">+7.0</div></div>
+        <div class="rank-odds"><div class="odds-val">18.0倍</div><div class="pop-val">8人気</div></div>
+    </div>
+
+    <!-- 6位 ジューンエオス -->
+    <div class="rank-row">
+        <div class="rank-pos">6</div>
+        <div class="waku-badge waku-2">②</div>
+        <div class="rank-name">
+            <div class="rank-horse"><span class="umaban-badge">2</span>ジューンエオス</div>
+            <div class="rank-meta">同コース実績 / 内枠先行 / 道悪適性 / 先行（ハイP不利）</div>
+            <div class="score-bar-bg"><div class="score-bar" style="--pct:51%"></div></div>
+        </div>
+        <div class="rank-score-wrap"><div class="rank-score">+6.9</div></div>
+        <div class="rank-odds"><div class="odds-val">5.2倍</div><div class="pop-val">1人気</div></div>
+    </div>
+
+    <!-- 7位 グランキングオー -->
+    <div class="rank-row">
+        <div class="rank-pos">7</div>
+        <div class="waku-badge waku-3">③</div>
+        <div class="rank-name">
+            <div class="rank-horse"><span class="umaban-badge">5</span>グランキングオー</div>
+            <div class="rank-meta">叩き2戦目 / 内枠先行 / 道悪適性 / 先行（ハイP不利）</div>
+            <div class="score-bar-bg"><div class="score-bar" style="--pct:51%"></div></div>
+        </div>
+        <div class="rank-score-wrap"><div class="rank-score">+6.9</div></div>
+        <div class="rank-odds"><div class="odds-val">26.0倍</div><div class="pop-val">11人気</div></div>
+    </div>
+
+    <!-- 8位 シンビリーブ -->
+    <div class="rank-row">
+        <div class="rank-pos">8</div>
+        <div class="waku-badge waku-7">⑦</div>
+        <div class="rank-name">
+            <div class="rank-horse"><span class="umaban-badge">13</span>シンビリーブ</div>
+            <div class="rank-meta">距離短縮 / グレード実績 / 先行</div>
+            <div class="score-bar-bg"><div class="score-bar" style="--pct:22%"></div></div>
+        </div>
+        <div class="rank-score-wrap"><div class="rank-score">+3.0</div></div>
+        <div class="rank-odds"><div class="odds-val">6.3倍</div><div class="pop-val">2人気</div></div>
+    </div>
+
+    <!-- 9位 アレナパラシオ -->
+    <div class="rank-row">
+        <div class="rank-pos">9</div>
+        <div class="waku-badge waku-7">⑦</div>
+        <div class="rank-name">
+            <div class="rank-horse"><span class="umaban-badge">12</span>アレナパラシオ</div>
+            <div class="rank-meta">叩き2戦目 / グレード実績 / 逃げ</div>
+            <div class="score-bar-bg"><div class="score-bar" style="--pct:22%"></div></div>
+        </div>
+        <div class="rank-score-wrap"><div class="rank-score">+2.9</div></div>
+        <div class="rank-odds"><div class="odds-val">8.5倍</div><div class="pop-val">5人気</div></div>
+    </div>
+
+    <!-- 10位 テーオールビー -->
+    <div class="rank-row">
+        <div class="rank-pos">10</div>
+        <div class="waku-badge waku-2">②</div>
+        <div class="rank-name">
+            <div class="rank-horse"><span class="umaban-badge">3</span>テーオールビー</div>
+            <div class="rank-meta">グレード実績 / 内枠先行 / 先行</div>
+            <div class="score-bar-bg"><div class="score-bar" style="--pct:19%"></div></div>
+        </div>
+        <div class="rank-score-wrap"><div class="rank-score">+2.5</div></div>
+        <div class="rank-odds"><div class="odds-val">20.8倍</div><div class="pop-val">10人気</div></div>
+    </div>
+
+    <!-- 11位 ケイアイメキラ -->
+    <div class="rank-row">
+        <div class="rank-pos">11</div>
+        <div class="waku-badge waku-1">①</div>
+        <div class="rank-name">
+            <div class="rank-horse"><span class="umaban-badge">1</span>ケイアイメキラ</div>
+            <div class="rank-meta">前々走好走 / 好位差し</div>
+            <div class="score-bar-bg"><div class="score-bar" style="--pct:18%"></div></div>
+        </div>
+        <div class="rank-score-wrap"><div class="rank-score">+2.4</div></div>
+        <div class="rank-odds"><div class="odds-val">40.7倍</div><div class="pop-val">14人気</div></div>
+    </div>
+
+    <!-- 12位 カネトシゴウト -->
+    <div class="rank-row">
+        <div class="rank-pos">12</div>
+        <div class="waku-badge waku-4">④</div>
+        <div class="rank-name">
+            <div class="rank-horse"><span class="umaban-badge">7</span>カネトシゴウト</div>
+            <div class="rank-meta">距離短縮 / 先行</div>
+            <div class="score-bar-bg"><div class="score-bar" style="--pct:15%"></div></div>
+        </div>
+        <div class="rank-score-wrap"><div class="rank-score">+2.0</div></div>
+        <div class="rank-odds"><div class="odds-val">19.6倍</div><div class="pop-val">9人気</div></div>
+    </div>
+
+    <!-- 13位 メイショウミカワ -->
+    <div class="rank-row">
+        <div class="rank-pos">13</div>
+        <div class="waku-badge waku-4">④</div>
+        <div class="rank-name">
+            <div class="rank-horse"><span class="umaban-badge">6</span>メイショウミカワ</div>
+            <div class="rank-meta">血統距離適性 / 先行</div>
+            <div class="score-bar-bg"><div class="score-bar" style="--pct:4%"></div></div>
+        </div>
+        <div class="rank-score-wrap"><div class="rank-score">+0.5</div></div>
+        <div class="rank-odds"><div class="odds-val">29.0倍</div><div class="pop-val">12人気</div></div>
+    </div>
+
+    <!-- 14位 メイショウコガシラ -->
+    <div class="rank-row">
+        <div class="rank-pos">14</div>
+        <div class="waku-badge waku-8">⑧</div>
+        <div class="rank-name">
+            <div class="rank-horse"><span class="umaban-badge">14</span>メイショウコガシラ</div>
+            <div class="rank-meta">前走3F最速 / 前走好走 / グレード実績 / 初ダート大幅減点</div>
+            <div class="score-bar-bg"><div class="score-bar" style="--pct:0%"></div></div>
+        </div>
+        <div class="rank-score-wrap"><div class="rank-score neg">-0.2</div></div>
+        <div class="rank-odds"><div class="odds-val">45.6倍</div><div class="pop-val">15人気</div></div>
+    </div>
+
+    <!-- 15位 プロミシングスター -->
+    <div class="rank-row">
+        <div class="rank-pos">15</div>
+        <div class="waku-badge waku-5">⑤</div>
+        <div class="rank-name">
+            <div class="rank-horse"><span class="umaban-badge">8</span>プロミシングスター</div>
+            <div class="rank-meta">好位差し / 距離延長・道悪で大幅減点</div>
+            <div class="score-bar-bg"><div class="score-bar" style="--pct:0%"></div></div>
+        </div>
+        <div class="rank-score-wrap"><div class="rank-score neg">-2.5</div></div>
+        <div class="rank-odds"><div class="odds-val">34.6倍</div><div class="pop-val">13人気</div></div>
+    </div>
+</div>
+
+<!-- ⑤ 調教データ -->
+<div class="section">
+    <div class="section-title">調教データ — netkeiba oikiri（無加工）</div>
+    <table class="training-table">
+        <thead>
+            <tr>
+                <th>枠</th><th>馬番</th><th>ランク</th><th>馬名</th><th>状態</th><th>コメント</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td style="text-align:center">①</td><td style="text-align:center">1</td><td><span class="rank-badge rank-C">C</span></td><td>ケイアイメキラ</td><td><span class="status-badge">前走</span></td><td>反応平凡</td></tr>
+            <tr><td style="text-align:center">②</td><td style="text-align:center">2</td><td><span class="rank-badge rank-B">B</span></td><td>ジューンエオス</td><td><span class="status-badge">前走</span></td><td>手応勝る</td></tr>
+            <tr><td style="text-align:center">②</td><td style="text-align:center">3</td><td><span class="rank-badge rank-C">C</span></td><td>テーオールビー</td><td><span class="status-badge">前走</span></td><td>やや良化</td></tr>
+            <tr><td style="text-align:center">③</td><td style="text-align:center">4</td><td><span class="rank-badge rank-B">B</span></td><td>ハリーケーン</td><td><span class="status-badge">前走</span></td><td>仕上良好</td></tr>
+            <tr><td style="text-align:center">③</td><td style="text-align:center">5</td><td><span class="rank-badge rank-B">B</span></td><td>グランキングオー</td><td><span class="status-badge">前走</span></td><td>仕上良好</td></tr>
+            <tr><td style="text-align:center">④</td><td style="text-align:center">6</td><td><span class="rank-badge rank-B">B</span></td><td>メイショウミカワ</td><td><span class="status-badge">前走</span></td><td>仕上良好</td></tr>
+            <tr><td style="text-align:center">④</td><td style="text-align:center">7</td><td><span class="rank-badge rank-B">B</span></td><td>カネトシゴウト</td><td><span class="status-badge">前走</span></td><td>仕上上々</td></tr>
+            <tr><td style="text-align:center">⑤</td><td style="text-align:center">8</td><td><span class="rank-badge rank-C">C</span></td><td>プロミシングスター</td><td><span class="status-badge">前走</span></td><td>まずまず</td></tr>
+            <tr><td style="text-align:center">⑤</td><td style="text-align:center">9</td><td><span class="rank-badge rank-B">B</span></td><td>ゴッドブルービー</td><td><span class="status-badge">前走</span></td><td>末脚良し</td></tr>
+            <tr><td style="text-align:center">⑥</td><td style="text-align:center">10</td><td><span class="rank-badge rank-B">B</span></td><td>マッシャーブルム</td><td><span class="status-badge">前走</span></td><td>叩き良化</td></tr>
+            <tr><td style="text-align:center">⑥</td><td style="text-align:center">11</td><td><span class="rank-badge rank-B">B</span></td><td>ストップヤーニング</td><td><span class="status-badge">前走</span></td><td>気配上々</td></tr>
+            <tr><td style="text-align:center">⑦</td><td style="text-align:center">12</td><td><span class="rank-badge rank-C">C</span></td><td>アレナパラシオ</td><td><span class="status-badge">前走</span></td><td>遅れ上々</td></tr>
+            <tr><td style="text-align:center">⑦</td><td style="text-align:center">13</td><td><span class="rank-badge rank-B">B</span></td><td>シンビリーブ</td><td><span class="status-badge">前走</span></td><td>伸び上々</td></tr>
+            <tr><td style="text-align:center">⑧</td><td style="text-align:center">14</td><td><span class="rank-badge rank-C">C</span></td><td>メイショウコガシラ</td><td><span class="status-badge">前走</span></td><td>平行線</td></tr>
+            <tr><td style="text-align:center">⑧</td><td style="text-align:center">15</td><td><span class="rank-badge rank-B">B</span></td><td>パフ</td><td><span class="status-badge">前走</span></td><td>状態良好</td></tr>
+        </tbody>
+    </table>
+</div>
+
+<!-- ⑥ 展開予測 -->
+<div class="section">
+    <div class="section-title">レース展開予測</div>
+    <div class="pace-grid">
+        <div class="pace-group">
+            <div class="pace-group-label">逃げ (1頭)</div>
+            <div class="pace-horse">⑦⑫ アレナパラシオ</div>
+        </div>
+        <div class="pace-group">
+            <div class="pace-group-label">先行 (6頭)</div>
+            <div class="pace-horse">②② ジューンエオス</div>
+            <div class="pace-horse">②③ テーオールビー</div>
+            <div class="pace-horse">③⑤ グランキングオー</div>
+            <div class="pace-horse">④⑦ カネトシゴウト</div>
+            <div class="pace-horse">⑥⑩ マッシャーブルム</div>
+            <div class="pace-horse">⑦⑬ シンビリーブ</div>
+        </div>
+        <div class="pace-group">
+            <div class="pace-group-label">好位差し (5頭)</div>
+            <div class="pace-horse">①① ケイアイメキラ</div>
+            <div class="pace-horse">⑤⑨ ゴッドブルービー</div>
+            <div class="pace-horse">⑥⑪ ストップヤーニング</div>
+            <div class="pace-horse">⑧⑮ パフ</div>
+            <div class="pace-horse">⑤⑧ プロミシングスター</div>
+        </div>
+        <div class="pace-group">
+            <div class="pace-group-label">差し (1頭)</div>
+            <div class="pace-horse">③④ ハリーケーン</div>
+        </div>
+    </div>
+    <div style="margin-top:10px">
+        <div class="pace-bar-row">
+            <div class="pace-bar-label">逃げ+先行比率</div>
+            <div class="pace-bar-bg"><div class="pace-bar-fill" style="width:46.7%;background:#E74C3C"></div></div>
+            <div style="font-size:12px;color:#E74C3C;margin-left:8px;font-weight:700">46.7% → ハイペース</div>
+        </div>
+    </div>
+    <div class="pace-scenario" style="margin-top:14px">
+        <div class="pace-scenario-title">展開シナリオ</div>
+        <div class="pace-scenario-text">
+            先行勢が7頭と多く、不良馬場でのダート1700m・ハイペース濃厚。各先行馬が譲らないと
+            直線で失速しやすく、好位差しの<span class="key-horse">⑮パフ</span>・
+            <span class="key-horse">⑪ストップヤーニング</span>が有利な展開。
+            1人気<span class="key-horse">②ジューンエオス</span>はペース適性マイナスで、
+            先行勢のハイペース競馬では直線の粘りに疑問符。
+            採点1位のパフはスコア差4.0ptながら道悪適性・同コース実績が光り、妙味あり。
+        </div>
+    </div>
+    <div class="pace-scenario" style="margin-top:10px;border-color:#473215">
+        <div class="pace-scenario-title" style="color:var(--muted)">鍵を握る馬</div>
+        <div class="pace-scenario-text" style="font-size:12px">
+            <span class="key-horse">⑫アレナパラシオ</span>（逃げ）のペース設定次第。前々走でペース適性-2.0の逃げタイプが引っ張ると全馬総崩れも。
+            <span class="key-horse">⑩マッシャーブルム</span>は先行しながら道悪実績+1.0を持つ伏兵。
+        </div>
+    </div>
+</div>
+
+<!-- ⑦ 加減点ブレークダウン -->
+<div class="section">
+    <div class="section-title">加減点ブレークダウン — 全15頭</div>
+    <div class="breakdown-grid">
+
+        <div class="bd-card">
+            <div class="bd-header"><span class="waku-badge waku-8" style="display:inline-flex;width:22px;height:22px;font-size:11px;border-radius:3px;align-items:center;justify-content:center;flex-shrink:0">⑧</span>⑮ パフ <span style="color:var(--gold2);font-size:13px;margin-left:auto">+13.4</span></div>
+            <div class="bd-plus">+3.0 同コース実績 / +2.0 調教B評価 / +1.0 叩き2戦目<br>+0.4 前々走好走 / +0.5 血統距離適性 / +1.5 複勝安定<br>+2.5 勝利数ボーナス / +1.0 道悪適性 / +1.5 ペース適性</div>
+        </div>
+
+        <div class="bd-card">
+            <div class="bd-header"><span class="waku-badge waku-6" style="display:inline-flex;width:22px;height:22px;font-size:11px;border-radius:3px;align-items:center;justify-content:center;flex-shrink:0">⑥</span>⑪ ストップヤーニング <span style="color:var(--gold2);font-size:13px;margin-left:auto">+9.4</span></div>
+            <div class="bd-plus">+2.0 同コース近距離実績 / +2.0 調教B評価 / +1.0 距離短縮<br>+0.4 前々走好走 / +2.5 勝利数ボーナス / +1.5 ペース適性</div>
+        </div>
+
+        <div class="bd-card">
+            <div class="bd-header"><span class="waku-badge waku-5" style="display:inline-flex;width:22px;height:22px;font-size:11px;border-radius:3px;align-items:center;justify-content:center;flex-shrink:0">⑤</span>⑨ ゴッドブルービー <span style="color:var(--gold2);font-size:13px;margin-left:auto">+7.5</span></div>
+            <div class="bd-plus">+3.0 同コース実績 / +2.0 調教B評価 / +1.0 叩き2戦目<br>+1.0 グレード実績(3-4走前) / +1.5 ペース適性</div>
+            <div class="bd-minus">-1.0 道悪適性</div>
+        </div>
+
+        <div class="bd-card">
+            <div class="bd-header"><span class="waku-badge waku-3" style="display:inline-flex;width:22px;height:22px;font-size:11px;border-radius:3px;align-items:center;justify-content:center;flex-shrink:0">③</span>④ ハリーケーン <span style="color:var(--gold2);font-size:13px;margin-left:auto">+7.4</span></div>
+            <div class="bd-plus">+2.0 調教B評価 / +0.4 前走好走 / +1.5 複勝安定ボーナス<br>+2.5 勝利数ボーナス / +2.0 ペース適性</div>
+            <div class="bd-minus">-1.0 道悪適性</div>
+        </div>
+
+        <div class="bd-card">
+            <div class="bd-header"><span class="waku-badge waku-6" style="display:inline-flex;width:22px;height:22px;font-size:11px;border-radius:3px;align-items:center;justify-content:center;flex-shrink:0">⑥</span>⑩ マッシャーブルム <span style="color:var(--gold2);font-size:13px;margin-left:auto">+7.0</span></div>
+            <div class="bd-plus">+3.0 同コース実績 / +2.0 調教B評価 / +1.0 叩き2戦目<br>+1.0 グレード実績(3-4走前) / +1.0 道悪適性</div>
+            <div class="bd-minus">-1.0 ペース適性</div>
+        </div>
+
+        <div class="bd-card">
+            <div class="bd-header"><span class="waku-badge waku-2" style="display:inline-flex;width:22px;height:22px;font-size:11px;border-radius:3px;align-items:center;justify-content:center;flex-shrink:0">②</span>② ジューンエオス <span style="color:var(--gold2);font-size:13px;margin-left:auto">+6.9</span></div>
+            <div class="bd-plus">+3.0 同コース実績 / +2.0 調教B評価 / +0.4 前々走好走<br>+1.0 内枠先行 / +2.5 勝利数ボーナス / +1.0 道悪適性</div>
+            <div class="bd-minus">-2.0 枠番補正 / -1.0 ペース適性</div>
+        </div>
+
+        <div class="bd-card">
+            <div class="bd-header"><span class="waku-badge waku-3" style="display:inline-flex;width:22px;height:22px;font-size:11px;border-radius:3px;align-items:center;justify-content:center;flex-shrink:0">③</span>⑤ グランキングオー <span style="color:var(--gold2);font-size:13px;margin-left:auto">+6.9</span></div>
+            <div class="bd-plus">+2.0 調教B評価 / +1.0 叩き2戦目 / +0.4 前走好走<br>+1.0 内枠先行 / +2.5 勝利数ボーナス / +1.0 道悪適性</div>
+            <div class="bd-minus">-1.0 ペース適性</div>
+        </div>
+
+        <div class="bd-card">
+            <div class="bd-header"><span class="waku-badge waku-7" style="display:inline-flex;width:22px;height:22px;font-size:11px;border-radius:3px;align-items:center;justify-content:center;flex-shrink:0">⑦</span>⑬ シンビリーブ <span style="color:var(--gold2);font-size:13px;margin-left:auto">+3.0</span></div>
+            <div class="bd-plus">+2.0 調教B評価 / +1.0 距離短縮 / +1.0 グレード実績(3-4走前)</div>
+            <div class="bd-minus">-1.0 ペース適性</div>
+        </div>
+
+        <div class="bd-card">
+            <div class="bd-header"><span class="waku-badge waku-7" style="display:inline-flex;width:22px;height:22px;font-size:11px;border-radius:3px;align-items:center;justify-content:center;flex-shrink:0">⑦</span>⑫ アレナパラシオ <span style="color:var(--gold2);font-size:13px;margin-left:auto">+2.9</span></div>
+            <div class="bd-plus">+1.0 調教C評価 / +1.0 叩き2戦目 / +0.4 前々走好走<br>+1.0 グレード実績(3-4走前) / +2.5 勝利数ボーナス</div>
+            <div class="bd-minus">-1.0 道悪適性 / -2.0 ペース適性</div>
+        </div>
+
+        <div class="bd-card">
+            <div class="bd-header"><span class="waku-badge waku-2" style="display:inline-flex;width:22px;height:22px;font-size:11px;border-radius:3px;align-items:center;justify-content:center;flex-shrink:0">②</span>③ テーオールビー <span style="color:var(--gold2);font-size:13px;margin-left:auto">+2.5</span></div>
+            <div class="bd-plus">+1.0 調教C評価 / +1.0 グレード実績(3-4走前) / +1.0 内枠先行<br>+2.5 勝利数ボーナス</div>
+            <div class="bd-minus">-2.0 枠番補正 / -1.0 ペース適性</div>
+        </div>
+
+        <div class="bd-card">
+            <div class="bd-header"><span class="waku-badge waku-1" style="display:inline-flex;width:22px;height:22px;font-size:11px;border-radius:3px;align-items:center;justify-content:center;flex-shrink:0">①</span>① ケイアイメキラ <span style="color:var(--gold2);font-size:13px;margin-left:auto">+2.4</span></div>
+            <div class="bd-plus">+1.0 調教C評価 / +0.4 前々走好走 / +2.5 勝利数ボーナス / +1.5 ペース適性</div>
+            <div class="bd-minus">-2.0 枠番補正 / -1.0 道悪適性</div>
+        </div>
+
+        <div class="bd-card">
+            <div class="bd-header"><span class="waku-badge waku-4" style="display:inline-flex;width:22px;height:22px;font-size:11px;border-radius:3px;align-items:center;justify-content:center;flex-shrink:0">④</span>⑦ カネトシゴウト <span style="color:var(--gold2);font-size:13px;margin-left:auto">+2.0</span></div>
+            <div class="bd-plus">+2.0 調教B評価 / +1.0 距離短縮</div>
+            <div class="bd-minus">-1.0 ペース適性</div>
+        </div>
+
+        <div class="bd-card">
+            <div class="bd-header"><span class="waku-badge waku-4" style="display:inline-flex;width:22px;height:22px;font-size:11px;border-radius:3px;align-items:center;justify-content:center;flex-shrink:0">④</span>⑥ メイショウミカワ <span style="color:var(--gold2);font-size:13px;margin-left:auto">+0.5</span></div>
+            <div class="bd-plus">+2.0 調教B評価 / +1.0 血統距離適性</div>
+            <div class="bd-minus">-0.5 前走ローカル / -1.0 道悪適性 / -1.0 ペース適性</div>
+        </div>
+
+        <div class="bd-card">
+            <div class="bd-header"><span class="waku-badge waku-8" style="display:inline-flex;width:22px;height:22px;font-size:11px;border-radius:3px;align-items:center;justify-content:center;flex-shrink:0">⑧</span>⑭ メイショウコガシラ <span style="color:var(--muted);font-size:13px;margin-left:auto">-0.2</span></div>
+            <div class="bd-plus">+2.0 前走3F最速 / +1.0 調教C評価 / +0.4 前走好走<br>+0.4 前々走好走 / +1.0 グレード実績(3-4走前)</div>
+            <div class="bd-minus">-5.0 初馬場種別 / -4.0 特殊条件 / -0.5 前走ローカル</div>
+        </div>
+
+        <div class="bd-card">
+            <div class="bd-header"><span class="waku-badge waku-5" style="display:inline-flex;width:22px;height:22px;font-size:11px;border-radius:3px;align-items:center;justify-content:center;flex-shrink:0">⑤</span>⑧ プロミシングスター <span style="color:var(--muted);font-size:13px;margin-left:auto">-2.5</span></div>
+            <div class="bd-plus">+1.0 調教C評価 / +1.5 ペース適性</div>
+            <div class="bd-minus">-3.0 距離延長 / -2.0 道悪適性</div>
+        </div>
+
+    </div>
+</div>
+
+<!-- ⑧ 買い目フォーメーション -->
+<div class="section">
+    <div class="section-title">買い目フォーメーション（参考）</div>
+    <div class="pass-banner">⚠ 当レースは見送り（乖離4.0pt）。以下は仮想フォームとして参考表示。</div>
+    <div class="form-grid">
+        <div class="form-card">
+            <div class="form-title">三連複 4頭BOX（4点）</div>
+            <div class="form-combos">
+                4－9－11<br>
+                4－9－15<br>
+                4－11－15<br>
+                9－11－15
+            </div>
+            <div class="form-note">対象: ⑮⑪⑨④</div>
+        </div>
+        <div class="form-card">
+            <div class="form-title">三連複10点（軸:⑮パフ）</div>
+            <div class="form-combos" style="font-size:12px">
+                2－4－15 / 2－9－15<br>
+                2－10－15 / 2－11－15<br>
+                4－9－15 / 4－10－15<br>
+                4－11－15 / 9－10－15<br>
+                9－11－15 / 10－11－15
+            </div>
+            <div class="form-note">相手: ⑪⑨④⑩②</div>
+        </div>
+        <div class="form-card">
+            <div class="form-title">三連複7点（⑮×⑪軸）</div>
+            <div class="form-combos" style="font-size:12px">
+                2－11－15 / 4－11－15<br>
+                5－11－15 / 9－11－15<br>
+                10－11－15 / 11－12－15<br>
+                11－13－15
+            </div>
+            <div class="form-note">相手: ⑨④⑩②⑤⑬⑫</div>
+        </div>
+    </div>
+</div>
+
+<div style="padding:16px 20px;text-align:center;color:var(--muted);font-size:11px;border-top:1px solid var(--turf4)">
+    Generated by 競馬予想システム · 2026-06-27 · race_id: 202610020111
+</div>
+
+</body>
+</html>
