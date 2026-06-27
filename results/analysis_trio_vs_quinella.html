@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>三連複 vs 馬連 — 採点順位×人気 分析レポート</title>
+<style>
+:root {
+    --bg:     #0D1117;
+    --bg2:    #161B22;
+    --bg3:    #1C2128;
+    --border: #30363D;
+    --gold:   #C9A227;
+    --gold2:  #E6C060;
+    --cream:  #E6EDF3;
+    --muted:  #7D8590;
+    --green:  #2EA043;
+    --green2: #56D364;
+    --red:    #DA3633;
+    --red2:   #FF7B72;
+    --blue:   #1F6FEB;
+    --blue2:  #79C0FF;
+    --orange: #D29922;
+    --orange2:#E3B341;
+    --purple: #8957E5;
+    --purple2:#BC8CFF;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--cream); font-family: -apple-system, 'Segoe UI', sans-serif; font-size: 14px; line-height: 1.6; }
+
+.hero {
+    background: linear-gradient(160deg, #0D1117 0%, #1C2128 60%, #161B22 100%);
+    border-bottom: 2px solid var(--gold);
+    padding: 38px 28px 28px;
+    text-align: center;
+}
+.hero-eyebrow { font-size: 11px; letter-spacing: 3px; color: var(--muted); text-transform: uppercase; margin-bottom: 10px; }
+.hero-title { font-size: 38px; font-weight: 900; color: var(--gold2); line-height: 1.15; }
+.hero-sub { color: var(--muted); font-size: 14px; margin-top: 8px; }
+.hero-meta { margin-top: 12px; font-size: 12px; color: var(--muted); }
+
+.page { max-width: 980px; margin: 0 auto; padding: 0 16px 40px; }
+.section { padding: 22px 0; border-bottom: 1px solid var(--border); }
+.section-title {
+    font-size: 11px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase;
+    color: var(--gold); border-left: 3px solid var(--gold); padding-left: 10px;
+    margin-bottom: 14px;
+}
+.section-desc { font-size: 13px; color: var(--muted); margin-bottom: 12px; line-height: 1.7; }
+
+/* summary cards */
+.summary-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; }
+.summary-card { background: var(--bg2); border-radius: 8px; padding: 14px; border: 1px solid var(--border); border-top: 3px solid var(--gold); }
+.summary-card.green { border-top-color: var(--green2); }
+.summary-card.red   { border-top-color: var(--red2); }
+.summary-card.blue  { border-top-color: var(--blue2); }
+.summary-card.orange{ border-top-color: var(--orange2); }
+.sum-title { font-size: 10px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
+.sum-value { font-size: 26px; font-weight: 800; line-height: 1.0; }
+.sum-value.green { color: var(--green2); }
+.sum-value.red   { color: var(--red2); }
+.sum-value.gold  { color: var(--gold2); }
+.sum-value.blue  { color: var(--blue2); }
+.sum-sub { font-size: 11px; color: var(--muted); margin-top: 3px; }
+.sum-note { font-size: 12px; color: var(--cream); margin-top: 8px; line-height: 1.5; }
+
+/* tables */
+.data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.data-table th { background: var(--bg3); color: var(--muted); font-size: 10px; letter-spacing: 1px; text-transform: uppercase; padding: 8px 12px; text-align: center; border-bottom: 1px solid var(--border); }
+.data-table td { padding: 9px 12px; border-bottom: 1px solid var(--border); text-align: center; }
+.data-table tr:last-child td { border-bottom: none; }
+.data-table tr:hover td { background: var(--bg3); }
+.good  { color: var(--green2); font-weight: 700; }
+.warn  { color: var(--orange2); font-weight: 700; }
+.bad   { color: var(--red2); font-weight: 700; }
+.dim   { color: var(--muted); }
+
+/* heatmap */
+.heatmap { width: 100%; border-collapse: collapse; font-size: 13px; }
+.heatmap th { background: var(--bg3); color: var(--muted); font-size: 10px; letter-spacing: 1px; padding: 8px 10px; text-align: center; border-bottom: 1px solid var(--border); }
+.heatmap td { padding: 9px 8px; border-bottom: 1px solid var(--border); text-align: center; border-right: 1px solid var(--border); }
+.hm-val { font-size: 15px; font-weight: 800; }
+.hm-n   { font-size: 10px; color: var(--muted); margin-top: 2px; }
+.heat-5 { background: rgba(86,211,100,0.35); }
+.heat-4 { background: rgba(86,211,100,0.22); }
+.heat-3 { background: rgba(227,179,65,0.22); }
+.heat-2 { background: rgba(210,153,34,0.15); }
+.heat-1 { background: rgba(218,54,51,0.10); }
+.heat-0 { background: transparent; }
+
+/* cross table */
+.cross-wrap { overflow-x: auto; }
+.cross-table { min-width: 620px; border-collapse: collapse; font-size: 12px; }
+.cross-table th { background: var(--bg3); color: var(--muted); font-size: 10px; letter-spacing: 1px; padding: 8px 10px; text-align: center; border: 1px solid var(--border); }
+.cross-table td { padding: 10px 8px; border: 1px solid var(--border); text-align: center; min-width: 85px; }
+.cross-roi { font-size: 15px; font-weight: 800; }
+.cross-n   { font-size: 10px; color: var(--muted); }
+
+/* rules */
+.rules-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 12px; }
+.rule-card { background: var(--bg2); border-radius: 8px; padding: 16px; border: 1px solid var(--border); }
+.rule-card.buy  { border-left: 4px solid var(--green2); }
+.rule-card.pass { border-left: 4px solid var(--red2); }
+.rule-card.caution { border-left: 4px solid var(--orange2); }
+.rule-badge { display: inline-block; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 3px; margin-bottom: 8px; }
+.rule-badge.buy    { background: var(--green); color: white; }
+.rule-badge.pass   { background: var(--red); color: white; }
+.rule-badge.caution{ background: var(--orange); color: white; }
+.rule-title { font-size: 15px; font-weight: 700; color: var(--cream); margin-bottom: 6px; }
+.rule-desc  { font-size: 12px; color: var(--muted); line-height: 1.6; }
+.rule-roi   { margin-top: 8px; font-size: 13px; font-weight: 700; }
+
+/* insight */
+.insight-box {
+    background: var(--bg2); border-radius: 8px; padding: 14px 16px;
+    border: 1px solid var(--border); border-left: 4px solid var(--gold);
+    margin: 12px 0; font-size: 13px; line-height: 1.7;
+}
+.insight-box .label { font-size: 10px; color: var(--gold); font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px; }
+
+/* comparison bar */
+.compare-row { display: flex; align-items: center; gap: 10px; margin: 5px 0; }
+.compare-label { font-size: 12px; width: 180px; flex-shrink: 0; }
+.compare-bar-bg { flex: 1; background: var(--bg3); border-radius: 4px; height: 22px; position: relative; }
+.compare-bar { height: 22px; border-radius: 4px; display: flex; align-items: center; padding-left: 8px; font-size: 12px; font-weight: 700; }
+.bar-green { background: rgba(86,211,100,0.4); color: var(--green2); }
+.bar-blue  { background: rgba(121,192,255,0.35); color: var(--blue2); }
+.bar-orange{ background: rgba(227,179,65,0.35); color: var(--orange2); }
+.bar-red   { background: rgba(218,54,51,0.25); color: var(--red2); }
+
+@media (max-width: 640px) {
+    .hero-title { font-size: 24px; }
+    .summary-grid { grid-template-columns: repeat(2,1fr); }
+    .rules-grid { grid-template-columns: 1fr; }
+    .compare-label { width: 100px; font-size: 11px; }
+}
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<div class="hero">
+    <div class="hero-eyebrow">Backtest Analysis · 2025/12〜2026/06</div>
+    <div class="hero-title">三連複 vs 馬連<br>採点順位×人気 分析レポート</div>
+    <div class="hero-sub">三連複4頭・5頭BOXと馬連——どの条件で何を買うべきか</div>
+    <div class="hero-meta">対象: 2勝クラス以上 · n=384レース · 払戻データ実績ベース</div>
+</div>
+
+<div class="page">
+
+<!-- ① 結論サマリー -->
+<div class="section">
+    <div class="section-title">主要発見 — 4つの結論</div>
+    <div class="summary-grid">
+        <div class="summary-card green">
+            <div class="sum-title">三連複が馬連を上回るクラス</div>
+            <div class="sum-value green">OP</div>
+            <div class="sum-sub">5頭BOX ROI 170.5%</div>
+            <div class="sum-note">採点1位=1人気のOPは<br>5頭BOX ROI <strong>329.8%</strong><br>（n=18, 7件的中）</div>
+        </div>
+        <div class="summary-card blue">
+            <div class="sum-title">馬連が三連複を上回るクラス</div>
+            <div class="sum-value blue">3勝クラス</div>
+            <div class="sum-sub">馬連ROI 183.1%</div>
+            <div class="sum-note">三連複5頭BOXはROI52%の赤字。<br>3勝クラスは馬連のみで戦う。</div>
+        </div>
+        <div class="summary-card green">
+            <div class="sum-title">三連複5頭BOX 黒字条件</div>
+            <div class="sum-value green">1位=1人気</div>
+            <div class="sum-sub">全クラス 5頭BOX ROI 119%</div>
+            <div class="sum-note">採点1位が1人気のとき<br>5頭BOX期待値プラス<br>（n=133）</div>
+        </div>
+        <div class="summary-card red">
+            <div class="sum-title">三連複 買い禁止パターン</div>
+            <div class="sum-value red">3勝・重賞</div>
+            <div class="sum-sub">5頭BOX ROI 52%以下</div>
+            <div class="sum-note">3勝クラス・重賞の三連複は<br>どの条件でも赤字。<br>馬連に一本化すべき。</div>
+        </div>
+    </div>
+</div>
+
+<!-- ② クラス別ROI比較 -->
+<div class="section">
+    <div class="section-title">クラス別 ROI比較 — 馬連 vs 三連複4頭 vs 5頭BOX</div>
+    <div class="section-desc">1点100円固定。4頭BOX=6点(600円/R)、5頭BOX=10点(1,000円/R)。n=全384レース。</div>
+
+    <!-- 3勝クラス -->
+    <div style="margin-bottom:18px">
+        <div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:6px;letter-spacing:1px">3勝クラス (n=91)</div>
+        <div class="compare-row">
+            <div class="compare-label">馬連1点</div>
+            <div class="compare-bar-bg">
+                <div class="compare-bar bar-green" style="width:min(183%,100%)">183.1% ✅</div>
+            </div>
+        </div>
+        <div class="compare-row">
+            <div class="compare-label">三連複4頭BOX</div>
+            <div class="compare-bar-bg">
+                <div class="compare-bar bar-red" style="width:32%">32.2% ❌</div>
+            </div>
+        </div>
+        <div class="compare-row">
+            <div class="compare-label">三連複5頭BOX</div>
+            <div class="compare-bar-bg">
+                <div class="compare-bar bar-red" style="width:52%">52.1% ❌</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- OP -->
+    <div style="margin-bottom:18px">
+        <div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:6px;letter-spacing:1px">OP (n=66)</div>
+        <div class="compare-row">
+            <div class="compare-label">馬連1点</div>
+            <div class="compare-bar-bg">
+                <div class="compare-bar bar-green" style="width:min(163%,100%)">163.8% ✅</div>
+            </div>
+        </div>
+        <div class="compare-row">
+            <div class="compare-label">三連複4頭BOX</div>
+            <div class="compare-bar-bg">
+                <div class="compare-bar bar-green" style="width:min(117%,100%)">116.8% ✅</div>
+            </div>
+        </div>
+        <div class="compare-row">
+            <div class="compare-label">三連複5頭BOX</div>
+            <div class="compare-bar-bg">
+                <div class="compare-bar bar-green" style="width:min(170%,100%)">170.5% ✅</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 重賞 -->
+    <div style="margin-bottom:18px">
+        <div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:6px;letter-spacing:1px">重賞 (n=57)</div>
+        <div class="compare-row">
+            <div class="compare-label">馬連1点</div>
+            <div class="compare-bar-bg">
+                <div class="compare-bar bar-red" style="width:55%">55.8% ❌</div>
+            </div>
+        </div>
+        <div class="compare-row">
+            <div class="compare-label">三連複4頭BOX</div>
+            <div class="compare-bar-bg">
+                <div class="compare-bar bar-red" style="width:19%">19.4% ❌</div>
+            </div>
+        </div>
+        <div class="compare-row">
+            <div class="compare-label">三連複5頭BOX</div>
+            <div class="compare-bar-bg">
+                <div class="compare-bar bar-red" style="width:52%">52.0% ❌</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2勝クラス -->
+    <div>
+        <div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:6px;letter-spacing:1px">2勝クラス (n=170)</div>
+        <div class="compare-row">
+            <div class="compare-label">馬連1点</div>
+            <div class="compare-bar-bg">
+                <div class="compare-bar bar-red" style="width:61%">61.2% ❌</div>
+            </div>
+        </div>
+        <div class="compare-row">
+            <div class="compare-label">三連複4頭BOX</div>
+            <div class="compare-bar-bg">
+                <div class="compare-bar bar-red" style="width:37%">37.1% ❌</div>
+            </div>
+        </div>
+        <div class="compare-row">
+            <div class="compare-label">三連複5頭BOX</div>
+            <div class="compare-bar-bg">
+                <div class="compare-bar bar-red" style="width:71%">71.2% ❌</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="insight-box" style="margin-top:14px">
+        <div class="label">結論</div>
+        <strong style="color:var(--green2)">OPクラスだけが三連複で期待値プラス</strong>。OP×馬連(163.8%)と OP×三連複5頭BOX(170.5%)は拮抗しており、両方購入が最も収益を大きくする。
+        3勝クラスは馬連ROI 183.1%に対して三連複5頭BOX 52.1%と3倍以上の差。三連複は捨てて馬連に集中すべき。
+        重賞は馬連も三連複も赤字（現行の重賞見送りルールが正しい）。
+    </div>
+</div>
+
+<!-- ③ 採点1位×5頭BOX ROI ヒートマップ -->
+<div class="section">
+    <div class="section-title">三連複5頭BOX ROI ヒートマップ — 採点各位の人気グループ別</div>
+    <table class="heatmap">
+        <thead>
+            <tr><th>軸</th><th>1人気</th><th>2〜3人気</th><th>4〜6人気</th><th>7〜9人気</th><th>10人気以下</th></tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>採点1位</strong></td>
+                <td class="heat-4">
+                    <div class="hm-val good">119.0%</div>
+                    <div class="hm-n">n=133, 41件 ★</div>
+                </td>
+                <td class="heat-1">
+                    <div class="hm-val bad">61.1%</div>
+                    <div class="hm-n">n=138, 31件</div>
+                </td>
+                <td class="heat-2">
+                    <div class="hm-val warn">73.7%</div>
+                    <div class="hm-n">n=70, 11件</div>
+                </td>
+                <td class="heat-1">
+                    <div class="hm-val bad">48.8%</div>
+                    <div class="hm-n">n=27, 4件</div>
+                </td>
+                <td class="heat-0">
+                    <div class="hm-val dim">19.6%</div>
+                    <div class="hm-n">n=16, 1件</div>
+                </td>
+            </tr>
+            <tr>
+                <td><strong>採点2位</strong></td>
+                <td class="heat-2">
+                    <div class="hm-val warn">73.7%</div>
+                    <div class="hm-n">n=75, 20件</div>
+                </td>
+                <td class="heat-3">
+                    <div class="hm-val warn">82.1%</div>
+                    <div class="hm-n">n=144, 45件</div>
+                </td>
+                <td class="heat-1">
+                    <div class="hm-val bad">57.9%</div>
+                    <div class="hm-n">n=114, 17件</div>
+                </td>
+                <td class="heat-5">
+                    <div class="hm-val good">233.0%</div>
+                    <div class="hm-n">n=30, 5件 ⚠n少</div>
+                </td>
+                <td class="heat-0">
+                    <div class="hm-val dim">5.5%</div>
+                    <div class="hm-n">n=21, 1件</div>
+                </td>
+            </tr>
+            <tr>
+                <td><strong>採点3位</strong></td>
+                <td class="heat-1">
+                    <div class="hm-val bad">44.0%</div>
+                    <div class="hm-n">n=48, 9件</div>
+                </td>
+                <td class="heat-3">
+                    <div class="hm-val warn">95.0%</div>
+                    <div class="hm-n">n=109, 28件</div>
+                </td>
+                <td class="heat-3">
+                    <div class="hm-val warn">95.9%</div>
+                    <div class="hm-n">n=111, 38件</div>
+                </td>
+                <td class="heat-2">
+                    <div class="hm-val warn">61.7%</div>
+                    <div class="hm-n">n=71, 11件</div>
+                </td>
+                <td class="heat-2">
+                    <div class="hm-val warn">79.2%</div>
+                    <div class="hm-n">n=45, 2件</div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    <div class="insight-box" style="margin-top:12px">
+        <div class="label">三連複5頭BOX 期待値プラスのゾーン</div>
+        <strong style="color:var(--green2)">採点1位=1人気: ROI 119%（n=133）</strong> が最も実用的な黒字ゾーン。
+        採点2位=7〜9人気: ROI 233%は爆発力あるが n=30 で統計的に弱い。
+        採点3位は2〜3人気も4〜6人気も95%前後で赤字傾向。<br>
+        <strong style="color:var(--orange2)">三連複5頭BOXの鍵は採点1位の人気であり、採点2位・3位ではない。</strong>
+    </div>
+</div>
+
+<!-- ④ 採点1位=1人気の詳細 -->
+<div class="section">
+    <div class="section-title">採点1位=1人気 の詳細分析（三連複の最重要条件）</div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+        <div>
+            <div style="font-size:12px;color:var(--muted);font-weight:700;margin-bottom:8px">採点1位=1人気 × クラス別 5頭BOX ROI</div>
+            <table class="data-table">
+                <thead><tr><th>クラス</th><th>n</th><th>的中率</th><th>5頭BOX ROI</th></tr></thead>
+                <tbody>
+                    <tr style="background:rgba(86,211,100,0.15)">
+                        <td><strong style="color:var(--green2)">OP ★★</strong></td><td>18</td>
+                        <td class="good">38.9%</td>
+                        <td class="good">329.8%</td>
+                    </tr>
+                    <tr>
+                        <td><strong>2勝クラス</strong></td><td>73</td>
+                        <td class="warn">32.9%</td>
+                        <td class="warn">104.9%</td>
+                    </tr>
+                    <tr>
+                        <td><strong>3勝クラス</strong></td><td>32</td>
+                        <td>25.0%</td>
+                        <td class="bad">47.8%</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div>
+            <div style="font-size:12px;color:var(--muted);font-weight:700;margin-bottom:8px">採点1位=1人気 × スコア差別 4頭/5頭BOX vs 馬連</div>
+            <table class="data-table">
+                <thead><tr><th>スコア差</th><th>n</th><th>4頭BOX</th><th>5頭BOX</th><th>馬連</th></tr></thead>
+                <tbody>
+                    <tr style="background:rgba(86,211,100,0.12)">
+                        <td><strong>0〜1.5pt</strong></td><td>52</td>
+                        <td class="good">164.0%</td>
+                        <td class="good">154.7%</td>
+                        <td class="good">127.5%</td>
+                    </tr>
+                    <tr style="background:rgba(86,211,100,0.08)">
+                        <td><strong>1.5〜3pt</strong></td><td>36</td>
+                        <td class="bad">10.9%</td>
+                        <td class="good">125.6%</td>
+                        <td class="bad">54.4%</td>
+                    </tr>
+                    <tr>
+                        <td><strong>3〜5pt</strong></td><td>28</td>
+                        <td class="warn">84.2%</td>
+                        <td class="warn">89.8%</td>
+                        <td class="warn">98.9%</td>
+                    </tr>
+                    <tr>
+                        <td><strong>5pt以上</strong></td><td>17</td>
+                        <td class="bad">7.6%</td>
+                        <td class="bad">44.1%</td>
+                        <td class="bad">45.3%</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="insight-box">
+        <div class="label">採点1位=1人気 × スコア差の解釈</div>
+        <strong style="color:var(--green2)">スコア差0〜1.5pt</strong>のとき、4頭BOX(164%)・5頭BOX(155%)・馬連(128%)すべて黒字。
+        拮抗した状態では採点上位5頭が3着以内に幅広く来るため、BOX戦略が有効。<br><br>
+        <strong style="color:var(--green2)">スコア差1.5〜3pt</strong>では馬連ROI 54%と低下するが、5頭BOX 126%はなお黒字。
+        適度な差がある状態では、1位馬は安定してくるが2位馬が来ず、広げた5頭BOXの中の別の馬が来る。<br><br>
+        <strong style="color:var(--red2)">スコア差5pt以上</strong>は1位馬が圧倒的に強い状態だが、三連複BOXでは買えるパートナー馬が安定しないため全馬券種赤字。
+    </div>
+
+    <div style="margin-top:12px">
+        <div style="font-size:12px;color:var(--muted);font-weight:700;margin-bottom:8px">採点1位=1人気 × 採点2位の人気別 5頭BOX ROI</div>
+        <table class="data-table">
+            <thead><tr><th>採点2位の人気</th><th>n</th><th>5頭BOX 的中率</th><th>5頭BOX ROI</th><th>4頭BOX ROI</th></tr></thead>
+            <tbody>
+                <tr style="background:rgba(86,211,100,0.10)">
+                    <td><strong>2〜3人気</strong></td><td>71</td>
+                    <td class="warn">35.2%</td>
+                    <td class="warn">106.7%</td>
+                    <td class="bad">62.2%</td>
+                </tr>
+                <tr style="background:rgba(86,211,100,0.30)">
+                    <td><strong style="color:var(--green2)">7〜9人気 ★</strong></td><td>11</td>
+                    <td class="good">36.4%</td>
+                    <td class="good">578.2%</td>
+                    <td class="good">590.6%</td>
+                </tr>
+                <tr>
+                    <td><strong>4〜6人気</strong></td><td>44</td>
+                    <td>25.0%</td>
+                    <td class="bad">40.4%</td>
+                    <td class="bad">6.8%</td>
+                </tr>
+            </tbody>
+        </table>
+        <div style="font-size:12px;color:var(--muted);margin-top:6px">⚠ 2位=7〜9人気はn=11と少ないため参考値。蓄積後に再判定が必要。</div>
+    </div>
+</div>
+
+<!-- ⑤ 採点2位×3位 クロス表 -->
+<div class="section">
+    <div class="section-title">採点2位×3位 人気グループ クロス表 — 三連複5頭BOX ROI</div>
+    <div class="section-desc">行=採点2位の人気グループ / 列=採点3位の人気グループ。セルは「的中件数/n = ROI%」。n≥5のみ表示。</div>
+    <div class="cross-wrap">
+        <table class="cross-table">
+            <thead>
+                <tr>
+                    <th>2位↓ / 3位→</th>
+                    <th>1人気</th>
+                    <th>2〜3人気</th>
+                    <th>4〜6人気</th>
+                    <th>7〜9人気</th>
+                    <th>10人気以下</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>1人気</strong></td>
+                    <td class="heat-0"><div class="cross-roi dim">—</div><div class="cross-n">n&lt;5</div></td>
+                    <td class="heat-2"><div class="cross-roi warn">55%</div><div class="cross-n">9/29件</div></td>
+                    <td class="heat-2"><div class="cross-roi warn">53%</div><div class="cross-n">7/21件</div></td>
+                    <td class="heat-4"><div class="cross-roi good">166%</div><div class="cross-n">4/17件</div></td>
+                    <td class="heat-0"><div class="cross-roi dim">0%</div><div class="cross-n">0/8件</div></td>
+                </tr>
+                <tr>
+                    <td><strong>2〜3人気</strong></td>
+                    <td class="heat-2"><div class="cross-roi warn">70%</div><div class="cross-n">6/19件</div></td>
+                    <td class="heat-4" style="background:rgba(86,211,100,0.22)">
+                        <div class="cross-roi good">114%</div>
+                        <div class="cross-n">9/27件 ✅</div>
+                    </td>
+                    <td class="heat-4" style="background:rgba(86,211,100,0.25)">
+                        <div class="cross-roi good">124%</div>
+                        <div class="cross-n">25/53件 ★</div>
+                    </td>
+                    <td class="heat-1"><div class="cross-roi bad">32%</div><div class="cross-n">5/27件</div></td>
+                    <td class="heat-0"><div class="cross-roi dim">0%</div><div class="cross-n">0/18件</div></td>
+                </tr>
+                <tr>
+                    <td><strong>4〜6人気</strong></td>
+                    <td class="heat-1"><div class="cross-roi bad">35%</div><div class="cross-n">3/22件</div></td>
+                    <td class="heat-1"><div class="cross-roi bad">31%</div><div class="cross-n">6/36件</div></td>
+                    <td class="heat-1"><div class="cross-roi bad">20%</div><div class="cross-n">4/22件</div></td>
+                    <td class="heat-1"><div class="cross-roi bad">35%</div><div class="cross-n">2/20件</div></td>
+                    <td class="heat-5"><div class="cross-roi good">255%</div><div class="cross-n">2/14件 ⚠n少</div></td>
+                </tr>
+                <tr>
+                    <td><strong>7〜9人気</strong></td>
+                    <td class="heat-0"><div class="cross-roi dim">—</div><div class="cross-n">n&lt;5</div></td>
+                    <td class="heat-5"><div class="cross-roi good">407%</div><div class="cross-n">3/11件 ⚠n少</div></td>
+                    <td class="heat-5"><div class="cross-roi good">359%</div><div class="cross-n">2/7件 ⚠n少</div></td>
+                    <td class="heat-0"><div class="cross-roi dim">0%</div><div class="cross-n">0/5件</div></td>
+                    <td class="heat-0"><div class="cross-roi dim">—</div><div class="cross-n">n&lt;5</div></td>
+                </tr>
+                <tr>
+                    <td><strong>10人気以下</strong></td>
+                    <td class="heat-0"><div class="cross-roi dim">—</div><div class="cross-n">n&lt;5</div></td>
+                    <td class="heat-1"><div class="cross-roi dim">19%</div><div class="cross-n">1/6件</div></td>
+                    <td class="heat-0"><div class="cross-roi dim">0%</div><div class="cross-n">0/8件</div></td>
+                    <td class="heat-0"><div class="cross-roi dim">—</div><div class="cross-n">n&lt;5</div></td>
+                    <td class="heat-0"><div class="cross-roi dim">—</div><div class="cross-n">n&lt;5</div></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <div class="insight-box" style="margin-top:12px">
+        <div class="label">クロス表の主要パターン</div>
+        <strong style="color:var(--green2)">採点2位=2〜3人気 × 3位=4〜6人気（n=53）ROI 124%</strong> が最も信頼できる黒字ゾーン。
+        「2番手は市場と採点が一致、3番手は市場が中程度に評価」というバランスの良い構図。<br><br>
+        採点2位=2〜3人気 × 3位=2〜3人気（n=27）ROI 114%も黒字。上位3頭が市場にも認められているとき三連複は機能する。<br><br>
+        <strong style="color:var(--red2)">採点2位=4〜6人気 × 3位=4〜6人気（n=22）ROI 20%</strong> は大赤字。
+        2・3位ともに市場の中堅評価のとき、三連複は来ない。
+    </div>
+</div>
+
+<!-- ⑥ 馬連 vs 三連複 統合比較 -->
+<div class="section">
+    <div class="section-title">馬連 vs 三連複 — 採点2位人気別の直接比較</div>
+    <div class="section-desc">採点2位の人気グループを軸にして、馬連と三連複5頭BOXを比較。</div>
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>採点2位の人気</th>
+                <th>n</th>
+                <th>馬連ROI<br><span style="font-weight:400;color:var(--muted)">(1点)</span></th>
+                <th>三連複4頭BOX ROI<br><span style="font-weight:400;color:var(--muted)">(6点)</span></th>
+                <th>三連複5頭BOX ROI<br><span style="font-weight:400;color:var(--muted)">(10点)</span></th>
+                <th>推奨</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>1人気</strong></td><td>75</td>
+                <td class="bad">75.7%</td>
+                <td class="bad">26.9%</td>
+                <td class="warn">73.7%</td>
+                <td class="dim">見送り推奨</td>
+            </tr>
+            <tr style="background:rgba(86,211,100,0.10)">
+                <td><strong style="color:var(--green2)">2〜3人気 ★</strong></td><td>144</td>
+                <td class="good">168.3%</td>
+                <td class="bad">54.3%</td>
+                <td class="warn">82.1%</td>
+                <td class="good">馬連のみ</td>
+            </tr>
+            <tr>
+                <td><strong>4〜6人気</strong></td><td>114</td>
+                <td class="bad">65.2%</td>
+                <td class="bad">13.4%</td>
+                <td class="bad">57.9%</td>
+                <td class="dim">見送り</td>
+            </tr>
+            <tr style="background:rgba(227,179,65,0.10)">
+                <td><strong>7〜9人気</strong></td><td>30</td>
+                <td class="good">267.7%</td>
+                <td class="good">216.6%</td>
+                <td class="good">233.0%</td>
+                <td class="warn">馬連+三連複<br>（n少・注意）</td>
+            </tr>
+            <tr>
+                <td><strong>10人気以下</strong></td><td>21</td>
+                <td class="bad">0.0%</td>
+                <td class="bad">9.1%</td>
+                <td class="bad">5.5%</td>
+                <td class="dim">完全見送り</td>
+            </tr>
+        </tbody>
+    </table>
+    <div class="insight-box" style="margin-top:12px">
+        <div class="label">重要な非対称性</div>
+        採点2位=2〜3人気のとき、<strong style="color:var(--green2)">馬連ROI 168%に対して三連複5頭BOX ROI 82%</strong> と大きな差。
+        馬連は「2頭が1〜2着」という狭い条件で高配当を狙うため効率が良い。
+        三連複は「3頭を3着以内に」という条件が広いにも関わらず配当が薄く、ROIが下がる。<br><br>
+        採点2位=7〜9人気のとき、馬連267%・三連複233%と両方高ROIだが n=30 のみ。
+        この状況は「市場が2位馬を穴視している」ときで、的中時の配当が高いため少ない的中でROIが上振れている可能性がある。
+    </div>
+</div>
+
+<!-- ⑦ 買い目推奨ルール -->
+<div class="section">
+    <div class="section-title">買い目推奨ルール — データ根拠付き（三連複版）</div>
+    <div class="rules-grid">
+
+        <div class="rule-card buy">
+            <span class="rule-badge buy">★ 三連複5頭BOX — 最優先</span>
+            <div class="rule-title">OPクラス × 採点1位=1人気</div>
+            <div class="rule-desc">ROI 329.8%（n=18, 7件的中）。採点と市場が1位一致のOP戦。三連複で上位5頭を広く買う戦略が爆発。馬連(163.8%)との併用が最大効率。</div>
+            <div class="rule-roi good">三連複5頭BOX ROI: 329.8%</div>
+        </div>
+
+        <div class="rule-card buy">
+            <span class="rule-badge buy">★ 三連複5頭BOX</span>
+            <div class="rule-title">採点1位=1人気 × スコア差0〜3pt</div>
+            <div class="rule-desc">スコア差0〜1.5pt: ROI154.7%。スコア差1.5〜3pt: ROI125.6%。本命が明確で相手が複数考えられるとき、5頭BOXが馬連を上回る。4頭BOXはスコア差0〜1.5ptのみ164%と黒字。</div>
+            <div class="rule-roi good">5頭BOX ROI: 125〜155%</div>
+        </div>
+
+        <div class="rule-card buy">
+            <span class="rule-badge buy">★ 三連複5頭BOX</span>
+            <div class="rule-title">採点2位=2〜3人気 × 採点3位=4〜6人気</div>
+            <div class="rule-desc">最大n=53のクロスセル、ROI124%。2番手が確定し3番手が中程度の人気のとき。OPクラスで採点1位=1人気と組み合わさると最強。</div>
+            <div class="rule-roi good">三連複5頭BOX ROI: 124%（n=53）</div>
+        </div>
+
+        <div class="rule-card caution">
+            <span class="rule-badge caution">要注意 — 馬連優先</span>
+            <div class="rule-title">採点2位=2〜3人気 のとき</div>
+            <div class="rule-desc">馬連ROI168% vs 三連複5頭BOX ROI82% → 馬連が圧勝。三連複を追加する場合でも、馬連1点は必ず入れるべき。三連複のみでは期待値マイナス。</div>
+            <div class="rule-roi warn">馬連ROI: 168% / 三連複5頭BOX: 82%</div>
+        </div>
+
+        <div class="rule-card pass">
+            <span class="rule-badge pass">三連複禁止</span>
+            <div class="rule-title">3勝クラス（すべての条件）</div>
+            <div class="rule-desc">3勝クラス × 三連複5頭BOX ROI 52.1%。馬連ROI 183.1%と差が大きい。3勝クラスで三連複を買うことは馬連の収益を食いつぶす行為。</div>
+            <div class="rule-roi bad">三連複5頭BOX ROI: 52.1%</div>
+        </div>
+
+        <div class="rule-card pass">
+            <span class="rule-badge pass">三連複禁止</span>
+            <div class="rule-title">重賞（すべての条件）</div>
+            <div class="rule-desc">重賞は馬連55.8%・三連複52.0%とすべて赤字。重賞は現行の「見送りルール」が正解。どの馬券種でも購入しない。</div>
+            <div class="rule-roi bad">三連複5頭BOX ROI: 52.0%</div>
+        </div>
+
+    </div>
+</div>
+
+<!-- ⑧ 統合フロー -->
+<div class="section">
+    <div class="section-title">馬連 + 三連複 統合判断フロー</div>
+    <div style="background:var(--bg2);border-radius:8px;padding:20px;border:1px solid var(--border);font-size:13px;line-height:2.2">
+        <div style="color:var(--gold2);font-weight:700;margin-bottom:12px">レース判断フロー（見送りルール通過後）</div>
+        <div style="padding-left:0;line-height:2.0">
+            <div style="margin-bottom:4px;padding:6px 10px;background:rgba(218,54,51,0.10);border-radius:4px">
+                ❌ <strong>重賞・採点1位7人気以上</strong> → すべて見送り（馬連・三連複ともに期待値マイナス）
+            </div>
+            <div style="margin-bottom:4px;padding:6px 10px;background:rgba(86,211,100,0.10);border-radius:4px">
+                ✅ <strong>OPクラス × 採点1位=1人気</strong> → 馬連1点 + 三連複5頭BOX（両方黒字）
+            </div>
+            <div style="margin-bottom:4px;padding:6px 10px;background:rgba(86,211,100,0.10);border-radius:4px">
+                ✅ <strong>採点2位=2〜3人気</strong> → 馬連1点必須（ROI168%）+ スコア差3pt未満なら三連複5頭BOX追加
+            </div>
+            <div style="margin-bottom:4px;padding:6px 10px;background:rgba(86,211,100,0.08);border-radius:4px">
+                ✅ <strong>採点1位=1人気 × スコア差0〜3pt</strong> → 三連複5頭BOX（ROI125〜155%）
+            </div>
+            <div style="margin-bottom:4px;padding:6px 10px;background:rgba(218,54,51,0.08);border-radius:4px">
+                ❌ <strong>3勝クラス</strong> → 三連複禁止。馬連のみ購入（ROI183%）
+            </div>
+            <div style="padding:6px 10px;background:rgba(218,54,51,0.08);border-radius:4px">
+                ❌ <strong>採点2位=4〜6人気または10人気以下</strong> → 馬連・三連複ともに見送り
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- footer -->
+<div style="padding:16px 0;text-align:center;color:var(--muted);font-size:11px;border-top:1px solid var(--border);margin-top:8px">
+    競馬予想システム バックテスト分析 · 三連複 vs 馬連 編 · 対象: 2025/12〜2026/06 · n=384レース · 生成日: 2026-06-27
+</div>
+</div>
+</body>
+</html>
