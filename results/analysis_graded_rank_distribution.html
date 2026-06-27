@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>重賞 着順×採点位置 分布分析</title>
+  <style>
+    :root {
+      --bg:      #0D1117;
+      --bg2:     #161B22;
+      --bg3:     #1C2333;
+      --bg4:     #21262D;
+      --purple:  #7C3AED;
+      --purple2: #A78BFA;
+      --purple3: #C4B5FD;
+      --gold:    #F59E0B;
+      --gold2:   #FCD34D;
+      --green:   #10B981;
+      --red:     #EF4444;
+      --orange:  #F97316;
+      --blue:    #3B82F6;
+      --cream:   #E6EDF3;
+      --muted:   #8B949E;
+      --border:  #30363D;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--cream); font-family: 'Helvetica Neue', Arial, 'Hiragino Sans', sans-serif; line-height: 1.6; }
+
+    .hero {
+      background: linear-gradient(145deg, #0C0518 0%, #12082A 40%, #0D1117 100%);
+      padding: 60px 40px 48px; text-align: center;
+      border-bottom: 1px solid var(--border);
+      position: relative; overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse at 30% 50%, rgba(124,58,237,0.18) 0%, transparent 60%),
+                  radial-gradient(ellipse at 80% 20%, rgba(59,130,246,0.1) 0%, transparent 50%);
+    }
+    .hero-eyebrow { color: var(--purple2); font-size: 0.78rem; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 14px; position: relative; }
+    .hero h1 { font-size: 2rem; font-weight: 700; color: var(--cream); margin-bottom: 10px; position: relative; line-height: 1.3; }
+    .hero-sub { color: var(--muted); font-size: 0.9rem; max-width: 600px; margin: 0 auto 24px; position: relative; }
+    .hero-discoveries { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; position: relative; }
+    .disc-tag { padding: 7px 16px; border-radius: 20px; font-size: 0.8rem; font-weight: 700; border: 1px solid; }
+    .disc-tag.shock { background: rgba(239,68,68,0.12); border-color: rgba(239,68,68,0.4); color: #FCA5A5; }
+    .disc-tag.gold  { background: rgba(245,158,11,0.12); border-color: rgba(245,158,11,0.4); color: var(--gold2); }
+    .disc-tag.blue  { background: rgba(59,130,246,0.12); border-color: rgba(59,130,246,0.4); color: #93C5FD; }
+
+    .container { max-width: 1020px; margin: 0 auto; padding: 44px 24px; }
+
+    h2 { font-size: 1.2rem; font-weight: 600; color: var(--purple2); border-left: 4px solid var(--purple); padding-left: 12px; margin-bottom: 20px; }
+    h3 { font-size: 0.97rem; font-weight: 600; color: var(--cream); margin-bottom: 10px; }
+
+    .section { margin-bottom: 52px; animation: fadeInUp 0.45s ease forwards; }
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* ====== ヒートマップ ====== */
+    .heatmap-wrap { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 24px; overflow-x: auto; }
+    .heatmap-title { font-size: 0.8rem; color: var(--muted); margin-bottom: 16px; }
+    .hmap-grid { display: grid; grid-template-columns: 80px repeat(3, 1fr); gap: 4px; min-width: 500px; }
+    .hmap-head { font-size: 0.75rem; color: var(--muted); text-align: center; padding: 6px; font-weight: 600; }
+    .hmap-label { font-size: 0.78rem; color: var(--muted); display: flex; align-items: center; padding-right: 8px; }
+    .hmap-cell {
+      border-radius: 6px; padding: 8px 4px; text-align: center;
+      font-size: 0.82rem; font-weight: 700;
+      transition: transform 0.15s;
+    }
+    .hmap-cell:hover { transform: scale(1.05); cursor: default; }
+    /* 色: 濃い = 高い頻度 */
+    .h0  { background: #1C2333; color: var(--muted); }
+    .h1  { background: rgba(124,58,237,0.15); color: #C4B5FD; }
+    .h2  { background: rgba(124,58,237,0.28); color: #C4B5FD; }
+    .h3  { background: rgba(124,58,237,0.44); color: white; }
+    .h4  { background: rgba(245,158,11,0.35); color: var(--gold2); }
+    .h5  { background: rgba(245,158,11,0.55); color: var(--gold2); }
+    .h6  { background: rgba(239,68,68,0.45); color: #FCA5A5; }
+    .h7  { background: rgba(239,68,68,0.65); color: white; }
+    .h9  { background: rgba(239,68,68,0.85); color: white; }
+    .h11 { background: #EF4444; color: white; }
+    .hmap-legend { display: flex; gap: 8px; align-items: center; margin-top: 14px; font-size: 0.72rem; color: var(--muted); flex-wrap: wrap; }
+    .leg-swatch { width: 14px; height: 14px; border-radius: 3px; }
+
+    /* ====== 配当逆相関バー ====== */
+    .inv-bar-wrap { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 20px 24px; }
+    .inv-row { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+    .inv-row:last-child { margin-bottom: 0; }
+    .inv-label { width: 200px; font-size: 0.83rem; flex-shrink: 0; line-height: 1.4; }
+    .inv-n { width: 56px; font-size: 0.75rem; color: var(--muted); text-align: right; flex-shrink: 0; }
+    .inv-bar-track { flex: 1; background: var(--bg4); border-radius: 4px; height: 28px; position: relative; overflow: hidden; }
+    .inv-bar-fill { height: 100%; border-radius: 4px; display: flex; align-items: center; padding-left: 10px; font-size: 0.8rem; font-weight: 700; color: white; }
+    .inv-bar-fill.c4 { background: linear-gradient(90deg, #059669, #10B981); }
+    .inv-bar-fill.c3 { background: linear-gradient(90deg, #0284C7, #38BDF8); }
+    .inv-bar-fill.c2 { background: linear-gradient(90deg, #D97706, #F59E0B); }
+    .inv-bar-fill.c1 { background: linear-gradient(90deg, #B91C1C, #EF4444); }
+
+    /* ====== サマリーカード ====== */
+    .sc-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+    .sc { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; }
+    .sc .label { font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
+    .sc .value { font-size: 1.45rem; font-weight: 700; }
+    .sc.green  .value { color: var(--green); }
+    .sc.red    .value { color: var(--red); }
+    .sc.gold   .value { color: var(--gold); }
+    .sc.blue   .value { color: #60A5FA; }
+    .sc .sub { font-size: 0.76rem; color: var(--muted); margin-top: 3px; }
+
+    /* ====== パターンリスト ====== */
+    .pattern-grid { display: grid; gap: 8px; }
+    .pat-row {
+      display: flex; align-items: center; gap: 12px;
+      background: var(--bg2); border: 1px solid var(--border); border-radius: 8px;
+      padding: 12px 16px;
+    }
+    .pat-row:hover { border-color: var(--purple); }
+    .pat-ranks { display: flex; gap: 6px; }
+    .rank-chip {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 32px; height: 32px; border-radius: 6px; font-size: 0.78rem; font-weight: 700;
+    }
+    .rc-top3  { background: rgba(16,185,129,0.2);  color: #6EE7B7; border: 1px solid rgba(16,185,129,0.4); }
+    .rc-top5  { background: rgba(59,130,246,0.2);  color: #93C5FD; border: 1px solid rgba(59,130,246,0.4); }
+    .rc-top9  { background: rgba(245,158,11,0.2);  color: var(--gold2); border: 1px solid rgba(245,158,11,0.4); }
+    .rc-out   { background: rgba(239,68,68,0.2);   color: #FCA5A5; border: 1px solid rgba(239,68,68,0.4); }
+    .pat-info { flex: 1; font-size: 0.82rem; color: var(--muted); }
+    .pat-count { font-size: 1.0rem; font-weight: 700; color: var(--cream); }
+    .pat-pay   { font-size: 0.82rem; color: var(--gold); text-align: right; }
+
+    /* ====== ハイライトボックス ====== */
+    .hb { border-radius: 10px; padding: 16px 20px; margin-bottom: 12px; }
+    .hb:last-child { margin-bottom: 0; }
+    .hb.green  { background: rgba(16,185,129,0.07);  border: 1px solid rgba(16,185,129,0.28); }
+    .hb.red    { background: rgba(239,68,68,0.07);   border: 1px solid rgba(239,68,68,0.28); }
+    .hb.gold   { background: rgba(245,158,11,0.07);  border: 1px solid rgba(245,158,11,0.28); }
+    .hb.blue   { background: rgba(59,130,246,0.07);  border: 1px solid rgba(59,130,246,0.28); }
+    .hb.purple { background: rgba(124,58,237,0.07);  border: 1px solid rgba(124,58,237,0.28); }
+    .hb .ht { font-weight: 700; margin-bottom: 6px; font-size: 0.93rem; }
+    .hb.green  .ht { color: #6EE7B7; }
+    .hb.red    .ht { color: #FCA5A5; }
+    .hb.gold   .ht { color: var(--gold2); }
+    .hb.blue   .ht { color: #93C5FD; }
+    .hb.purple .ht { color: var(--purple3); }
+    .hb p, .hb ul { font-size: 0.875rem; color: var(--muted); line-height: 1.75; }
+    .hb ul { padding-left: 16px; }
+    .hb strong { color: var(--cream); }
+
+    /* ====== テーブル ====== */
+    .tbl { width: 100%; border-collapse: collapse; font-size: 0.84rem; }
+    .tbl th { background: var(--bg3); padding: 9px 12px; color: var(--muted); font-size: 0.72rem; text-align: center; border-bottom: 1px solid var(--border); }
+    .tbl td { padding: 9px 12px; border-bottom: 1px solid var(--border); text-align: center; }
+    .tbl tr:hover td { background: var(--bg3); }
+    .tbl td:first-child { text-align: left; }
+    .roi-pos  { color: var(--green);  font-weight: 700; }
+    .roi-near { color: var(--gold);   font-weight: 600; }
+    .roi-neg  { color: var(--red); }
+    .badge { display: inline-block; padding: 2px 9px; border-radius: 20px; font-size: 0.7rem; font-weight: 700; }
+    .bg-g { background: rgba(16,185,129,0.15); color: #6EE7B7; border: 1px solid rgba(16,185,129,0.35); }
+    .bg-y { background: rgba(245,158,11,0.15); color: var(--gold2); border: 1px solid rgba(245,158,11,0.35); }
+    .bg-r { background: rgba(239,68,68,0.15);  color: #FCA5A5; border: 1px solid rgba(239,68,68,0.35); }
+    .bg-b { background: rgba(59,130,246,0.15); color: #93C5FD; border: 1px solid rgba(59,130,246,0.35); }
+    .bg-p { background: rgba(124,58,237,0.15); color: var(--purple3); border: 1px solid rgba(124,58,237,0.35); }
+
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    @media (max-width: 640px) { .two-col { grid-template-columns: 1fr; } }
+    .panel { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 18px 20px; }
+
+    /* ====== 結論 ====== */
+    .conclusion {
+      background: linear-gradient(135deg, rgba(124,58,237,0.1) 0%, transparent 100%);
+      border: 1px solid rgba(124,58,237,0.35);
+      border-radius: 12px; padding: 28px 32px; margin-top: 36px;
+    }
+    .conclusion h2 { color: var(--purple3); margin-bottom: 18px; }
+    .conclusion ol { padding-left: 20px; line-height: 2.1; color: var(--cream); font-size: 0.92rem; }
+    .conclusion strong { color: var(--gold2); }
+    .note { font-size: 0.77rem; color: var(--muted); margin-top: 10px; }
+    .sep { border: none; border-top: 1px solid var(--border); margin: 44px 0; }
+
+    /* ====== 逆説ボックス ====== */
+    .paradox-box {
+      background: linear-gradient(135deg, rgba(239,68,68,0.08) 0%, rgba(124,58,237,0.08) 100%);
+      border: 1px solid rgba(239,68,68,0.35);
+      border-radius: 12px; padding: 24px 28px;
+    }
+    .paradox-box h3 { color: #FCA5A5; font-size: 1.05rem; margin-bottom: 12px; }
+    .paradox-inner { display: grid; grid-template-columns: 1fr 1px 1fr; gap: 20px; align-items: center; }
+    .paradox-inner .divider-v { background: rgba(239,68,68,0.3); height: 100%; }
+    .px-side { text-align: center; }
+    .px-side .big { font-size: 1.6rem; font-weight: 700; margin-bottom: 4px; }
+    .px-side .big.green { color: var(--green); }
+    .px-side .big.red   { color: var(--red); }
+    .px-side p { font-size: 0.82rem; color: var(--muted); line-height: 1.6; }
+    @media (max-width: 580px) { .paradox-inner { grid-template-columns: 1fr; } .paradox-inner .divider-v { display: none; } }
+  </style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-eyebrow">重賞のみ · n=57レース · 着順×採点位置 全数調査</div>
+  <h1>重賞 三連複の真実<br>「採点が当たるほど配当が安くなる」</h1>
+  <div class="hero-sub">1着・2着・3着に採点何位の馬が来たかを全57レース分析。逆説的な配当構造と構造的黒字化困難の根拠を解明。</div>
+  <div class="hero-discoveries">
+    <span class="disc-tag shock">採点1位が3着外 = 54.4%</span>
+    <span class="disc-tag gold">採点5頭内が1頭以下 = 43%・avg65,880円</span>
+    <span class="disc-tag blue">2着の47%が採点6位以下の穴馬</span>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- ① サマリーカード -->
+  <div class="section">
+    <h2>① 発見のサマリー</h2>
+    <div class="sc-grid">
+      <div class="sc red">
+        <div class="label">採点1位が3着外になる確率</div>
+        <div class="value">54.4%</div>
+        <div class="sub">31/57レース · avg払戻51,094円</div>
+      </div>
+      <div class="sc gold">
+        <div class="label">2着に採点6位以下が来る確率</div>
+        <div class="value">47.4%</div>
+        <div class="sub">27/57レース — ほぼ5割が穴馬</div>
+      </div>
+      <div class="sc blue">
+        <div class="label">採点上位5頭だけで3着以内完結</div>
+        <div class="value">17.5%</div>
+        <div class="sub">10/57レース · avg払戻2,965円（最安）</div>
+      </div>
+      <div class="sc green">
+        <div class="label">採点5頭内が1頭以下のとき</div>
+        <div class="value">avg 65,880円</div>
+        <div class="sub">22レース(39%) · 高配当の主要源</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ② 配当逆相関の逆説 -->
+  <div class="section">
+    <h2>② 核心: 採点が「当たるほど配当が安い」逆説</h2>
+    <div class="paradox-box">
+      <h3>採点精度 ↑ と 配当 ↓ は強い逆相関を示す</h3>
+      <div class="paradox-inner">
+        <div class="px-side">
+          <div class="big green">2,965円</div>
+          <p><strong style="color:var(--cream)">採点上位5頭が全員3着以内</strong><br>（10件・17.5%）<br>みんなが同じ馬を選ぶ → 人気集中 → 低配当</p>
+        </div>
+        <div class="divider-v"></div>
+        <div class="px-side">
+          <div class="big red">65,880円</div>
+          <p><strong style="color:var(--cream)">採点5頭内が1頭のみ3着以内</strong><br>（22件・39%）<br>採点外の馬が入る → 配当爆発</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 逆相関バー -->
+    <div class="inv-bar-wrap" style="margin-top:14px">
+      <div style="font-size:0.8rem; color:var(--muted); margin-bottom:14px">採点上位5頭が3着以内に入った頭数 × 平均配当（対数スケール調整済み）</div>
+      <div class="inv-row">
+        <div class="inv-label"><strong style="color:#6EE7B7">3頭全員が採点1-5位</strong><br><span style="font-size:0.73rem; color:var(--muted)">10件(17.5%) · 採点精度 最高</span></div>
+        <div class="inv-bar-track"><div class="inv-bar-fill c4" style="width:3%">2,965円</div></div>
+        <div class="inv-n">n=10</div>
+      </div>
+      <div class="inv-row">
+        <div class="inv-label"><strong style="color:#93C5FD">2頭が採点1-5位・1頭が圏外</strong><br><span style="font-size:0.73rem; color:var(--muted)">23件(40.4%)</span></div>
+        <div class="inv-bar-track"><div class="inv-bar-fill c3" style="width:24%">23,700円</div></div>
+        <div class="inv-n">n=23</div>
+      </div>
+      <div class="inv-row">
+        <div class="inv-label"><strong style="color:var(--gold2)">1頭が採点1-5位・2頭が圏外</strong><br><span style="font-size:0.73rem; color:var(--muted)">22件(38.6%)</span></div>
+        <div class="inv-bar-track"><div class="inv-bar-fill c2" style="width:69%">65,880円</div></div>
+        <div class="inv-n">n=22</div>
+      </div>
+      <div class="inv-row">
+        <div class="inv-label"><strong style="color:#FCA5A5">採点1-5位が全員3着外</strong><br><span style="font-size:0.73rem; color:var(--muted)">2件(3.5%)</span></div>
+        <div class="inv-bar-track"><div class="inv-bar-fill c1" style="width:100%">95,255円</div></div>
+        <div class="inv-n">n=2</div>
+      </div>
+    </div>
+    <p class="note" style="margin-top:10px">* バー幅は最大95,255円を100%とした相対スケール</p>
+  </div>
+
+  <!-- ③ ヒートマップ: 着順×採点位置 -->
+  <div class="section">
+    <h2>③ 着順別 採点位置分布ヒートマップ（n=57レース）</h2>
+    <div class="heatmap-wrap">
+      <div class="heatmap-title">各セルの数字 = 「該当着順にその採点位置の馬が来た回数」。濃い色 = 高頻度。</div>
+      <div class="hmap-grid">
+        <div class="hmap-head"></div>
+        <div class="hmap-head">1着</div>
+        <div class="hmap-head">2着</div>
+        <div class="hmap-head">3着</div>
+
+        <div class="hmap-label">採点1位</div>
+        <div class="hmap-cell h3">10<br><small>17.5%</small></div>
+        <div class="hmap-cell h5">11<br><small>19.3%</small></div>
+        <div class="hmap-cell h1">5<br><small>8.8%</small></div>
+
+        <div class="hmap-label">採点2位</div>
+        <div class="hmap-cell h2">8<br><small>14.0%</small></div>
+        <div class="hmap-cell h2">7<br><small>12.3%</small></div>
+        <div class="hmap-cell h2">6<br><small>10.5%</small></div>
+
+        <div class="hmap-label">採点3位</div>
+        <div class="hmap-cell h3">9<br><small>15.8%</small></div>
+        <div class="hmap-cell h1">4<br><small>7.0%</small></div>
+        <div class="hmap-cell h3">9<br><small>15.8%</small></div>
+
+        <div class="hmap-label">採点4位</div>
+        <div class="hmap-cell h0">3<br><small>5.3%</small></div>
+        <div class="hmap-cell h1">5<br><small>8.8%</small></div>
+        <div class="hmap-cell h2">7<br><small>12.3%</small></div>
+
+        <div class="hmap-label">採点5位</div>
+        <div class="hmap-cell h2">6<br><small>10.5%</small></div>
+        <div class="hmap-cell h0">3<br><small>5.3%</small></div>
+        <div class="hmap-cell h1">5<br><small>8.8%</small></div>
+
+        <div class="hmap-label">採点6〜10位</div>
+        <div class="hmap-cell h4">13<br><small>22.8%</small></div>
+        <div class="hmap-cell h6">17<br><small>29.8%</small></div>
+        <div class="hmap-cell h4">12<br><small>21.1%</small></div>
+
+        <div class="hmap-label">採点11位以下</div>
+        <div class="hmap-cell h2">8<br><small>14.0%</small></div>
+        <div class="hmap-cell h4">10<br><small>17.5%</small></div>
+        <div class="hmap-cell h4">13<br><small>22.8%</small></div>
+      </div>
+      <div class="hmap-legend">
+        <div class="leg-swatch h0"></div><span>1〜3回</span>
+        <div class="leg-swatch h2" style="margin-left:8px"></div><span>5〜8回</span>
+        <div class="leg-swatch h4" style="margin-left:8px"></div><span>10〜14回</span>
+        <div class="leg-swatch h6" style="margin-left:8px"></div><span>15〜18回</span>
+      </div>
+    </div>
+    <div class="hb red" style="margin-top:14px">
+      <div class="ht">衝撃: 2着の最多頻度は「採点1位(19.3%)」ではなく「採点6〜10位(29.8%)」</div>
+      <p>2着欄を見ると採点1位の11回(19.3%)より採点6〜10位の17回(29.8%)が多い。重賞の2着は<strong>採点上位よりも中穴がより多く来る</strong>。さらに採点11位以下も10回(17.5%)。合計すると<strong>2着の47%は採点6位以下の穴馬</strong>。</p>
+    </div>
+    <div class="hb blue" style="margin-top:10px">
+      <div class="ht">3着は「採点3位(15.8%)」と「採点11位以下(22.8%)」が最多</div>
+      <p>3着も同様に採点圏外馬が22.8%と最多。採点上位3頭が揃って3着以内になるケースは1件(2%)のみ。<strong>採点3位が最も3着に来やすい</strong>(15.8%)という発見も重要。</p>
+    </div>
+  </div>
+
+  <!-- ④ 採点1位が外れたときの分布 -->
+  <div class="section">
+    <h2>④ 採点1位が「外れた31件」の3着以内分布</h2>
+    <div class="two-col">
+      <div class="panel">
+        <h3 style="color:#FCA5A5">採点1位が3着外のとき (31件)</h3>
+        <p style="font-size:0.82rem; color:var(--muted); margin-bottom:12px">3着以内に入った採点位置（全93頭分）</p>
+        <table class="tbl">
+          <thead><tr><th style="text-align:left">採点位置</th><th>頻度</th><th>割合</th></tr></thead>
+          <tbody>
+            <tr><td>採点2位</td><td>13回</td><td class="roi-near">14.0%</td></tr>
+            <tr><td>採点3位</td><td>13回</td><td class="roi-near">14.0%</td></tr>
+            <tr><td>採点4位</td><td>11回</td><td>11.8%</td></tr>
+            <tr><td>採点5位</td><td>9回</td><td>9.7%</td></tr>
+            <tr><td>採点6〜10位</td><td>23回</td><td class="roi-neg">24.7%</td></tr>
+            <tr><td>採点11位以下</td><td>24回</td><td class="roi-neg">25.8%</td></tr>
+          </tbody>
+        </table>
+        <p class="note" style="margin-top:8px">→ 採点11位以下が25.8%。圏外2頭以上が同時に入るパターンが多い。</p>
+      </div>
+      <div class="panel">
+        <h3 style="color:#6EE7B7">採点1位が3着以内のとき (26件)</h3>
+        <p style="font-size:0.82rem; color:var(--muted); margin-bottom:12px">残り2頭の採点位置（全52頭分）</p>
+        <table class="tbl">
+          <thead><tr><th style="text-align:left">採点位置</th><th>頻度</th><th>割合</th></tr></thead>
+          <tbody>
+            <tr><td>採点2位</td><td>8回</td><td>15.4%</td></tr>
+            <tr><td>採点3〜5位</td><td>18回</td><td>34.6%</td></tr>
+            <tr><td>採点6〜10位</td><td>12回</td><td class="roi-near">23.1%</td></tr>
+            <tr><td>採点11位以下</td><td>14回</td><td class="roi-neg">26.9%</td></tr>
+          </tbody>
+        </table>
+        <p class="note" style="margin-top:8px">→ 採点1位が入ってもあと2頭の50%は採点6位以下が来る。</p>
+      </div>
+    </div>
+    <div class="hb gold" style="margin-top:14px">
+      <div class="ht">結論: 「採点1位が入っても外れても」相手は広く採点圏外まで取る必要がある</div>
+      <p>採点1位が入る26件でも残り2頭の半分(50%)は採点6位以下。採点1位が外れる31件は更に深刻で採点11位以下が25.8%。<strong>採点上位5頭のBOXでカバーできるのは17.5%のレースのみ</strong>という事実と一致する。</p>
+    </div>
+  </div>
+
+  <!-- ⑤ 頻出パターン TOP10 -->
+  <div class="section">
+    <h2>⑤ 3着以内の採点位置 頻出パターン TOP10</h2>
+    <div class="pattern-grid">
+
+      <div class="pat-row">
+        <div class="pat-ranks">
+          <div class="rank-chip rc-top3">1</div>
+          <div class="rank-chip rc-top9">9</div>
+          <div class="rank-chip rc-out">11</div>
+        </div>
+        <div class="pat-info">最頻パターン — 採点1位+採点圏外2頭</div>
+        <div class="pat-count">3件(5.3%)</div>
+        <div class="pat-pay">avg 14,820円</div>
+      </div>
+
+      <div class="pat-row">
+        <div class="pat-ranks">
+          <div class="rank-chip rc-top3">2</div>
+          <div class="rank-chip rc-top3">3</div>
+          <div class="rank-chip rc-top5">5</div>
+        </div>
+        <div class="pat-info">採点上位3頭（5位以内）— 低配当</div>
+        <div class="pat-count">3件(5.3%)</div>
+        <div class="pat-pay" style="color:var(--muted)">avg 2,067円</div>
+      </div>
+
+      <div class="pat-row">
+        <div class="pat-ranks">
+          <div class="rank-chip rc-top3">1</div>
+          <div class="rank-chip rc-top3">3</div>
+          <div class="rank-chip rc-out">14</div>
+        </div>
+        <div class="pat-info">採点1・3位+大穴(14位) — 高配当</div>
+        <div class="pat-count">2件(3.5%)</div>
+        <div class="pat-pay">avg 11,960円</div>
+      </div>
+
+      <div class="pat-row">
+        <div class="pat-ranks">
+          <div class="rank-chip rc-top3">1</div>
+          <div class="rank-chip rc-top3">3</div>
+          <div class="rank-chip rc-top5">5</div>
+        </div>
+        <div class="pat-info">採点1・3・5位 — 上位5頭内完結</div>
+        <div class="pat-count">2件(3.5%)</div>
+        <div class="pat-pay" style="color:var(--muted)">avg 1,475円</div>
+      </div>
+
+      <div class="pat-row">
+        <div class="pat-ranks">
+          <div class="rank-chip rc-top3">1</div>
+          <div class="rank-chip rc-top3">2</div>
+          <div class="rank-chip rc-top5">4</div>
+        </div>
+        <div class="pat-info">採点1・2・4位 — 上位4頭内完結</div>
+        <div class="pat-count">2件(3.5%)</div>
+        <div class="pat-pay" style="color:var(--muted)">avg 980円</div>
+      </div>
+
+      <div class="pat-row" style="border-color: rgba(239,68,68,0.4)">
+        <div class="pat-ranks">
+          <div class="rank-chip rc-out">11</div>
+          <div class="rank-chip rc-out">15</div>
+          <div class="rank-chip rc-out">16</div>
+        </div>
+        <div class="pat-info">採点上位10頭が全滅 — 三連複最高配当</div>
+        <div class="pat-count">1件(1.8%)</div>
+        <div class="pat-pay" style="color:#FCA5A5">avg 180,090円</div>
+      </div>
+
+      <div class="pat-row" style="border-color: rgba(239,68,68,0.4)">
+        <div class="pat-ranks">
+          <div class="rank-chip rc-top3">1</div>
+          <div class="rank-chip rc-out">8</div>
+          <div class="rank-chip rc-out">14</div>
+        </div>
+        <div class="pat-info">採点1位+大穴2頭 — 万馬券圏</div>
+        <div class="pat-count">1件(1.8%)</div>
+        <div class="pat-pay" style="color:#FCA5A5">avg 243,770円</div>
+      </div>
+
+      <div class="pat-row" style="border-color: rgba(239,68,68,0.4)">
+        <div class="pat-ranks">
+          <div class="rank-chip rc-top5">4</div>
+          <div class="rank-chip rc-top9">9</div>
+          <div class="rank-chip rc-out">18</div>
+        </div>
+        <div class="pat-info">採点4・9・18位 — 最高配当パターン</div>
+        <div class="pat-count">1件(1.8%)</div>
+        <div class="pat-pay" style="color:#FCA5A5">avg 303,950円</div>
+      </div>
+
+    </div>
+
+    <div class="hb purple" style="margin-top:14px">
+      <div class="ht">最頻パターンが3件のみ — 重賞は「毎回違うパターン」で荒れる</div>
+      <p>top10パターンの中で2件以上は5パターンのみ。57レース中の残り52パターンが1件ずつバラバラに散っている。これが重賞三連複の本質 — <strong>どのフォーメーションも同じ3着パターンを繰り返さないため的中率が上がらない</strong>。</p>
+    </div>
+  </div>
+
+  <!-- ⑥ フォーメーション × ROI 最終比較 -->
+  <div class="section">
+    <h2>⑥ フォーメーション × ROI 最終比較（全57レース）</h2>
+    <div style="overflow-x:auto">
+      <table class="tbl">
+        <thead>
+          <tr>
+            <th style="text-align:left; min-width:200px">買い方</th>
+            <th>平均点数</th>
+            <th>的中</th>
+            <th>的中率</th>
+            <th>ROI</th>
+            <th>avg配当</th>
+            <th>判定</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>FRM {1,2,3}-{1,2,3}-{4-9}</td>
+            <td>17.9点</td>
+            <td>13件</td>
+            <td>22.8%</td>
+            <td class="roi-near">68.8%</td>
+            <td>5,396円</td>
+            <td><span class="badge bg-y">全体最高効率</span></td>
+          </tr>
+          <tr>
+            <td>1軸×2-3-4-5（6点）</td>
+            <td>6.0点</td>
+            <td>7件</td>
+            <td>12.3%</td>
+            <td class="roi-near">68.6%</td>
+            <td>3,350円</td>
+            <td><span class="badge bg-y">次点</span></td>
+          </tr>
+          <tr>
+            <td>BOX5頭(1-5位) 10点</td>
+            <td>10.0点</td>
+            <td>10件</td>
+            <td>17.5%</td>
+            <td class="roi-neg">52.0%</td>
+            <td>2,965円</td>
+            <td><span class="badge bg-r">赤字</span></td>
+          </tr>
+          <tr>
+            <td>FRM {1,2}-{1-4}-{3-9}</td>
+            <td>28.8点</td>
+            <td>16件</td>
+            <td>28.1%</td>
+            <td class="roi-neg">47.0%</td>
+            <td>4,826円</td>
+            <td><span class="badge bg-r">点数過多</span></td>
+          </tr>
+          <tr>
+            <td>BOX8頭(1-8位) 56点</td>
+            <td>55.6点</td>
+            <td>20件</td>
+            <td>35.1%</td>
+            <td class="roi-neg">39.5%</td>
+            <td>6,269円</td>
+            <td><span class="badge bg-r">点数致命的</span></td>
+          </tr>
+          <tr>
+            <td>FRM {1,2,3}-{1-6}-{1-10}</td>
+            <td>66.2点</td>
+            <td>23件</td>
+            <td>40.4%</td>
+            <td class="roi-neg">41.5%</td>
+            <td>6,805円</td>
+            <td><span class="badge bg-r">点数致命的</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="hb red" style="margin-top:14px">
+      <div class="ht">点数を増やして的中率を上げても、ROIは逆に下がる</div>
+      <p>5頭BOX(10点)ROI52% vs 8頭BOX(56点)ROI39.5%。広げるほど投資が増え、増えた分に見合う配当増加がない。<strong>重賞の三連複はどのフォーメーションでも黒字化できない</strong>。全戦略が70%未満。</p>
+    </div>
+  </div>
+
+  <!-- ⑦ なぜ黒字化できないかのメカニズム -->
+  <div class="section">
+    <h2>⑦ 重賞三連複が黒字化できない4つのメカニズム</h2>
+
+    <div class="hb red">
+      <div class="ht">① 採点精度が低い（採点1位の1着率17.5%・3着以内率45.6%）</div>
+      <p>3勝クラスの採点1位が3着以内に入る確率が約65%に対し、重賞は45.6%。採点ロジックが通用しにくい。原因: 重賞馬は全馬が実力伯仲で近走実績や調教の差が小さい。</p>
+    </div>
+    <div class="hb red">
+      <div class="ht">② 2着・3着の穴馬化 — 2着の47%が採点6位以下</div>
+      <p>重賞は展開次第で伏兵が絡みやすい。採点上位を買っても「2着が10〜16人気の穴馬」というパターンが頻発。これをカバーするには相手を非常に広く取る必要がある。</p>
+    </div>
+    <div class="hb gold">
+      <div class="ht">③ 採点精度の逆相関 — 「当たるほど安い」構造</div>
+      <p>採点が精度高く上位5頭が3着以内に全部入るのは17.5%で、このときの平均配当2,965円。しかしこれをカバーするBOX5頭(10点)は ROI 52%。採点外も含む高配当レースを取ることができないと回収率が上がらない。</p>
+    </div>
+    <div class="hb purple">
+      <div class="ht">④ パターンが毎回バラバラ — 的中パターンが57通りほぼ全て異なる</div>
+      <p>3着以内の採点位置組み合わせが最頻でも3件(5.3%)のみ。残りは全て1〜2件のバラバラなパターン。特定のフォーメーションで「よく当たる組み合わせ」を事前に絞ることが原理的に不可能。</p>
+    </div>
+  </div>
+
+  <!-- 結論 -->
+  <div class="conclusion">
+    <h2>⑧ 新たな発見 — 実運用への示唆</h2>
+    <ol>
+      <li><strong>採点上位5頭BOXは「安心感だが高コスト・低ROI」</strong> — 的中17.5%・平均配当2,965円では黒字化不可能</li>
+      <li><strong>重賞の配当は「採点精度が下がるほど高くなる」</strong> — これは構造的なもので採点改善では解決しない</li>
+      <li><strong>2着の47%が採点6位以下の穴馬</strong> — 相手を6位以下まで広げないと半数の入着を取りこぼすが、広げると点数が増えROIが悪化する</li>
+      <li><strong>最も効率的な買い方は「FRM {1,2,3}-{1,2,3}-{4-9}」</strong> — ROI68.8%だが黒字には届かない</li>
+      <li><strong>重賞の三連複買い方ベスト: どれを選んでも ROI70%未満</strong> — 重賞見送りルールは正しく、三連複の買い方を変えても覆せない</li>
+      <li><strong>唯一の突破口</strong> — 「採点2位=市場1人気(ROI377%)」など「市場と採点の乖離」を条件にした買い方のみが可能性を持つ。これはフォーメーションの形式より「どのレースを買うか」の選別が重要であることを示す</li>
+    </ol>
+  </div>
+
+</div>
+</body>
+</html>
