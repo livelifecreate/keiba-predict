@@ -165,10 +165,9 @@ body { background: var(--bg); color: var(--cream); font-family: -apple-system, '
             <div class="sum-note">三連複5頭BOXはROI52%の赤字。<br>3勝クラスは馬連のみで戦う。</div>
         </div>
         <div class="summary-card green">
-            <div class="sum-title">三連複5頭BOX 黒字条件</div>
-            <div class="sum-value green">1位=1人気</div>
-            <div class="sum-sub">全クラス 5頭BOX ROI 119%</div>
-            <div class="sum-note">採点1位が1人気のとき<br>5頭BOX期待値プラス<br>（n=133）</div>
+            <div class="sum-title">三連複5頭BOX 黒字の3条件</div>
+            <div class="sum-value green" style="font-size:18px;line-height:1.4">1位=1人気<br>2位≤9人気<br>3位≤9人気</div>
+            <div class="sum-note">3条件すべて満たすとき<br>5頭BOX ROI <strong>131.4%</strong><br>（n=125）</div>
         </div>
         <div class="summary-card red">
             <div class="sum-title">三連複 買い禁止パターン</div>
@@ -472,6 +471,79 @@ body { background: var(--bg); color: var(--cream); font-family: -apple-system, '
     </div>
 </div>
 
+<!-- ④-b 採点3位の人気フィルター + 穴馬の扱い -->
+<div class="section">
+    <div class="section-title">採点3位の人気フィルター — 3〜5位の穴馬の扱い</div>
+    <div class="section-desc">条件: 採点1位=1人気 &amp; 2位≤9人気 のとき。採点3〜5位の人気が三連複ROIに与える影響。</div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+        <div>
+            <div style="font-size:12px;color:var(--muted);font-weight:700;margin-bottom:8px">採点3位の人気グループ別 ROI（1位=1人気 &amp; 2位≤9人気）</div>
+            <table class="data-table">
+                <thead><tr><th>採点3位の人気</th><th>n</th><th>1位軸4頭(6点)</th><th>5頭BOX(10点)</th></tr></thead>
+                <tbody>
+                    <tr style="background:rgba(86,211,100,0.15)">
+                        <td><strong>2〜3人気</strong></td><td>50</td>
+                        <td class="good">123.8%</td>
+                        <td class="good">185.0%</td>
+                    </tr>
+                    <tr style="background:rgba(86,211,100,0.08)">
+                        <td><strong>4〜6人気</strong></td><td>44</td>
+                        <td class="warn">85.4%</td>
+                        <td class="good">141.1%</td>
+                    </tr>
+                    <tr>
+                        <td><strong>7〜9人気</strong></td><td>15</td>
+                        <td class="bad">77.6%</td>
+                        <td class="bad">46.5%</td>
+                    </tr>
+                    <tr style="background:rgba(218,54,51,0.12)">
+                        <td><strong style="color:var(--red2)">10人気以下 ❌</strong></td><td>13</td>
+                        <td class="bad">34.0%</td>
+                        <td class="bad">20.4%</td>
+                    </tr>
+                </tbody>
+            </table>
+            <div style="font-size:12px;color:var(--muted);margin-top:6px">→ <strong style="color:var(--red2)">採点3位も9人気以内が必要条件</strong></div>
+        </div>
+        <div>
+            <div style="font-size:12px;color:var(--muted);font-weight:700;margin-bottom:8px">3〜5位の穴馬（10人気以下）が何頭いるか</div>
+            <table class="data-table">
+                <thead><tr><th>穴馬の数</th><th>n</th><th>1位軸4頭</th><th>5頭BOX</th></tr></thead>
+                <tbody>
+                    <tr>
+                        <td><strong>0頭（全員9人気以内）</strong></td><td>85</td>
+                        <td class="warn">90.1%</td>
+                        <td class="good">116.1%</td>
+                    </tr>
+                    <tr style="background:rgba(86,211,100,0.15)">
+                        <td><strong style="color:var(--green2)">1頭（4か5位のみ穴馬）★</strong></td><td>28</td>
+                        <td class="good">139.2%</td>
+                        <td class="warn">95.0%</td>
+                    </tr>
+                    <tr style="background:rgba(218,54,51,0.10)">
+                        <td><strong style="color:var(--red2)">2頭以上 ❌</strong></td><td>11</td>
+                        <td class="bad">0.0%</td>
+                        <td><span class="warn">354%</span><span style="font-size:10px;color:var(--muted)"> n=11</span></td>
+                    </tr>
+                </tbody>
+            </table>
+            <div style="font-size:12px;color:var(--muted);margin-top:6px">→ 4〜5位の穴馬が<strong>1頭だけ</strong>なら1位軸4頭(6点)の方が優位</div>
+        </div>
+    </div>
+
+    <div class="insight-box">
+        <div class="label">3位・4〜5位の穴馬に関する結論</div>
+        <strong style="color:var(--red2)">採点3位が10人気以下はROI 20〜34%と大赤字</strong>。
+        3位の馬が市場に評価されていないとき、三連複に絡む可能性が著しく低い。
+        <strong>採点3位も9人気以内が必要条件。</strong><br><br>
+        一方、<strong style="color:var(--green2)">4〜5位に穴馬が1頭だけなら逆にプラス</strong>（1位軸4頭 ROI 139%）。
+        「3位は人気馬・4か5位の1頭だけ穴馬」という構図で穴が来ると高配当になり、5頭BOX(95%)より1位軸4頭が上回る。<br><br>
+        <strong style="color:var(--red2)">穴馬2頭以上（4・5位がともに10人気以下）は1位軸4頭ROI 0%。</strong>
+        5頭BOX 354%は n=11 で信頼性が低い。この状況は見送りが安全。
+    </div>
+</div>
+
 <!-- ⑤ 採点2位×3位 クロス表 -->
 <div class="section">
     <div class="section-title">採点2位×3位 人気グループ クロス表 — 三連複5頭BOX ROI</div>
@@ -611,7 +683,78 @@ body { background: var(--bg); color: var(--cream); font-family: -apple-system, '
     </div>
 </div>
 
-<!-- ⑦ 買い目推奨ルール -->
+<!-- ⑦ なぜ採点1位=1人気でROIが高いか -->
+<div class="section">
+    <div class="section-title">なぜ採点1位=1人気のときだけROIが高いのか — メカニズム解説</div>
+    <div class="section-desc">的中率と平均配当に分解すると、2つの独立した要因が重なっていることがわかる。</div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+        <div>
+            <div style="font-size:12px;color:var(--muted);font-weight:700;margin-bottom:8px">① 的中率 × 平均配当 の分解（5頭BOX）</div>
+            <table class="data-table">
+                <thead><tr><th>採点1位の人気</th><th>n</th><th>的中率</th><th>平均配当(的中時)</th><th>ROI</th></tr></thead>
+                <tbody>
+                    <tr style="background:rgba(86,211,100,0.15)">
+                        <td><strong style="color:var(--green2)">1人気 ★</strong></td><td>132</td>
+                        <td class="good">30.3%</td>
+                        <td class="good">4,134円</td>
+                        <td class="good">125.3%</td>
+                    </tr>
+                    <tr>
+                        <td><strong>2〜3人気</strong></td><td>140</td>
+                        <td class="warn">21.4%</td>
+                        <td class="bad">2,811円</td>
+                        <td class="bad">60.2%</td>
+                    </tr>
+                    <tr>
+                        <td><strong>4〜6人気</strong></td><td>68</td>
+                        <td class="bad">16.2%</td>
+                        <td class="warn">4,693円</td>
+                        <td class="bad">75.9%</td>
+                    </tr>
+                </tbody>
+            </table>
+            <div style="font-size:12px;color:var(--muted);margin-top:6px">採点1位=2〜3人気のとき、的中率も配当も両方低い</div>
+        </div>
+        <div>
+            <div style="font-size:12px;color:var(--muted);font-weight:700;margin-bottom:8px">② 市場1人気が5頭内に入っているかどうか</div>
+            <table class="data-table">
+                <thead><tr><th>採点1位</th><th>1人気が5頭内</th><th>そのときROI</th><th>5頭外のROI</th></tr></thead>
+                <tbody>
+                    <tr>
+                        <td><strong>1人気</strong></td><td>100%</td>
+                        <td class="good">125.3%</td>
+                        <td class="dim">—</td>
+                    </tr>
+                    <tr style="background:rgba(218,54,51,0.10)">
+                        <td><strong>2〜3人気</strong></td><td>77.9%</td>
+                        <td class="bad">41.7%</td>
+                        <td class="good">125.3%</td>
+                    </tr>
+                    <tr>
+                        <td><strong>4〜6人気</strong></td><td>61.8%</td>
+                        <td class="warn">98.5%</td>
+                        <td class="bad">39.5%</td>
+                    </tr>
+                </tbody>
+            </table>
+            <div style="font-size:12px;color:var(--muted);margin-top:6px">採点1位≠市場1人気 → 1人気を5頭に抱え込むことで低配当を量産</div>
+        </div>
+    </div>
+
+    <div class="insight-box">
+        <div class="label">メカニズムの核心</div>
+        <strong>採点1位=2〜3人気のとき、77.9%のレースで市場1人気（別馬）も採点2〜5位に入っている。</strong>
+        市場1人気は実際に3着以内に来やすいため、「1人気 + 採点1位（2〜3人気） + 他の人気馬」という
+        <strong style="color:var(--red2)">市場が想定通りと評価する低配当コンボ</strong>を量産させられ、平均配当が2,811円まで沈む。<br><br>
+        採点1位=市場1人気のとき: <strong style="color:var(--green2)">採点システムと市場が二重に同じ馬を支持</strong>（的中率30.3%）、
+        かつ5頭内の他の4頭には余白があるため配当が保たれる（平均4,134円）。<br><br>
+        まとめ: 三連複5頭BOXは<strong>「採点と市場の一致」がある種の品質フィルターになっており</strong>、
+        不一致のときは市場1人気に配当を稀釈される構造的問題がある。
+    </div>
+</div>
+
+<!-- ⑧ 買い目推奨ルール -->
 <div class="section">
     <div class="section-title">買い目推奨ルール — データ根拠付き（三連複版）</div>
     <div class="rules-grid">
@@ -632,9 +775,16 @@ body { background: var(--bg); color: var(--cream); font-family: -apple-system, '
 
         <div class="rule-card buy">
             <span class="rule-badge buy">★ 三連複5頭BOX</span>
-            <div class="rule-title">採点2位=2〜3人気 × 採点3位=4〜6人気</div>
-            <div class="rule-desc">最大n=53のクロスセル、ROI124%。2番手が確定し3番手が中程度の人気のとき。OPクラスで採点1位=1人気と組み合わさると最強。</div>
-            <div class="rule-roi good">三連複5頭BOX ROI: 124%（n=53）</div>
+            <div class="rule-title">採点2位=2〜3人気 × 採点3位≤9人気</div>
+            <div class="rule-desc">3位が2〜3人気: 5頭BOX ROI 185%（n=50）。3位が4〜6人気: 5頭BOX ROI 141%（n=44）。3位も9人気以内が必須。OPクラスで採点1位=1人気と組み合わさると最強。</div>
+            <div class="rule-roi good">5頭BOX ROI: 141〜185%（3位≤9人気のとき）</div>
+        </div>
+
+        <div class="rule-card pass">
+            <span class="rule-badge pass">三連複禁止</span>
+            <div class="rule-title">採点3位が10人気以下</div>
+            <div class="rule-desc">1位=1人気 &amp; 2位≤9人気 の条件下でも、3位が10人気以下になると5頭BOX ROI 20.4%・1位軸4頭 ROI 34.0%と大赤字。3位のフィルターは2位と同等に重要。</div>
+            <div class="rule-roi bad">5頭BOX ROI: 20.4% / 1位軸4頭 ROI: 34.0%</div>
         </div>
 
         <div class="rule-card caution">
@@ -674,16 +824,19 @@ body { background: var(--bg); color: var(--cream); font-family: -apple-system, '
                 ✅ <strong>OPクラス × 採点1位=1人気</strong> → 馬連1点 + 三連複5頭BOX（両方黒字）
             </div>
             <div style="margin-bottom:4px;padding:6px 10px;background:rgba(86,211,100,0.10);border-radius:4px">
-                ✅ <strong>採点2位=2〜3人気</strong> → 馬連1点必須（ROI168%）+ スコア差3pt未満なら三連複5頭BOX追加
+                ✅ <strong>採点2位=2〜3人気 かつ 採点3位≤9人気</strong> → 馬連1点必須（ROI168%）+ 三連複5頭BOX追加（ROI141〜185%）
             </div>
             <div style="margin-bottom:4px;padding:6px 10px;background:rgba(86,211,100,0.08);border-radius:4px">
-                ✅ <strong>採点1位=1人気 × スコア差0〜3pt</strong> → 三連複5頭BOX（ROI125〜155%）
+                ✅ <strong>採点1位=1人気 × スコア差0〜3pt × 採点3位≤9人気</strong> → 三連複5頭BOX（ROI125〜155%）
             </div>
             <div style="margin-bottom:4px;padding:6px 10px;background:rgba(218,54,51,0.08);border-radius:4px">
                 ❌ <strong>3勝クラス</strong> → 三連複禁止。馬連のみ購入（ROI183%）
             </div>
+            <div style="margin-bottom:4px;padding:6px 10px;background:rgba(218,54,51,0.08);border-radius:4px">
+                ❌ <strong>採点2位=4〜6人気 または 10人気以下</strong> → 馬連・三連複ともに見送り
+            </div>
             <div style="padding:6px 10px;background:rgba(218,54,51,0.08);border-radius:4px">
-                ❌ <strong>採点2位=4〜6人気または10人気以下</strong> → 馬連・三連複ともに見送り
+                ❌ <strong>採点3位=10人気以下</strong> → 三連複は禁止（ROI20%）。馬連のみ検討
             </div>
         </div>
     </div>
@@ -691,7 +844,7 @@ body { background: var(--bg); color: var(--cream); font-family: -apple-system, '
 
 <!-- footer -->
 <div style="padding:16px 0;text-align:center;color:var(--muted);font-size:11px;border-top:1px solid var(--border);margin-top:8px">
-    競馬予想システム バックテスト分析 · 三連複 vs 馬連 編 · 対象: 2025/12〜2026/06 · n=384レース · 生成日: 2026-06-27
+    競馬予想システム バックテスト分析 · 三連複 vs 馬連 編 · 対象: 2025/12〜2026/06 · n=384レース · 更新日: 2026-06-27（採点3位フィルター・メカニズム解説追加）
 </div>
 </div>
 </body>
