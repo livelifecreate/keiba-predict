@@ -35,6 +35,9 @@ class TrainingData:
     rank: str        # A/B/C/D
     comment: str     # 気配抜群 / 叩き良化 / etc.
     score: int       # RANK_SCORE に基づくスコア
+    frame_num: str = ""   # 枠番
+    horse_num: str = ""   # 馬番
+    status: str = ""      # 前走 / 中間 / 休み明け（Horse_Info の末尾テキスト）
 
 
 def _fetch(url: str) -> BeautifulSoup:
@@ -105,29 +108,35 @@ def fetch_training_data(race_id: str) -> dict[str, TrainingData]:
 
     result = {}
     for row in table.find_all("tr"):
-        name_cell  = row.find(class_="Horse_Info")
+        tds = row.find_all("td")
+        name_cell   = row.find(class_="Horse_Info")
         critic_cell = row.find(class_="Training_Critic")
-        rank_cell  = next(
-            (td for td in row.find_all("td")
-             if td.get("class") and any("Rank_" in c for c in td.get("class", []))),
-            None,
-        )
+        waku_cell   = next((td for td in tds if td.get("class") and any(c.startswith("Waku") for c in td.get("class", []))), None)
+        umaban_cell = row.find(class_="Umaban")
+        rank_cell   = next((td for td in tds if td.get("class") and any("Rank_" in c for c in td.get("class", []))), None)
 
         if not name_cell:
             continue
 
-        horse_name = name_cell.get_text(strip=True)
-        horse_name = re.sub(r"(前走|中間|休み明け).*$", "", horse_name).strip()
+        raw_name    = name_cell.get_text(strip=True)
+        status_m    = re.search(r"(前走|中間|休み明け)", raw_name)
+        status      = status_m.group(1) if status_m else ""
+        horse_name  = re.sub(r"(前走|中間|休み明け).*$", "", raw_name).strip()
 
-        comment = critic_cell.get_text(strip=True) if critic_cell else ""
-        rank    = rank_cell.get_text(strip=True)   if rank_cell   else ""
-        score   = RANK_SCORE.get(rank, 0)
+        comment    = critic_cell.get_text(strip=True) if critic_cell  else ""
+        rank       = rank_cell.get_text(strip=True)   if rank_cell    else ""
+        frame_num  = waku_cell.get_text(strip=True)   if waku_cell    else ""
+        horse_num  = umaban_cell.get_text(strip=True) if umaban_cell  else ""
+        score      = RANK_SCORE.get(rank, 0)
 
         result[horse_name] = TrainingData(
             horse_name=horse_name,
             rank=rank,
             comment=comment,
             score=score,
+            frame_num=frame_num,
+            horse_num=horse_num,
+            status=status,
         )
 
     return result
