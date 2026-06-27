@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>重賞レース ROI低下の原因分析</title>
+<style>
+:root {
+    --bg:     #0D1117;
+    --bg2:    #161B22;
+    --bg3:    #1C2128;
+    --border: #30363D;
+    --gold:   #C9A227;
+    --gold2:  #E6C060;
+    --cream:  #E6EDF3;
+    --muted:  #7D8590;
+    --green:  #2EA043;
+    --green2: #56D364;
+    --red:    #DA3633;
+    --red2:   #FF7B72;
+    --blue:   #1F6FEB;
+    --blue2:  #79C0FF;
+    --orange: #D29922;
+    --orange2:#E3B341;
+    --purple: #8957E5;
+    --purple2:#BC8CFF;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--cream); font-family: -apple-system,'Segoe UI',sans-serif; font-size: 14px; line-height: 1.6; }
+
+.hero {
+    background: linear-gradient(160deg, #0D1117 0%, #1C1020 60%, #161B22 100%);
+    border-bottom: 2px solid var(--purple2);
+    padding: 38px 28px 28px;
+    text-align: center;
+}
+.hero-eyebrow { font-size: 11px; letter-spacing: 3px; color: var(--muted); text-transform: uppercase; margin-bottom: 10px; }
+.hero-title { font-size: 36px; font-weight: 900; color: var(--purple2); line-height: 1.15; }
+.hero-sub { color: var(--muted); font-size: 14px; margin-top: 8px; }
+.hero-meta { margin-top: 12px; font-size: 12px; color: var(--muted); }
+
+.page { max-width: 980px; margin: 0 auto; padding: 0 16px 40px; }
+.section { padding: 22px 0; border-bottom: 1px solid var(--border); }
+.section-title {
+    font-size: 11px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase;
+    color: var(--purple2); border-left: 3px solid var(--purple2); padding-left: 10px;
+    margin-bottom: 14px;
+}
+.section-desc { font-size: 13px; color: var(--muted); margin-bottom: 12px; line-height: 1.7; }
+
+.summary-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+.summary-card { background: var(--bg2); border-radius: 8px; padding: 14px; border: 1px solid var(--border); }
+.summary-card.root1 { border-top: 3px solid var(--red2); }
+.summary-card.root2 { border-top: 3px solid var(--orange2); }
+.summary-card.root3 { border-top: 3px solid var(--blue2); }
+.summary-card.root4 { border-top: 3px solid var(--purple2); }
+.sum-num { font-size: 10px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 4px; }
+.sum-title { font-size: 13px; font-weight: 700; color: var(--cream); margin-bottom: 6px; line-height: 1.4; }
+.sum-value { font-size: 24px; font-weight: 800; line-height: 1.0; margin-bottom: 4px; }
+.sum-note { font-size: 11px; color: var(--muted); line-height: 1.5; }
+
+.data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.data-table th { background: var(--bg3); color: var(--muted); font-size: 10px; letter-spacing: 1px; text-transform: uppercase; padding: 8px 12px; text-align: center; border-bottom: 1px solid var(--border); }
+.data-table td { padding: 9px 12px; border-bottom: 1px solid var(--border); text-align: center; }
+.data-table tr:last-child td { border-bottom: none; }
+.data-table tr:hover td { background: var(--bg3); }
+.good  { color: var(--green2); font-weight: 700; }
+.warn  { color: var(--orange2); font-weight: 700; }
+.bad   { color: var(--red2); font-weight: 700; }
+.dim   { color: var(--muted); }
+.hl-row { background: rgba(218,54,51,0.12) !important; }
+
+.insight-box {
+    background: var(--bg2); border-radius: 8px; padding: 14px 16px;
+    border: 1px solid var(--border); border-left: 4px solid var(--gold);
+    margin: 12px 0; font-size: 13px; line-height: 1.7;
+}
+.insight-box.red  { border-left-color: var(--red2); }
+.insight-box.blue { border-left-color: var(--blue2); }
+.insight-box.purple { border-left-color: var(--purple2); }
+.insight-box .label { font-size: 10px; color: var(--gold); font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px; }
+.insight-box.red    .label { color: var(--red2); }
+.insight-box.blue   .label { color: var(--blue2); }
+.insight-box.purple .label { color: var(--purple2); }
+
+/* 原因カード */
+.cause-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.cause-card { background: var(--bg2); border-radius: 8px; padding: 16px; border: 1px solid var(--border); }
+.cause-num { display: inline-block; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 3px; margin-bottom: 8px; }
+.c1 { background: rgba(218,54,51,0.3); color: var(--red2); }
+.c2 { background: rgba(210,153,34,0.3); color: var(--orange2); }
+.c3 { background: rgba(31,111,235,0.3); color: var(--blue2); }
+.c4 { background: rgba(137,87,229,0.3); color: var(--purple2); }
+.cause-title { font-size: 15px; font-weight: 700; color: var(--cream); margin-bottom: 6px; }
+.cause-desc { font-size: 12px; color: var(--muted); line-height: 1.6; }
+.cause-stat { margin-top: 10px; font-size: 13px; font-weight: 700; }
+
+/* 棒グラフ */
+.bar-row { display: flex; align-items: center; gap: 8px; margin: 5px 0; }
+.bar-label { font-size: 12px; width: 90px; flex-shrink: 0; color: var(--muted); }
+.bar-label.hl { color: var(--cream); font-weight: 700; }
+.bar-bg { flex: 1; background: var(--bg3); border-radius: 3px; height: 22px; }
+.bar-fill { height: 22px; border-radius: 3px; display: flex; align-items: center; padding-left: 8px; font-size: 12px; font-weight: 700; }
+.bar-g { background: rgba(86,211,100,0.35); color: var(--green2); }
+.bar-o { background: rgba(227,179,65,0.35); color: var(--orange2); }
+.bar-r { background: rgba(218,54,51,0.35); color: var(--red2); }
+.bar-p { background: rgba(137,87,229,0.35); color: var(--purple2); }
+
+/* 比較テーブル */
+.compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+@media (max-width: 640px) {
+    .hero-title { font-size: 24px; }
+    .summary-grid { grid-template-columns: repeat(2,1fr); }
+    .cause-grid { grid-template-columns: 1fr; }
+    .compare-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<div class="hero">
+    <div class="hero-eyebrow">Root Cause Analysis · 2025/12〜2026/06</div>
+    <div class="hero-title">重賞レース ROI低下<br>4つの根本原因</div>
+    <div class="hero-sub">なぜ重賞は当たらず、当たっても回収できないのか</div>
+    <div class="hero-meta">対象: 重賞 n=57レース / 他クラス比較含む · バックテスト実績ベース</div>
+</div>
+
+<div class="page">
+
+<!-- ① 結論サマリー -->
+<div class="section">
+    <div class="section-title">全体サマリー — 重賞の数字を直視する</div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-bottom:16px">
+        <div style="background:var(--bg2);border-radius:8px;padding:14px;border:1px solid var(--border);border-top:3px solid var(--red2)">
+            <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px">馬連ROI</div>
+            <div style="font-size:28px;font-weight:800;color:var(--red2)">32.5%</div>
+            <div style="font-size:11px;color:var(--muted)">3勝クラス179.1%<br>OPクラス256.7%</div>
+        </div>
+        <div style="background:var(--bg2);border-radius:8px;padding:14px;border:1px solid var(--border);border-top:3px solid var(--red2)">
+            <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px">馬連的中率</div>
+            <div style="font-size:28px;font-weight:800;color:var(--red2)">3.5%</div>
+            <div style="font-size:11px;color:var(--muted)">57R中2件<br>3勝クラス8.8%</div>
+        </div>
+        <div style="background:var(--bg2);border-radius:8px;padding:14px;border:1px solid var(--border);border-top:3px solid var(--red2)">
+            <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px">採点1位の1着率</div>
+            <div style="font-size:28px;font-weight:800;color:var(--red2)">17.5%</div>
+            <div style="font-size:11px;color:var(--muted)">2勝クラス25.5%<br>3勝クラス23.1%</div>
+        </div>
+        <div style="background:var(--bg2);border-radius:8px;padding:14px;border:1px solid var(--border);border-top:3px solid var(--red2)">
+            <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px">採点1位=市場1人気</div>
+            <div style="font-size:28px;font-weight:800;color:var(--red2)">17.5%</div>
+            <div style="font-size:11px;color:var(--muted)">2勝クラス42.2%<br>3勝クラス35.2%</div>
+        </div>
+        <div style="background:var(--bg2);border-radius:8px;padding:14px;border:1px solid var(--border);border-top:3px solid var(--orange2)">
+            <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px">馬連的中時の平均配当</div>
+            <div style="font-size:28px;font-weight:800;color:var(--orange2)">1,060円</div>
+            <div style="font-size:11px;color:var(--muted)">3勝1,851円<br>OP1,802円</div>
+        </div>
+        <div style="background:var(--bg2);border-radius:8px;padding:14px;border:1px solid var(--border);border-top:3px solid var(--orange2)">
+            <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px">三連複5頭ROI</div>
+            <div style="font-size:28px;font-weight:800;color:var(--orange2)">43.7%</div>
+            <div style="font-size:11px;color:var(--muted)">OP177.7%<br>3勝47.9%</div>
+        </div>
+    </div>
+
+    <div class="insight-box red">
+        <div class="label">結論</div>
+        重賞は <strong style="color:var(--red2)">的中率・平均配当の両方が低い</strong>という二重苦。
+        馬連の的中率3.5%（57R中2件）は偶然の域を出ておらず、三連複5頭BOXも43.7%と大赤字。
+        「重賞見送り」ルールはこの実績で完全に正当化される。
+    </div>
+</div>
+
+<!-- ② 4つの根本原因 -->
+<div class="section">
+    <div class="section-title">根本原因 — なぜ重賞だけここまで低いのか</div>
+    <div class="cause-grid">
+
+        <div class="cause-card">
+            <span class="cause-num c1">原因①</span>
+            <div class="cause-title">採点と市場の一致率が極端に低い</div>
+            <div class="cause-desc">
+                採点1位=市場1人気になる割合が<strong style="color:var(--red2)">17.5%のみ</strong>。
+                重賞は毎回トップクラスの馬が集まるため、「近走実績」ベースの採点では
+                「今回特に強い馬」を正確に識別できない。
+                採点は2〜3人気の馬を1位に挙げることが47%を占める。
+            </div>
+            <div class="cause-stat bad">採点1位=市場1人気: 17.5%（他クラス35〜42%）</div>
+        </div>
+
+        <div class="cause-card">
+            <span class="cause-num c2">原因②</span>
+            <div class="cause-title">採点1位が1人気のときしか予測が機能しない</div>
+            <div class="cause-desc">
+                先行分析で明らかになったように、採点1位≠市場1人気のとき
+                5頭BOX ROIは60%以下に沈む。
+                重賞ではそれが82.5%のレースで発生している。
+                採点1位=1人気（n=10）のときだけ1着率40%、3着内90%と機能するが、
+                そのレース自体が少ない。
+            </div>
+            <div class="cause-stat bad">採点1位≠市場1人気のとき: ROI推定60%以下</div>
+        </div>
+
+        <div class="cause-card">
+            <span class="cause-num c3">原因③</span>
+            <div class="cause-title">当たっても配当が安い</div>
+            <div class="cause-desc">
+                重賞の馬連的中時の平均配当は<strong style="color:var(--blue2)">1,060円</strong>と最も低い。
+                重賞は多くの実力馬が集まり人気が均等化するため、
+                どの組み合わせが来ても「それなりに人気した馬」の組み合わせになりがち。
+                「外さなくても儲からない」構造。
+            </div>
+            <div class="cause-stat" style="color:var(--blue2)">馬連平均配当: 重賞1,060円 vs 3勝1,851円</div>
+        </div>
+
+        <div class="cause-card">
+            <span class="cause-num c4">原因④</span>
+            <div class="cause-title">番狂わせが多く採点上位5頭から1着馬が逃げる</div>
+            <div class="cause-desc">
+                重賞で採点1位が外れた47レースのうち、
+                <strong style="color:var(--purple2)">1着馬が採点7位以下になるケースが約32%</strong>。
+                つまり5頭BOXを買っても1着馬がBOX外にいることが多い。
+                重賞の1着馬は4〜6人気が22.8%、7人気以上が19.3%と波乱が多い。
+            </div>
+            <div class="cause-stat" style="color:var(--purple2)">1着馬が採点5位以外: 重賞で推定45%以上</div>
+        </div>
+
+    </div>
+</div>
+
+<!-- ③ 採点1位の人気分布（クラス比較） -->
+<div class="section">
+    <div class="section-title">採点1位の人気分布 — クラス別比較</div>
+    <div class="section-desc">採点1位は何人気になっているか。1人気との一致率が高いほど、採点モデルの予測精度が高い。</div>
+
+    <div style="margin-bottom:18px">
+        <div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:8px">採点1位=市場1人気の一致率</div>
+        <div class="bar-row">
+            <div class="bar-label">2勝クラス</div>
+            <div class="bar-bg"><div class="bar-fill bar-g" style="width:42%">42.2%</div></div>
+        </div>
+        <div class="bar-row">
+            <div class="bar-label">3勝クラス</div>
+            <div class="bar-bg"><div class="bar-fill bar-g" style="width:35%">35.2%</div></div>
+        </div>
+        <div class="bar-row">
+            <div class="bar-label">OP</div>
+            <div class="bar-bg"><div class="bar-fill bar-o" style="width:27%">27.3%</div></div>
+        </div>
+        <div class="bar-row">
+            <div class="bar-label hl">重賞 ★</div>
+            <div class="bar-bg"><div class="bar-fill bar-r" style="width:17.5%">17.5%</div></div>
+        </div>
+    </div>
+
+    <table class="data-table">
+        <thead>
+            <tr><th>クラス</th><th>n</th><th>1人気</th><th>2〜3人気</th><th>4〜6人気</th><th>7〜9人気</th><th>10人気以下</th><th>採点1位1着率</th></tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>2勝クラス</strong></td><td>192</td>
+                <td class="good">42%</td><td>33%</td><td>17%</td><td>5%</td><td>4%</td>
+                <td class="good">25.5%</td>
+            </tr>
+            <tr>
+                <td><strong>3勝クラス</strong></td><td>91</td>
+                <td class="warn">35%</td><td>36%</td><td>16%</td><td>10%</td><td>2%</td>
+                <td class="warn">23.1%</td>
+            </tr>
+            <tr>
+                <td><strong>OP</strong></td><td>66</td>
+                <td class="warn">27%</td><td>36%</td><td>21%</td><td>6%</td><td>9%</td>
+                <td class="warn">18.2%</td>
+            </tr>
+            <tr class="hl-row">
+                <td><strong style="color:var(--red2)">重賞 ★</strong></td><td>57</td>
+                <td class="bad">18%</td><td>47%</td><td>21%</td><td>11%</td><td>4%</td>
+                <td class="bad">17.5%</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="insight-box red" style="margin-top:12px">
+        <div class="label">解釈</div>
+        重賞では採点1位が2〜3人気になるケースが<strong style="color:var(--red2)">47%</strong>。
+        市場は別の馬（1人気）を最有力視しているのに、採点モデルが2〜3番手の馬を推している状態。
+        先行分析の結論「採点1位≠市場1人気のとき、5頭BOX ROIは構造的に60%以下」がそのまま適用される。
+    </div>
+</div>
+
+<!-- ④ 重賞 採点1位人気別の1着率 -->
+<div class="section">
+    <div class="section-title">重賞 採点1位の人気別パフォーマンス</div>
+    <div class="section-desc">重賞の中でも「採点1位=市場1人気」のレースだけは機能する可能性がある。</div>
+
+    <div class="compare-grid">
+        <div>
+            <div style="font-size:12px;color:var(--muted);font-weight:700;margin-bottom:8px">重賞 採点1位の人気別 1着率・3着内率</div>
+            <table class="data-table">
+                <thead><tr><th>採点1位の人気</th><th>n</th><th>1着率</th><th>3着内率</th><th>平均単勝</th></tr></thead>
+                <tbody>
+                    <tr style="background:rgba(86,211,100,0.12)">
+                        <td><strong style="color:var(--green2)">1人気 ★</strong></td><td>10</td>
+                        <td class="good">40.0%</td>
+                        <td class="good">90.0%</td>
+                        <td>2.8倍</td>
+                    </tr>
+                    <tr>
+                        <td><strong>2〜3人気</strong></td><td>27</td>
+                        <td class="bad">14.8%</td>
+                        <td class="bad">33.3%</td>
+                        <td>5.0倍</td>
+                    </tr>
+                    <tr>
+                        <td><strong>4〜6人気</strong></td><td>12</td>
+                        <td class="bad">16.7%</td>
+                        <td class="warn">50.0%</td>
+                        <td>10.8倍</td>
+                    </tr>
+                    <tr>
+                        <td><strong>7〜9人気</strong></td><td>6</td>
+                        <td class="bad">0.0%</td>
+                        <td class="bad">33.3%</td>
+                        <td>17.4倍</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div>
+            <div style="font-size:12px;color:var(--muted);font-weight:700;margin-bottom:8px">重賞で実際に勝った馬の人気分布</div>
+            <table class="data-table">
+                <thead><tr><th>1着馬の人気</th><th>件数</th><th>割合</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>1人気</strong></td><td>21件</td><td class="warn">36.8%</td></tr>
+                    <tr><td><strong>2〜3人気</strong></td><td>12件</td><td>21.1%</td></tr>
+                    <tr><td><strong>4〜6人気</strong></td><td>13件</td><td class="warn">22.8%</td></tr>
+                    <tr><td><strong>7〜9人気</strong></td><td>7件</td><td class="warn">12.3%</td></tr>
+                    <tr><td><strong>10人気以下</strong></td><td>4件</td><td>7.0%</td></tr>
+                </tbody>
+            </table>
+            <div style="font-size:12px;color:var(--muted);margin-top:8px">
+                4人気以上の「波乱」: 42.1%（vs 3勝クラス推定20〜25%）
+            </div>
+        </div>
+    </div>
+
+    <div class="insight-box" style="margin-top:14px">
+        <div class="label">重賞で唯一機能するパターン</div>
+        採点1位=1人気（n=10）のとき、1着率<strong style="color:var(--green2)">40%・3着内90%</strong>と非常に優秀。
+        ただし重賞全体の17.5%（57R中10R）しか発生しない。
+        さらに「当たっても馬連平均1,060円」という配当問題が残る。<br><br>
+        <strong style="color:var(--orange2)">結論: 重賞でも「採点1位=市場1人気かつ配当が高い」という稀なケースなら理論上買える。
+        しかし確認できる時点（レース当日）でオッズを見て判断するしかなく、事前ルール化は困難。</strong>
+    </div>
+</div>
+
+<!-- ⑤ 採点上位3頭の的中分布 -->
+<div class="section">
+    <div class="section-title">採点上位3頭の的中分布 — 三連複の構造問題</div>
+    <div class="section-desc">三連複1-2-3（採点上位3頭）に実際の3着以内馬が何頭含まれるか。</div>
+
+    <div class="compare-grid">
+        <div>
+            <div style="font-size:12px;color:var(--muted);font-weight:700;margin-bottom:8px">採点上位3頭が実際の3着内に何頭入るか</div>
+            <table class="data-table">
+                <thead><tr><th>的中頭数</th><th>重賞(n=57)</th><th>3勝クラス(n=91)</th><th>OP(n=66)</th></tr></thead>
+                <tbody>
+                    <tr>
+                        <td><strong>3頭全員的中</strong></td>
+                        <td class="bad">1件 (1.8%)</td>
+                        <td>2件 (2.2%)</td>
+                        <td>3件 (4.5%)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>2頭的中</strong></td>
+                        <td class="warn">21件 (36.8%)</td>
+                        <td class="warn">29件 (31.9%)</td>
+                        <td class="warn">21件 (31.8%)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>1頭的中</strong></td>
+                        <td>24件 (42.1%)</td>
+                        <td>43件 (47.3%)</td>
+                        <td>23件 (34.8%)</td>
+                    </tr>
+                    <tr class="hl-row">
+                        <td><strong style="color:var(--red2)">0頭的中（完全外れ）</strong></td>
+                        <td class="bad">11件 (19.3%)</td>
+                        <td class="warn">17件 (18.7%)</td>
+                        <td class="bad">19件 (28.8%)</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <div>
+            <div style="font-size:12px;color:var(--muted);font-weight:700;margin-bottom:8px">採点1位が外れたとき — 1着馬の採点順位</div>
+            <table class="data-table">
+                <thead><tr><th>1着馬の採点順位</th><th>重賞(n=47)</th><th>OP(n=54)</th><th>3勝(n=70)</th></tr></thead>
+                <tbody>
+                    <tr><td><strong>2位</strong></td><td class="warn">8件 (17%)</td><td>9件 (17%)</td><td>8件 (11%)</td></tr>
+                    <tr><td><strong>3位</strong></td><td class="warn">9件 (19%)</td><td>8件 (15%)</td><td>7件 (10%)</td></tr>
+                    <tr><td><strong>4位</strong></td><td>3件 (6%)</td><td>6件 (11%)</td><td>13件 (19%)</td></tr>
+                    <tr><td><strong>5位</strong></td><td>6件 (13%)</td><td>3件 (6%)</td><td>10件 (14%)</td></tr>
+                    <tr><td><strong>6位</strong></td><td>3件 (6%)</td><td>2件 (4%)</td><td>8件 (11%)</td></tr>
+                    <tr><td><strong>7位以下</strong></td><td class="bad">18件 (38%)</td><td class="warn">26件 (48%)</td><td>24件 (34%)</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="insight-box purple" style="margin-top:12px">
+        <div class="label">三連複BOXが機能しない理由</div>
+        重賞では採点1位が外れた47Rのうち<strong style="color:var(--purple2)">38%（18件）で1着馬が採点7位以下</strong>。
+        これは5頭BOXの外から勝ち馬が来ることを意味する。<br><br>
+        さらに「0頭完全外れ」（採点上位3頭が誰も3着以内に来ない）が<strong style="color:var(--red2)">11件(19.3%)</strong>。
+        5頭BOXに広げても完全外れは防げず、投資額だけが増える。<br><br>
+        3勝クラスやOPは「4〜5位に1着馬が入る」パターンが多く、5頭BOXで救える余地があるが、
+        重賞はそもそも5頭外から来やすい。
+    </div>
+</div>
+
+<!-- ⑥ クラス別 馬連・三連複配当比較 -->
+<div class="section">
+    <div class="section-title">的中時の平均配当 — 当たっても儲からない問題</div>
+    <div class="section-desc">的中件数と平均配当の両方が低いと、ROIは二乗で悪化する。</div>
+
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>クラス</th>
+                <th>馬連 的中件数/全R</th>
+                <th>馬連 平均配当</th>
+                <th>三連複5頭BOX 的中件数/全R</th>
+                <th>三連複5頭BOX 平均配当</th>
+                <th>馬連ROI</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>2勝クラス</strong></td>
+                <td>18件/170R (10.6%)</td>
+                <td class="warn">668円</td>
+                <td>41件/170R (24.1%)</td>
+                <td>3,123円</td>
+                <td class="bad">55.2%</td>
+            </tr>
+            <tr>
+                <td><strong>3勝クラス</strong></td>
+                <td>9件/91R (9.9%)</td>
+                <td class="good">1,851円</td>
+                <td>18件/91R (19.8%)</td>
+                <td>2,635円</td>
+                <td class="good">179.1%</td>
+            </tr>
+            <tr>
+                <td><strong>OP</strong></td>
+                <td>6件/66R (9.1%)</td>
+                <td class="good">1,802円</td>
+                <td>16件/66R (24.2%)</td>
+                <td class="good">7,032円</td>
+                <td class="good">256.7%</td>
+            </tr>
+            <tr class="hl-row">
+                <td><strong style="color:var(--red2)">重賞 ★</strong></td>
+                <td class="bad">3件/57R (5.3%)</td>
+                <td class="bad">1,060円</td>
+                <td>10件/57R (17.5%)</td>
+                <td class="warn">2,965円</td>
+                <td class="bad">32.5%</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="insight-box blue" style="margin-top:12px">
+        <div class="label">馬連ROIの算数</div>
+        馬連ROI = 的中率 × 平均配当（対投資額）<br><br>
+        <strong>3勝クラス</strong>: 9.9% × 1,851円 / 100 = ROI 183%<br>
+        <strong style="color:var(--red2)">重賞</strong>: 5.3% × 1,060円 / 100 = ROI 56%（実測32.5%）<br><br>
+        重賞は<strong style="color:var(--red2)">的中率が約半分、配当も約半分</strong>という二重苦。
+        3勝クラスと比べると回収力は約1/6。これは偶然ではなく構造的な問題。
+    </div>
+</div>
+
+<!-- ⑦ 現行ルールの正当性確認 -->
+<div class="section">
+    <div class="section-title">現行の「重賞見送りルール」の正当性</div>
+    <div class="section-desc">見送りルールは恣意的な判断ではなく、データが明確に支持している。</div>
+
+    <div style="background:var(--bg2);border-radius:8px;padding:20px;border:1px solid var(--border);font-size:13px">
+        <div style="color:var(--gold2);font-weight:700;margin-bottom:14px">見送りルールがある理由（データ根拠）</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div style="padding:10px;background:rgba(218,54,51,0.08);border-radius:6px;border-left:3px solid var(--red2)">
+                <div style="font-size:11px;color:var(--red2);font-weight:700;margin-bottom:4px">採点モデルの適用外</div>
+                採点モデルは「近走実績・調教・条件適性」で点数化。
+                重賞は全馬が近走好調で条件も合うため、採点の差別化が機能しない（平均乖離2.09pt、乖離1pt以内が45.6%）。
+            </div>
+            <div style="padding:10px;background:rgba(218,54,51,0.08);border-radius:6px;border-left:3px solid var(--red2)">
+                <div style="font-size:11px;color:var(--red2);font-weight:700;margin-bottom:4px">市場との乖離が最大</div>
+                採点1位=市場1人気の一致率17.5%は全クラス最低。
+                「採点と市場が一致するとき三連複は機能する」という法則から最も遠い。
+            </div>
+            <div style="padding:10px;background:rgba(210,153,34,0.08);border-radius:6px;border-left:3px solid var(--orange2)">
+                <div style="font-size:11px;color:var(--orange2);font-weight:700;margin-bottom:4px">波乱が多い</div>
+                実際の1着馬が4人気以上になるケースが42.1%。
+                採点上位5頭で三連複BOXを組んでも、1着馬が外にいることが頻繁に起きる。
+            </div>
+            <div style="padding:10px;background:rgba(210,153,34,0.08);border-radius:6px;border-left:3px solid var(--orange2)">
+                <div style="font-size:11px;color:var(--orange2);font-weight:700;margin-bottom:4px">当たっても安い</div>
+                馬連的中時の平均配当1,060円は全クラス最低。
+                的中率を上げるためにBOXを広げても、配当が薄いためROIが改善しない。
+            </div>
+        </div>
+    </div>
+
+    <div class="insight-box" style="margin-top:14px">
+        <div class="label">唯一の例外パターン（要継続観察）</div>
+        重賞でも「採点1位=市場1人気（n=10）」のときは1着率40%・3着内90%と別物。
+        ただし馬連平均配当の問題が残る（1人気が絡む馬連は安い）。<br><br>
+        <strong style="color:var(--orange2)">仮説: 採点1位=市場1人気 かつ 採点2位が7〜9人気（市場の穴馬）の重賞なら馬連ROIが高い可能性。
+        ただし現行n=10では検証不十分。50R以上蓄積後に再判定すること。</strong>
+    </div>
+</div>
+
+<!-- footer -->
+<div style="padding:16px 0;text-align:center;color:var(--muted);font-size:11px;border-top:1px solid var(--border);margin-top:8px">
+    競馬予想システム 原因分析 · 重賞ROI低下 編 · 対象: 2025/12〜2026/06 · 重賞n=57レース · 生成日: 2026-06-28
+</div>
+</div>
+</body>
+</html>
