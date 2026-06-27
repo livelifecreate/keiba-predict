@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>ワイド馬券 戦略分析レポート</title>
+  <style>
+    :root {
+      --bg: #0D1117;
+      --bg2: #161B22;
+      --bg3: #1C2333;
+      --bg4: #21262D;
+      --purple: #7C3AED;
+      --purple2: #A78BFA;
+      --purple3: #C4B5FD;
+      --green: #10B981;
+      --red: #EF4444;
+      --yellow: #F59E0B;
+      --cream: #E6EDF3;
+      --muted: #8B949E;
+      --border: #30363D;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--cream); font-family: 'Helvetica Neue', Arial, 'Hiragino Sans', sans-serif; line-height: 1.6; }
+
+    .hero {
+      background: linear-gradient(135deg, #1A0A3E 0%, #120820 50%, #0D1117 100%);
+      padding: 64px 40px 48px;
+      text-align: center;
+      border-bottom: 1px solid var(--border);
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse at 50% 0%, rgba(124,58,237,0.15) 0%, transparent 70%);
+    }
+    .hero-eyebrow { color: var(--purple2); font-size: 0.8rem; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 16px; position: relative; }
+    .hero h1 { font-size: 2.2rem; font-weight: 700; color: var(--cream); margin-bottom: 12px; position: relative; }
+    .hero-sub { color: var(--muted); font-size: 0.95rem; max-width: 560px; margin: 0 auto 28px; position: relative; }
+    .hero-verdict {
+      display: inline-block;
+      background: rgba(239,68,68,0.12);
+      border: 1px solid rgba(239,68,68,0.4);
+      border-radius: 8px;
+      padding: 12px 24px;
+      color: #FCA5A5;
+      font-size: 0.95rem;
+      font-weight: 600;
+      position: relative;
+    }
+
+    .container { max-width: 980px; margin: 0 auto; padding: 44px 24px; }
+
+    h2 {
+      font-size: 1.25rem; font-weight: 600; color: var(--purple2);
+      border-left: 4px solid var(--purple); padding-left: 12px;
+      margin-bottom: 20px;
+    }
+    h3 { font-size: 1rem; font-weight: 600; color: var(--cream); margin-bottom: 12px; }
+
+    .section { margin-bottom: 52px; animation: fadeInUp 0.5s ease forwards; }
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* サマリーカード */
+    .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 8px; }
+    .s-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 16px 20px; }
+    .s-card .label { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+    .s-card .value { font-size: 1.6rem; font-weight: 700; }
+    .s-card.green .value { color: var(--green); }
+    .s-card.red .value { color: var(--red); }
+    .s-card.yellow .value { color: var(--yellow); }
+    .s-card .sub { font-size: 0.78rem; color: var(--muted); margin-top: 4px; }
+
+    /* ROIテーブル */
+    .roi-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+    .roi-table th { background: var(--bg3); padding: 10px 12px; text-align: center; color: var(--muted); font-weight: 600; font-size: 0.75rem; border-bottom: 1px solid var(--border); }
+    .roi-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); text-align: center; }
+    .roi-table tr:hover td { background: var(--bg3); }
+    .roi-table td:first-child { text-align: left; color: var(--cream); font-weight: 500; }
+    .roi-positive { color: var(--green); font-weight: 700; }
+    .roi-marginal { color: var(--yellow); font-weight: 600; }
+    .roi-negative { color: var(--red); }
+
+    /* バー可視化 */
+    .bar-container { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 20px 24px; }
+    .bar-row { display: flex; align-items: center; margin-bottom: 14px; }
+    .bar-row:last-of-type { margin-bottom: 0; }
+    .bar-label { width: 130px; font-size: 0.82rem; color: var(--muted); flex-shrink: 0; line-height: 1.4; }
+    .bar-wrap { flex: 1; background: var(--bg4); border-radius: 4px; height: 30px; overflow: hidden; position: relative; }
+    .bar-fill { height: 100%; border-radius: 4px; display: flex; align-items: center; padding-left: 10px; font-size: 0.8rem; font-weight: 700; color: white; }
+    .bar-fill.green { background: linear-gradient(90deg, #059669, #10B981); }
+    .bar-fill.yellow { background: linear-gradient(90deg, #D97706, #F59E0B); }
+    .bar-fill.red { background: linear-gradient(90deg, #991B1B, #EF4444); }
+    .bar-fill.deep-red { background: linear-gradient(90deg, #7F1D1D, #DC2626); }
+    .bar-marker { position: absolute; left: 66.7%; top: 0; height: 100%; width: 2px; background: rgba(255,255,255,0.25); }
+    .bar-note { font-size: 0.72rem; color: var(--muted); margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
+
+    /* ハイライトボックス */
+    .hbox { border-radius: 10px; padding: 18px 22px; margin-bottom: 14px; }
+    .hbox:last-child { margin-bottom: 0; }
+    .hbox.green  { background: rgba(16,185,129,0.08);  border: 1px solid rgba(16,185,129,0.3); }
+    .hbox.red    { background: rgba(239,68,68,0.08);   border: 1px solid rgba(239,68,68,0.3); }
+    .hbox.yellow { background: rgba(245,158,11,0.08);  border: 1px solid rgba(245,158,11,0.3); }
+    .hbox.purple { background: rgba(124,58,237,0.08);  border: 1px solid rgba(124,58,237,0.3); }
+    .hbox .htitle { font-weight: 700; margin-bottom: 8px; font-size: 0.95rem; }
+    .hbox.green  .htitle { color: var(--green); }
+    .hbox.red    .htitle { color: #FCA5A5; }
+    .hbox.yellow .htitle { color: var(--yellow); }
+    .hbox.purple .htitle { color: var(--purple3); }
+    .hbox p, .hbox ul { font-size: 0.875rem; color: var(--muted); line-height: 1.75; }
+    .hbox ul { padding-left: 18px; }
+    .hbox strong { color: var(--cream); }
+
+    /* バッジ */
+    .badge { display: inline-block; padding: 2px 10px; border-radius: 20px; font-size: 0.72rem; font-weight: 700; }
+    .badge-green  { background: rgba(16,185,129,0.18);  color: var(--green);  border: 1px solid rgba(16,185,129,0.4); }
+    .badge-yellow { background: rgba(245,158,11,0.18);  color: var(--yellow); border: 1px solid rgba(245,158,11,0.4); }
+    .badge-red    { background: rgba(239,68,68,0.18);   color: #FCA5A5;        border: 1px solid rgba(239,68,68,0.4); }
+    .badge-gray   { background: rgba(139,148,158,0.18); color: var(--muted);  border: 1px solid rgba(139,148,158,0.4); }
+
+    /* 条件テーブル */
+    .cond-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    .cond-table th { background: var(--bg3); padding: 8px 12px; color: var(--muted); font-size: 0.75rem; text-align: center; border-bottom: 1px solid var(--border); }
+    .cond-table td { padding: 9px 12px; border-bottom: 1px solid var(--border); text-align: center; }
+    .cond-table td:first-child { text-align: left; }
+    .cond-table tr:hover td { background: var(--bg3); }
+
+    /* 2カラム */
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    @media (max-width: 640px) { .two-col { grid-template-columns: 1fr; } }
+    .panel { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 18px 20px; }
+    .panel h3 { color: var(--purple2); font-size: 0.9rem; margin-bottom: 12px; }
+
+    /* 結論 */
+    .conclusion {
+      background: linear-gradient(135deg, rgba(124,58,237,0.12) 0%, transparent 100%);
+      border: 1px solid rgba(124,58,237,0.35);
+      border-radius: 12px;
+      padding: 28px 32px;
+      margin-top: 36px;
+    }
+    .conclusion h2 { color: var(--purple3); margin-bottom: 18px; }
+    .conclusion ol { padding-left: 20px; line-height: 2.0; color: var(--cream); font-size: 0.92rem; }
+    .conclusion li { margin-bottom: 4px; }
+    .conclusion strong { color: var(--purple3); }
+
+    /* divider */
+    .divider { border: none; border-top: 1px solid var(--border); margin: 48px 0; }
+    .note { font-size: 0.78rem; color: var(--muted); margin-top: 10px; }
+  </style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-eyebrow">バックテスト 2025/12〜2026/06 · 2勝クラス以上 · n=384レース</div>
+  <h1>ワイド馬券 戦略分析レポート</h1>
+  <div class="hero-sub">採点上位5頭の組み合わせで、ワイドが黒字になる条件を探索。馬連・三連複との比較を含む。</div>
+  <div class="hero-verdict">結論: 3勝クラス ワイド1-2（ROI 141%）のみ黒字。ただし馬連1-2（ROI 179%）の下位互換。重賞は全条件赤字。</div>
+</div>
+
+<div class="container">
+
+  <!-- ① サマリー -->
+  <div class="section">
+    <h2>① 分析サマリー</h2>
+    <div class="summary-grid">
+      <div class="s-card green">
+        <div class="label">唯一の黒字条件</div>
+        <div class="value">141.4%</div>
+        <div class="sub">3勝クラス ワイド1-2（n=91）</div>
+      </div>
+      <div class="s-card red">
+        <div class="label">ワイド全体平均 ROI</div>
+        <div class="value">79.4%</div>
+        <div class="sub">5頭BOX・全クラス計（n=384）</div>
+      </div>
+      <div class="s-card red">
+        <div class="label">重賞 ワイド5頭BOX</div>
+        <div class="value">65.7%</div>
+        <div class="sub">的中率57.9%・平均1,135円</div>
+      </div>
+      <div class="s-card yellow">
+        <div class="label">OP ワイド5頭BOX</div>
+        <div class="value">93.6%</div>
+        <div class="sub">惜しいが黒字未到達（n=66）</div>
+      </div>
+    </div>
+    <p class="note">* 馬連1-2（3勝クラス・現行実運用）は ROI 179.1%。ワイドは全条件でこれを下回る。</p>
+  </div>
+
+  <!-- ② クラス×馬券種 -->
+  <div class="section">
+    <h2>② クラス × ワイド馬券種 ROI一覧</h2>
+    <div style="overflow-x:auto;">
+      <table class="roi-table">
+        <thead>
+          <tr>
+            <th style="text-align:left; min-width:200px">馬券種</th>
+            <th>点数</th>
+            <th>全体<br><small>(n=384)</small></th>
+            <th>2勝クラス<br><small>(n=170)</small></th>
+            <th>3勝クラス<br><small>(n=91)</small></th>
+            <th>OP<br><small>(n=66)</small></th>
+            <th>重賞<br><small>(n=57)</small></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>ワイド1-2（1位×2位）</td>
+            <td>1点</td>
+            <td class="roi-negative">85.8%</td>
+            <td class="roi-negative">65.6%</td>
+            <td class="roi-positive">141.4%</td>
+            <td class="roi-negative">77.7%</td>
+            <td class="roi-negative">66.3%</td>
+          </tr>
+          <tr>
+            <td>ワイド3点BOX（1〜3位）</td>
+            <td>3点</td>
+            <td class="roi-negative">87.5%</td>
+            <td class="roi-negative">88.8%</td>
+            <td class="roi-negative">84.3%</td>
+            <td class="roi-negative">82.8%</td>
+            <td class="roi-negative">94.0%</td>
+          </tr>
+          <tr>
+            <td>ワイド1軸4頭（1位×2〜5位）</td>
+            <td>4点</td>
+            <td class="roi-negative">84.9%</td>
+            <td class="roi-negative">85.6%</td>
+            <td class="roi-negative">97.3%</td>
+            <td class="roi-negative">77.7%</td>
+            <td class="roi-negative">71.4%</td>
+          </tr>
+          <tr>
+            <td>ワイド5頭BOX（1〜5位・全10通り）</td>
+            <td>10点</td>
+            <td class="roi-negative">79.4%</td>
+            <td class="roi-negative">80.6%</td>
+            <td class="roi-negative">75.6%</td>
+            <td class="roi-negative">93.6%</td>
+            <td class="roi-negative">65.7%</td>
+          </tr>
+          <tr>
+            <td>ワイド穴軸（1位×4・5位）</td>
+            <td>2点</td>
+            <td class="roi-negative">79.0%</td>
+            <td class="roi-negative">90.3%</td>
+            <td class="roi-negative">84.2%</td>
+            <td class="roi-negative">65.7%</td>
+            <td class="roi-negative">52.8%</td>
+          </tr>
+          <tr style="background: rgba(52,211,153,0.04);">
+            <td colspan="7" style="padding: 6px 12px; font-size: 0.77rem; color: var(--muted);">参考 — 現行実運用（馬連1-2）</td>
+          </tr>
+          <tr style="background: rgba(52,211,153,0.04);">
+            <td>馬連1-2（3勝クラス・現行）</td>
+            <td>1点</td>
+            <td>—</td>
+            <td>—</td>
+            <td class="roi-positive" style="color:#34D399">179.1%</td>
+            <td>—</td>
+            <td>—</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note">緑 = 100%超（黒字）/ 赤 = 100%未満（赤字）</p>
+  </div>
+
+  <!-- ③ 黒字条件 -->
+  <div class="section">
+    <h2>③ 黒字が見つかった条件（と限界）</h2>
+    <div class="hbox green">
+      <div class="htitle">✓ 3勝クラス ワイド1-2 — ROI 141.4%（n=91）</div>
+      <p>的中17件（18.7%）・平均配当757円・回収超過。しかし同一条件の<strong>馬連1-2はROI 179.1%</strong>。ワイドは馬連の配当をそのまま圧縮したもの。同じ組み合わせを買うなら馬連が有利。</p>
+    </div>
+    <div class="hbox yellow">
+      <div class="htitle">△ 重賞 × 採点2位=1人気 — ワイド5頭BOX ROI 105.6%（n=13）</div>
+      <p>唯一重賞で黒字に見える条件。ただし<strong>サンプル13件のみ</strong>。実運用判断には最低50件必要。現時点では「継続観察」。</p>
+    </div>
+    <div class="hbox red">
+      <div class="htitle">✗ 重賞: それ以外の全条件で赤字</div>
+      <ul>
+        <li>ワイド1-2: ROI 66.3%（的中率14.0%、平均配当472円）</li>
+        <li>ワイド3点BOX: ROI 94.0%（最も高いが黒字未到達）</li>
+        <li>ワイド5頭BOX: ROI 65.7%（的中率57.9%、平均配当1,135円）</li>
+        <li>ワイド穴軸(1×4,5位): ROI 52.8%（最悪）</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ④ 重賞 採点1位の人気別 -->
+  <div class="section">
+    <h2>④ 重賞: 採点1位の人気グループ別 ワイド5頭BOX ROI</h2>
+    <div class="bar-container">
+      <div class="bar-row">
+        <div class="bar-label" style="color:var(--cream)">1位=1人気<br><span style="color:var(--muted);font-size:0.77rem">n=10 · 的中80.0%</span></div>
+        <div class="bar-wrap">
+          <div class="bar-fill red" style="width:51.8%">77.7%</div>
+          <div class="bar-marker"></div>
+        </div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label" style="color:var(--cream)">1位=2〜3人気<br><span style="color:var(--muted);font-size:0.77rem">n=27 · 的中51.9%</span></div>
+        <div class="bar-wrap">
+          <div class="bar-fill deep-red" style="width:27.6%">41.4%</div>
+          <div class="bar-marker"></div>
+        </div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label" style="color:var(--cream)">1位=4〜6人気<br><span style="color:var(--muted);font-size:0.77rem">n=12 · 的中66.7%</span></div>
+        <div class="bar-wrap">
+          <div class="bar-fill yellow" style="width:63.5%">95.2%</div>
+          <div class="bar-marker"></div>
+        </div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label" style="color:var(--cream)">1位=7〜9人気<br><span style="color:var(--muted);font-size:0.77rem">n=6 · 的中50.0%</span></div>
+        <div class="bar-wrap">
+          <div class="bar-fill green" style="width:78.5%">117.7%</div>
+          <div class="bar-marker"></div>
+        </div>
+      </div>
+      <div class="bar-note">縦線 = 損益分岐点100%。バー幅は0〜150%スケール。</div>
+    </div>
+    <div class="hbox purple" style="margin-top:14px">
+      <div class="htitle">逆説: 重賞で採点1位=穴馬のときROI117%</div>
+      <p>採点1位が7〜9人気（穴馬）のとき5頭BOX ROI 117.7%。しかし<strong>n=6件のみ</strong>で統計的信頼性ゼロ。採点1位=2〜3人気が最多(n=27)だが、この条件がROI 41.4%と最悪で全体平均を押し下げている。</p>
+    </div>
+  </div>
+
+  <!-- ⑤ 重賞 採点2位の人気別 -->
+  <div class="section">
+    <h2>⑤ 重賞: 採点2位の人気グループ別 ワイド5頭BOX ROI</h2>
+    <table class="cond-table">
+      <thead>
+        <tr>
+          <th style="text-align:left">採点2位の人気</th>
+          <th>n</th>
+          <th>的中率</th>
+          <th>平均配当</th>
+          <th>ROI</th>
+          <th>判定</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>2位=1人気</td>
+          <td>13</td>
+          <td>61.5%</td>
+          <td>1,716円</td>
+          <td class="roi-positive">105.6%</td>
+          <td><span class="badge badge-yellow">継続観察 (n不足)</span></td>
+        </tr>
+        <tr>
+          <td>2位=2〜3人気</td>
+          <td>20</td>
+          <td>70.0%</td>
+          <td>1,189円</td>
+          <td class="roi-negative">83.2%</td>
+          <td><span class="badge badge-red">赤字</span></td>
+        </tr>
+        <tr>
+          <td>2位=4〜6人気</td>
+          <td>19</td>
+          <td>57.9%</td>
+          <td>643円</td>
+          <td class="roi-negative">37.2%</td>
+          <td><span class="badge badge-red">最悪</span></td>
+        </tr>
+        <tr>
+          <td>2位=7〜9人気</td>
+          <td>3</td>
+          <td>0.0%</td>
+          <td>—</td>
+          <td class="roi-negative">0.0%</td>
+          <td><span class="badge badge-gray">n不足</span></td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="hbox yellow" style="margin-top:14px">
+      <div class="htitle">△ 採点2位=1人気が最有望条件 — なぜROIが高いか</div>
+      <p>採点1位≠市場1人気のときに採点2位=1人気になるケースが多い。採点と市場の評価がズレた状況 = <strong>荒れやすく高配当コンボが生まれる</strong>。的中時平均配当1,716円（2位=4〜6人気の2.7倍）。50件蓄積後に再判断。</p>
+    </div>
+  </div>
+
+  <!-- ⑥ ワイド vs 馬連 -->
+  <div class="section">
+    <h2>⑥ ワイドと馬連の比較（3勝クラス）</h2>
+    <div class="two-col">
+      <div class="panel">
+        <h3>ワイド1-2</h3>
+        <table class="cond-table">
+          <tr><td style="color:var(--muted)">ROI</td><td class="roi-positive">141.4%</td></tr>
+          <tr><td style="color:var(--muted)">的中率</td><td>18.7%（17/91件）</td></tr>
+          <tr><td style="color:var(--muted)">平均配当</td><td>757円</td></tr>
+          <tr><td style="color:var(--muted)">点数/R</td><td>1点</td></tr>
+          <tr><td style="color:var(--muted)">投資総額</td><td>9,100円</td></tr>
+          <tr><td style="color:var(--muted)">回収総額</td><td>12,863円</td></tr>
+        </table>
+      </div>
+      <div class="panel" style="border-color: rgba(52,211,153,0.3)">
+        <h3 style="color:#34D399">馬連1-2（現行実運用）</h3>
+        <table class="cond-table">
+          <tr><td style="color:var(--muted)">ROI</td><td style="color:#34D399;font-weight:700">179.1%</td></tr>
+          <tr><td style="color:var(--muted)">配当水準</td><td>ワイドより高い</td></tr>
+          <tr><td style="color:var(--muted)">点数/R</td><td>1点（同じ）</td></tr>
+          <tr><td style="color:var(--muted)">状態</td><td><span class="badge badge-green">実運用中</span></td></tr>
+          <tr><td colspan="2" style="color:var(--muted);font-size:0.77rem;padding-top:8px">CLAUDE.md ベースライン値より</td></tr>
+        </table>
+      </div>
+    </div>
+    <div class="hbox red" style="margin-top:14px">
+      <div class="htitle">✗ ワイドは馬連の下位互換</div>
+      <p>3勝クラスで同じ採点1位×2位の組み合わせを買う場合、ワイドのROI 141%に対し馬連は ROI 179%。ワイドは「着順不問」のかわりに<strong>配当が馬連の約41%に圧縮</strong>される。馬連を買えるなら馬連一択。</p>
+    </div>
+  </div>
+
+  <!-- ⑦ なぜワイドは難しいか -->
+  <div class="section">
+    <h2>⑦ なぜワイドは黒字化しにくいか</h2>
+    <div class="two-col">
+      <div class="hbox red">
+        <div class="htitle">配当が低すぎる</div>
+        <ul>
+          <li>3勝クラス ワイド1-2: 平均 <strong>757円</strong></li>
+          <li>3勝クラス 馬連1-2: 平均 <strong>1,851円</strong>（2.4倍）</li>
+          <li>重賞 ワイド5頭BOX: 平均 <strong>1,135円</strong></li>
+          <li>「着順不問」の代償として配当は大幅圧縮</li>
+          <li>的中率が上がっても配当格差を覆せない</li>
+        </ul>
+      </div>
+      <div class="hbox purple">
+        <div class="htitle">的中率が思ったほど伸びない</div>
+        <ul>
+          <li>5頭BOX 全体的中率: <strong>65.6%</strong></li>
+          <li>採点上位5頭に3着以内2頭が入る確率は65%止まり</li>
+          <li>重賞では採点精度自体が低下（採点1位=1人気17.5%）</li>
+          <li>OP・重賞では「番狂わせ」が多く採点外馬が3着以内に入る</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ⑧ 3点BOXの特徴 -->
+  <div class="section">
+    <h2>⑧ 特記事項: 重賞 ワイド3点BOXが最も高いROI</h2>
+    <div class="bar-container">
+      <div class="bar-row">
+        <div class="bar-label" style="color:var(--cream)">ワイド1-2<br><span style="color:var(--muted);font-size:0.77rem">1点</span></div>
+        <div class="bar-wrap">
+          <div class="bar-fill red" style="width:44.2%">66.3%</div>
+          <div class="bar-marker"></div>
+        </div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label" style="color:var(--cream)">ワイド3点BOX<br><span style="color:var(--muted);font-size:0.77rem">3点</span></div>
+        <div class="bar-wrap">
+          <div class="bar-fill yellow" style="width:62.7%">94.0%</div>
+          <div class="bar-marker"></div>
+        </div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label" style="color:var(--cream)">ワイド1軸4頭<br><span style="color:var(--muted);font-size:0.77rem">4点</span></div>
+        <div class="bar-wrap">
+          <div class="bar-fill red" style="width:47.6%">71.4%</div>
+          <div class="bar-marker"></div>
+        </div>
+      </div>
+      <div class="bar-row">
+        <div class="bar-label" style="color:var(--cream)">ワイド5頭BOX<br><span style="color:var(--muted);font-size:0.77rem">10点</span></div>
+        <div class="bar-wrap">
+          <div class="bar-fill red" style="width:43.8%">65.7%</div>
+          <div class="bar-marker"></div>
+        </div>
+      </div>
+      <div class="bar-note">対象: 重賞 n=57レース。縦線 = 損益分岐点100%。バー幅0〜150%スケール。</div>
+    </div>
+    <div class="hbox purple" style="margin-top:14px">
+      <div class="htitle">重賞ではワイド3点BOX（採点1〜3位）が相対的にマシ</div>
+      <p>ROI 94.0%と黒字には届かないが、点数拡大（4点・10点）より絞った3点の方がROIが高い。採点上位3頭の精度が5頭より高い傾向。ただし100%を超えるまでには至らない。</p>
+    </div>
+  </div>
+
+  <!-- 結論 -->
+  <div class="conclusion">
+    <h2>⑨ 実運用上の結論</h2>
+    <ol>
+      <li><strong>ワイドを現行戦略に追加する理由はない</strong> — どの条件・クラスでも馬連・三連複の下位互換</li>
+      <li><strong>3勝クラス ワイド1-2 ROI141% → 馬連1-2 ROI179%</strong> — 同じ組み合わせなら馬連を優先すること</li>
+      <li><strong>重賞では全条件赤字</strong> — 重賞見送りルールはワイドでも有効。ワイドに逃げ道なし</li>
+      <li><strong>重賞×採点2位=1人気 ROI105.6%</strong> — 唯一の可能性だがn=13件のみ。50件蓄積後に再判断</li>
+      <li><strong>逆説的発見</strong>: 重賞で採点1位が穴馬(7〜9人気)のときROI117.7%だが、n=6件で統計無効。参考程度</li>
+      <li><strong>ワイドの本質的限界</strong>: 配当圧縮（馬連の約40〜50%）が的中率向上を上回る局面がなく、期待値構造上の黒字化は困難</li>
+    </ol>
+  </div>
+
+</div>
+</body>
+</html>
