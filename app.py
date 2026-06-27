@@ -8,6 +8,7 @@ from pathlib import Path
 
 import pandas as pd
 import streamlit as st
+import streamlit.components.v1 as components
 
 st.set_page_config(
     page_title="競馬予想",
@@ -306,3 +307,12 @@ if not df.empty and "加点内訳" in df.columns:
     with st.expander("加点・減点詳細"):
         detail_cols = [c for c in ["馬番", "馬名", "合計スコア", "加点内訳", "減点内訳"] if c in df.columns]
         st.dataframe(df[detail_cols].set_index("馬番"), use_container_width=True)
+
+# ── HTML レースレポート ────────────────────────────────────────────────────────
+report_dir   = RESULTS_DIR / race["date"] / race["venue"]
+report_files = sorted(report_dir.glob(f"report_{race['race_num']}R_*.html"))
+if report_files:
+    st.markdown("---")
+    with st.expander("📊 詳細レースレポート（採点・調教・展開分析・バックテスト収支）", expanded=False):
+        html_content = report_files[0].read_text(encoding="utf-8")
+        components.html(html_content, height=1600, scrolling=True)

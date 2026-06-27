@@ -340,6 +340,47 @@
       from { width: 0%; }
       to   { width: var(--pct); }
     }
+
+    /* ===== MOBILE ===== */
+    @media (max-width: 640px) {
+      .hero { padding: 36px 16px 32px; }
+      .hero-title { font-size: 28px; letter-spacing: 1px; }
+      .hero-sub { font-size: 13px; }
+      .hero-bet-box { padding: 14px 18px; }
+      .hero-bet-main { font-size: 17px; }
+      .hero-bet-sub { font-size: 11px; }
+
+      .info-strip { padding: 10px 8px; gap: 0; }
+      .info-item { padding: 6px 12px; }
+      .info-val { font-size: 15px; }
+
+      .section { padding: 28px 14px; }
+
+      .rank-row {
+        grid-template-columns: 24px 30px 1fr 64px;
+        gap: 8px;
+        padding: 12px 10px;
+      }
+      .rank-odds { display: none; }
+      .rank-name { font-size: 14px; }
+      .rank-meta { font-size: 10px; }
+      .rank-pos { font-size: 16px; }
+      .rank-waku-badge { width: 28px; height: 28px; font-size: 11px; }
+      .rank-score-val { font-size: 17px; }
+      .rank-score-lbl { font-size: 10px; }
+
+      .bt-grid { grid-template-columns: repeat(2, 1fr); }
+      .bt-roi { font-size: 24px; }
+
+      .pace-section { grid-template-columns: 1fr; }
+      .key-horse-grid { grid-template-columns: 1fr; }
+      .breakdown-grid { grid-template-columns: 1fr; }
+      .bet-combo-grid { grid-template-columns: repeat(2, 1fr); }
+
+      .training-table th, .training-table td { padding: 10px 10px; }
+      .t-name { font-size: 13px; }
+      .t-comment { font-size: 12px; }
+    }
   </style>
 </head>
 <body>
