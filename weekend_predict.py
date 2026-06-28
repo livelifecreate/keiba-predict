@@ -108,7 +108,7 @@ def gen_eval_comment(sorted_results, odds_map, n_horses, sign_level, sign_detail
         reasons = [r.strip() for r in sign_detail.split(" / ")]
 
         if any("乖離" in r and "3〜5pt" in r for r in reasons):
-            lines.append(f"乖離{gap:.1f}pt：このゾーン（3〜5pt）はサンプル不足のため判断保留。馬連ROI48%・三連複ROI30〜50%のため見送り。")
+            lines.append(f"乖離{gap:.1f}pt：このゾーン（3〜5pt）はバックテストROI69%のため見送り。")
         if any("18頭" in r for r in reasons):
             lines.append("18頭フルゲートは荒れやすく軸信頼度が低下。")
         if any("ROI47%" in r for r in reasons):
