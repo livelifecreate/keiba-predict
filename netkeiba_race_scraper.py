@@ -46,9 +46,10 @@ VENUE_CODE = {
 # レース一覧取得
 # ──────────────────────────────────────────────────────────────
 def _race_list_url(date: datetime.date) -> str:
-    # 当日: race_list_sub（出馬表リンクあり）、過去: db.netkeiba レース一覧
+    # 直近7日以内はrace_list_sub（JRAのみ・出馬表/結果リンクあり）
+    # それ以前はdb.netkeiba（ただし地方競馬混在に注意）
     today = datetime.date.today()
-    if date >= today:
+    if (today - date).days <= 7:
         return f"https://race.netkeiba.com/top/race_list_sub.html?kaisai_date={date:%Y%m%d}"
     return f"https://db.netkeiba.com/race/list/{date:%Y%m%d}/"
 
@@ -98,7 +99,10 @@ def get_race_list(dates: list[datetime.date] = None) -> list[dict]:
             # 当日: shutuba.html?race_id=XXXX
             if "shutuba.html?race_id=" in href:
                 race_id = href.split("race_id=")[1].split("&")[0]
-            # 過去: /race/XXXXXXXXXXXX/
+            # race_list_sub 過去日: result.html?race_id=XXXX
+            elif "result.html?race_id=" in href:
+                race_id = href.split("race_id=")[1].split("&")[0]
+            # db.netkeiba 過去: /race/XXXXXXXXXXXX/
             else:
                 m = re.search(r"/race/(\d{12})/", href)
                 if m:

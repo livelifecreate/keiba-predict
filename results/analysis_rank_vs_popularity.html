@@ -2,769 +2,219 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>採点順位×市場人気 分析レポート</title>
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>採点順位×市場人気 分析レポート（2年縛り版）</title>
 <style>
-:root {
-    --bg:     #0D1117;
-    --bg2:    #161B22;
-    --bg3:    #1C2128;
-    --border: #30363D;
-    --gold:   #C9A227;
-    --gold2:  #E6C060;
-    --cream:  #E6EDF3;
-    --muted:  #7D8590;
-    --green:  #2EA043;
-    --green2: #56D364;
-    --red:    #DA3633;
-    --red2:   #FF7B72;
-    --blue:   #1F6FEB;
-    --blue2:  #79C0FF;
-    --orange: #D29922;
-    --orange2:#E3B341;
-    --purple: #8957E5;
-    --purple2:#BC8CFF;
-}
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { background: var(--bg); color: var(--cream); font-family: -apple-system, 'Segoe UI', sans-serif; font-size: 14px; line-height: 1.6; }
-
-/* ── HERO ── */
-.hero {
-    background: linear-gradient(160deg, #0D1117 0%, #1C2128 60%, #161B22 100%);
-    border-bottom: 2px solid var(--gold);
-    padding: 40px 28px 30px;
-    text-align: center;
-}
-.hero-eyebrow { font-size: 11px; letter-spacing: 3px; color: var(--muted); text-transform: uppercase; margin-bottom: 10px; }
-.hero-title { font-size: 42px; font-weight: 900; color: var(--gold2); line-height: 1.1; }
-.hero-sub { color: var(--muted); font-size: 14px; margin-top: 8px; }
-.hero-meta { margin-top: 14px; font-size: 12px; color: var(--muted); }
-
-/* ── LAYOUT ── */
-.page { max-width: 960px; margin: 0 auto; padding: 0 16px 40px; }
-.section { padding: 24px 0; border-bottom: 1px solid var(--border); }
-.section-title {
-    font-size: 11px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase;
-    color: var(--gold); border-left: 3px solid var(--gold); padding-left: 10px;
-    margin-bottom: 16px;
-}
-.section-desc { font-size: 13px; color: var(--muted); margin-bottom: 14px; line-height: 1.7; }
-
-/* ── SUMMARY CARDS ── */
-.summary-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
-.summary-card {
-    background: var(--bg2); border-radius: 8px; padding: 16px;
-    border: 1px solid var(--border); border-top: 3px solid var(--gold);
-}
-.summary-card.green { border-top-color: var(--green2); }
-.summary-card.red   { border-top-color: var(--red2); }
-.summary-card.blue  { border-top-color: var(--blue2); }
-.summary-card.purple{ border-top-color: var(--purple2); }
-.sum-title { font-size: 10px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px; }
-.sum-value { font-size: 28px; font-weight: 800; line-height: 1.0; }
-.sum-value.gold { color: var(--gold2); }
-.sum-value.green { color: var(--green2); }
-.sum-value.red   { color: var(--red2); }
-.sum-value.blue  { color: var(--blue2); }
-.sum-sub { font-size: 11px; color: var(--muted); margin-top: 4px; }
-.sum-note { font-size: 12px; color: var(--cream); margin-top: 8px; line-height: 1.5; }
-
-/* ── PROFILE TABLE ── */
-.prof-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-.prof-table th { background: var(--bg3); color: var(--muted); font-size: 10px; letter-spacing: 1px; text-transform: uppercase; padding: 8px 12px; text-align: center; border-bottom: 1px solid var(--border); }
-.prof-table td { padding: 9px 12px; border-bottom: 1px solid var(--border); text-align: center; }
-.prof-table tr:last-child td { border-bottom: none; }
-.prof-table tr:hover td { background: var(--bg3); }
-.rank-label { display: inline-block; width: 30px; height: 30px; border-radius: 50%; background: var(--bg3); border: 2px solid var(--gold); text-align: center; line-height: 28px; font-weight: 800; color: var(--gold2); }
-.rank-label.r1 { background: var(--gold); color: #0D1117; border-color: var(--gold2); }
-.bar-cell { text-align: left; padding-left: 8px; }
-.pct-bar { display: inline-block; height: 6px; border-radius: 3px; vertical-align: middle; }
-.pct-green { background: var(--green2); }
-.pct-blue  { background: var(--blue2); }
-.pct-gold  { background: var(--gold); }
-.good  { color: var(--green2); font-weight: 700; }
-.warn  { color: var(--orange2); font-weight: 700; }
-.bad   { color: var(--red2); font-weight: 700; }
-.dim   { color: var(--muted); }
-
-/* ── HEATMAP ── */
-.heatmap { width: 100%; border-collapse: collapse; font-size: 13px; }
-.heatmap th { background: var(--bg3); color: var(--muted); font-size: 10px; letter-spacing: 1px; padding: 8px 10px; text-align: center; border-bottom: 1px solid var(--border); }
-.heatmap td { padding: 10px 8px; border-bottom: 1px solid var(--border); text-align: center; border-right: 1px solid var(--border); }
-.hm-val { font-size: 15px; font-weight: 800; }
-.hm-n   { font-size: 10px; color: var(--muted); margin-top: 2px; }
-/* heat colors */
-.heat-5 { background: rgba(46,160,67,0.35); }
-.heat-4 { background: rgba(46,160,67,0.22); }
-.heat-3 { background: rgba(227,179,65,0.20); }
-.heat-2 { background: rgba(210,153,34,0.15); }
-.heat-1 { background: rgba(218,54,51,0.10); }
-.heat-0 { background: transparent; }
-
-/* ── CROSS TABLE ── */
-.cross-wrap { overflow-x: auto; }
-.cross-table { min-width: 600px; border-collapse: collapse; font-size: 13px; }
-.cross-table th { background: var(--bg3); color: var(--muted); font-size: 10px; letter-spacing: 1px; padding: 8px 12px; text-align: center; border: 1px solid var(--border); }
-.cross-table td { padding: 10px 10px; border: 1px solid var(--border); text-align: center; min-width: 90px; }
-.cross-hit  { font-size: 16px; font-weight: 800; }
-.cross-n    { font-size: 10px; color: var(--muted); }
-.star { color: var(--gold2); }
-
-/* ── RULE CARDS ── */
-.rules-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
-.rule-card { background: var(--bg2); border-radius: 8px; padding: 16px; border: 1px solid var(--border); }
-.rule-card.buy  { border-color: var(--green2); border-left-width: 4px; }
-.rule-card.pass { border-color: var(--red2);   border-left-width: 4px; }
-.rule-card.caution { border-color: var(--orange2); border-left-width: 4px; }
-.rule-badge { display: inline-block; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 3px; margin-bottom: 8px; }
-.rule-badge.buy    { background: var(--green); color: white; }
-.rule-badge.pass   { background: var(--red); color: white; }
-.rule-badge.caution{ background: var(--orange); color: white; }
-.rule-title { font-size: 15px; font-weight: 700; color: var(--cream); margin-bottom: 6px; }
-.rule-desc  { font-size: 12px; color: var(--muted); line-height: 1.6; }
-.rule-roi   { margin-top: 8px; font-size: 13px; font-weight: 700; }
-
-/* ── NOTE ── */
-.insight-box {
-    background: var(--bg2); border-radius: 8px; padding: 14px 16px;
-    border: 1px solid var(--border); border-left: 4px solid var(--gold);
-    margin: 14px 0; font-size: 13px; line-height: 1.7;
-}
-.insight-box .label { font-size: 10px; color: var(--gold); font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px; }
-
-/* ── MOBILE ── */
-@media (max-width: 640px) {
-    .hero-title { font-size: 28px; }
-    .summary-grid { grid-template-columns: repeat(2, 1fr); }
-    .rules-grid { grid-template-columns: 1fr; }
-}
+:root{--bg:#0D1117;--bg2:#161B22;--bg3:#1C2128;--border:#30363D;--gold:#C9A227;--gold2:#E6C060;--cream:#E6EDF3;--muted:#7D8590;--green:#2EA043;--green2:#56D364;--red:#DA3633;--red2:#FF7B72;--blue:#1F6FEB;--blue2:#79C0FF;--orange:#D29922;--orange2:#E3B341;--purple:#8957E5;--purple2:#BC8CFF;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--cream);font-family:-apple-system,'Segoe UI',sans-serif;font-size:14px;line-height:1.6;}
+.hero{background:linear-gradient(160deg,#0D1117 0%,#1C2128 60%,#161B22 100%);border-bottom:2px solid var(--gold);padding:40px 28px 30px;text-align:center;}
+.hero-eyebrow{font-size:11px;letter-spacing:3px;color:var(--muted);text-transform:uppercase;margin-bottom:10px;}
+.hero-title{font-size:42px;font-weight:900;color:var(--gold2);line-height:1.1;}
+.hero-sub{color:var(--muted);font-size:14px;margin-top:8px;}
+.hero-meta{margin-top:14px;font-size:12px;color:var(--muted);}
+.page{max-width:960px;margin:0 auto;padding:0 16px 40px;}
+.section{padding:24px 0;border-bottom:1px solid var(--border);}
+.section-title{font-size:11px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--gold);border-left:3px solid var(--gold);padding-left:10px;margin-bottom:16px;}
+.section-desc{font-size:13px;color:var(--muted);margin-bottom:14px;line-height:1.7;}
+.summary-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;}
+.summary-card{background:var(--bg2);border-radius:8px;padding:16px;border:1px solid var(--border);border-top:3px solid var(--gold);}
+.summary-card.green{border-top-color:var(--green2);}.summary-card.red{border-top-color:var(--red2);}.summary-card.blue{border-top-color:var(--blue2);}.summary-card.purple{border-top-color:var(--purple2);}
+.sum-title{font-size:10px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;}
+.sum-value{font-size:28px;font-weight:800;line-height:1.0;}
+.sum-value.gold{color:var(--gold2);}.sum-value.green{color:var(--green2);}.sum-value.red{color:var(--red2);}.sum-value.blue{color:var(--blue2);}
+.sum-sub{font-size:11px;color:var(--muted);margin-top:4px;}
+.sum-note{font-size:12px;color:var(--cream);margin-top:8px;line-height:1.5;}
+.prof-table{width:100%;border-collapse:collapse;font-size:13px;}
+.prof-table th{background:var(--bg3);color:var(--muted);font-size:10px;letter-spacing:1px;text-transform:uppercase;padding:8px 12px;text-align:center;border-bottom:1px solid var(--border);}
+.prof-table td{padding:9px 12px;border-bottom:1px solid var(--border);text-align:center;}
+.prof-table tr:last-child td{border-bottom:none;}
+.prof-table tr:hover td{background:var(--bg3);}
+.rank-label{display:inline-block;width:30px;height:30px;border-radius:50%;background:var(--bg3);border:2px solid var(--gold);text-align:center;line-height:28px;font-weight:800;color:var(--gold2);}
+.rank-label.r1{background:var(--gold);color:#0D1117;border-color:var(--gold2);}
+.good{color:var(--green2);font-weight:700;}.warn{color:var(--orange2);font-weight:700;}.bad{color:var(--red2);font-weight:700;}.dim{color:var(--muted);}
+.heatmap{width:100%;border-collapse:collapse;font-size:13px;}
+.heatmap th{background:var(--bg3);color:var(--muted);font-size:10px;letter-spacing:1px;padding:8px 10px;text-align:center;border-bottom:1px solid var(--border);}
+.heatmap td{padding:10px 8px;border-bottom:1px solid var(--border);text-align:center;border-right:1px solid var(--border);}
+.hm-val{font-size:15px;font-weight:800;}.hm-n{font-size:10px;color:var(--muted);margin-top:2px;}
+.heat-5{background:rgba(46,160,67,0.35);}.heat-4{background:rgba(46,160,67,0.22);}.heat-3{background:rgba(227,179,65,0.20);}.heat-2{background:rgba(210,153,34,0.15);}.heat-1{background:rgba(218,54,51,0.10);}.heat-0{background:transparent;}
+.cross-wrap{overflow-x:auto;}
+.cross-table{min-width:600px;border-collapse:collapse;font-size:13px;}
+.cross-table th{background:var(--bg3);color:var(--muted);font-size:10px;letter-spacing:1px;padding:8px 12px;text-align:center;border:1px solid var(--border);}
+.cross-table td{padding:10px 10px;border:1px solid var(--border);text-align:center;min-width:90px;}
+.cross-hit{font-size:16px;font-weight:800;}.cross-n{font-size:10px;color:var(--muted);}
+.star{color:var(--gold2);}
+.rules-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;}
+.rule-card{background:var(--bg2);border-radius:8px;padding:16px;border:1px solid var(--border);}
+.rule-card.buy{border-color:var(--green2);border-left-width:4px;}.rule-card.pass{border-color:var(--red2);border-left-width:4px;}.rule-card.caution{border-color:var(--orange2);border-left-width:4px;}
+.rule-badge{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:3px;margin-bottom:8px;}
+.rule-badge.buy{background:var(--green);color:white;}.rule-badge.pass{background:var(--red);color:white;}.rule-badge.caution{background:var(--orange);color:white;}
+.rule-title{font-size:15px;font-weight:700;color:var(--cream);margin-bottom:6px;}
+.rule-desc{font-size:12px;color:var(--muted);line-height:1.6;}
+.rule-roi{margin-top:8px;font-size:13px;font-weight:700;}
+.insight-box{background:var(--bg2);border-radius:8px;padding:14px 16px;border:1px solid var(--border);border-left:4px solid var(--gold);margin:14px 0;font-size:13px;line-height:1.7;}
+.insight-box .label{font-size:10px;color:var(--gold);font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;}
+@media(max-width:640px){.hero-title{font-size:28px;}.summary-grid{grid-template-columns:repeat(2,1fr);}.rules-grid{grid-template-columns:1fr;}}
 </style>
 </head>
 <body>
 
-<!-- HERO -->
 <div class="hero">
-    <div class="hero-eyebrow">Backtest Analysis · 2025/12〜2026/06</div>
-    <div class="hero-title">採点順位 × 市場人気<br>分析レポート</div>
-    <div class="hero-sub">どの「採点順位×人気」の組み合わせで買い目が成立するか</div>
-    <div class="hero-meta">対象: 2勝クラス以上 · n=384レース · 1596エントリー</div>
+  <div class="hero-eyebrow">Backtest Analysis · 2025/12〜2026/06 · 2年縛りロジック</div>
+  <div class="hero-title">採点順位 × 市場人気<br>分析レポート</div>
+  <div class="hero-sub">どの「採点順位×人気」の組み合わせで買い目が成立するか</div>
+  <div class="hero-meta">対象: 2勝クラス以上 · n=490レース · 2026-06-28更新</div>
 </div>
 
 <div class="page">
 
 <!-- ① エグゼクティブサマリー -->
 <div class="section">
-    <div class="section-title">主要発見 — 4つのキーファクト</div>
-    <div class="summary-grid">
-        <div class="summary-card green">
-            <div class="sum-title">最強パターン</div>
-            <div class="sum-value green">27%</div>
-            <div class="sum-sub">馬連的中率</div>
-            <div class="sum-note">採点1位=市場1人気<br>かつ採点2位=2〜3人気<br>のとき（n=71）</div>
-        </div>
-        <div class="summary-card green">
-            <div class="sum-title">馬連ROI 最優秀</div>
-            <div class="sum-value green">168%</div>
-            <div class="sum-sub">採点2位が2〜3人気のとき</div>
-            <div class="sum-note">n=144レース · 的中25件<br>採点2位の人気が<br>馬連収益性の鍵</div>
-        </div>
-        <div class="summary-card blue">
-            <div class="sum-title">採点1位 信頼度</div>
-            <div class="sum-value blue">40.4%</div>
-            <div class="sum-sub">1着率（1位=市場1人気時）</div>
-            <div class="sum-note">3着内率75.2%<br>ただし単勝ROI96%で<br>期待値はほぼトントン</div>
-        </div>
-        <div class="summary-card red">
-            <div class="sum-title">採点1位 買い禁止</div>
-            <div class="sum-value red">0%</div>
-            <div class="sum-sub">馬連的中率（1位=7人気以上）</div>
-            <div class="sum-note">n=27レースで馬連0的中<br>採点1位が7人気以上の<br>レースは見送り確定</div>
-        </div>
+  <div class="section-title">主要発見 — 4つのキーファクト</div>
+  <div class="summary-grid">
+    <div class="summary-card green">
+      <div class="sum-title">最強パターン</div>
+      <div class="sum-value green">20%</div>
+      <div class="sum-sub">馬連的中率</div>
+      <div class="sum-note">採点1位=1人気<br>かつ採点2位=7〜9人気<br>のとき（n=20）</div>
     </div>
+    <div class="summary-card green">
+      <div class="sum-title">馬連ROI 最優秀</div>
+      <div class="sum-value green">682%</div>
+      <div class="sum-sub">採点2位が1人気のとき</div>
+      <div class="sum-note">n=123レース · 的中12件<br>採点2位の人気が<br>馬連収益性の鍵</div>
+    </div>
+    <div class="summary-card blue">
+      <div class="sum-title">採点1位 1着率 (1人気時)</div>
+      <div class="sum-value blue">38.7%</div>
+      <div class="sum-sub">3着内率76%</div>
+      <div class="sum-note">n=155<br>単勝ROI89%</div>
+    </div>
+    <div class="summary-card red">
+      <div class="sum-title">採点1位 危険ゾーン</div>
+      <div class="sum-value red">6%</div>
+      <div class="sum-sub">馬連的中率（1位=7人気以上）</div>
+      <div class="sum-note">n=72レースで的中4件<br>採点1位が7人気以上の<br>レースは買い禁止</div>
+    </div>
+  </div>
 </div>
 
 <!-- ② 採点順位別プロファイル -->
 <div class="section">
-    <div class="section-title">採点順位1〜6位 基本プロファイル</div>
-    <div class="section-desc">全384レース・2勝クラス以上対象。1着率・3着内率は「その採点順位の馬が実際に1着/3着以内に入った割合」</div>
-    <table class="prof-table">
-        <thead>
-            <tr>
-                <th>採点順位</th>
-                <th>n</th>
-                <th>1着率</th>
-                <th>3着内率</th>
-                <th>主な市場人気帯</th>
-                <th>単勝ROI 全体傾向</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td><span class="rank-label r1">1</span></td>
-                <td>406</td>
-                <td class="good">19.1%</td>
-                <td class="good">49.3%</td>
-                <td>1〜3人気 多数</td>
-                <td class="warn">71〜109% (人気帯で大差)</td>
-            </tr>
-            <tr>
-                <td><span class="rank-label">2</span></td>
-                <td>406</td>
-                <td>9.6%</td>
-                <td>35.5%</td>
-                <td>1〜3人気 多数</td>
-                <td class="bad">62〜104% (全体赤字)</td>
-            </tr>
-            <tr>
-                <td><span class="rank-label">3</span></td>
-                <td>406</td>
-                <td>9.4%</td>
-                <td>31.5%</td>
-                <td>1〜6人気 分散</td>
-                <td class="warn">7〜9人気でROI172%</td>
-            </tr>
-            <tr>
-                <td><span class="rank-label">4</span></td>
-                <td>406</td>
-                <td>6.9%</td>
-                <td>23.6%</td>
-                <td>3〜7人気 中心</td>
-                <td class="warn">4〜6人気でROI102%</td>
-            </tr>
-            <tr>
-                <td><span class="rank-label">5</span></td>
-                <td>406</td>
-                <td class="warn">9.1%</td>
-                <td>25.4%</td>
-                <td>4〜8人気</td>
-                <td class="good">4〜6人気でROI145%</td>
-            </tr>
-            <tr>
-                <td><span class="rank-label">6</span></td>
-                <td>406</td>
-                <td>5.2%</td>
-                <td>21.4%</td>
-                <td>4〜9人気</td>
-                <td class="bad">全人気帯で赤字傾向</td>
-            </tr>
-        </tbody>
-    </table>
-
-    <div class="insight-box" style="margin-top:14px">
-        <div class="label">注目ポイント</div>
-        採点5位の1着率9.1%は採点2位（9.6%）と大差ない。採点5位=市場4〜6人気のとき単勝ROI145%は、
-        「市場も中程度に評価しているが、オッズ水準に対して勝率が高い」馬であることを示す。
-        これは採点システムが5位に置くような馬でも、市場が4〜6番手と評価する馬は実際のパフォーマンスが良い可能性がある。
-    </div>
+  <div class="section-title">採点順位1〜6位 基本プロファイル</div>
+  <div class="section-desc">全490レース・2勝クラス以上対象。1着率・3着内率は「その採点順位の馬が実際に1着/3着以内に入った割合」</div>
+  <table class="prof-table">
+    <thead><tr><th>採点順位</th><th>n</th><th>1着率</th><th>3着内率</th><th>単勝ROI</th></tr></thead>
+    <tbody><tr><td><span class="rank-label r1">1</span></td><td>490</td><td class="good">19.0%</td><td class="good">49.6%</td><td class="warn">81%</td></tr><tr><td><span class="rank-label">2</span></td><td>490</td><td class="good">17.3%</td><td class="good">44.5%</td><td class="warn">83%</td></tr><tr><td><span class="rank-label">3</span></td><td>490</td><td class="warn">10.8%</td><td class="warn">32.7%</td><td class="bad">71%</td></tr><tr><td><span class="rank-label">4</span></td><td>490</td><td class="warn">10.6%</td><td class="warn">32.0%</td><td class="good">103%</td></tr><tr><td><span class="rank-label">5</span></td><td>490</td><td class="">8.0%</td><td class="">28.2%</td><td class="warn">82%</td></tr><tr><td><span class="rank-label">6</span></td><td>490</td><td class="">6.5%</td><td class="">20.8%</td><td class="bad">47%</td></tr></tbody>
+  </table>
 </div>
 
 <!-- ③ 単勝ROI ヒートマップ -->
 <div class="section">
-    <div class="section-title">単勝ROI ヒートマップ — 採点順位 × 人気グループ</div>
-    <div class="section-desc">セルの色が濃いほど期待値が高い。100%以上 = 期待値プラス（黒字）</div>
-    <table class="heatmap">
-        <thead>
-            <tr>
-                <th>採点順位</th>
-                <th>1人気</th>
-                <th>2〜3人気</th>
-                <th>4〜6人気</th>
-                <th>7〜9人気</th>
-                <th>10人気以下</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td><strong>採点1位</strong></td>
-                <td class="heat-2">
-                    <div class="hm-val warn">96.0%</div>
-                    <div class="hm-n">n=141, 57件</div>
-                </td>
-                <td class="heat-1">
-                    <div class="hm-val bad">64.0%</div>
-                    <div class="hm-n">n=147, 23件</div>
-                </td>
-                <td class="heat-3">
-                    <div class="hm-val good">109.3%</div>
-                    <div class="hm-n">n=73, 10件</div>
-                </td>
-                <td class="heat-1">
-                    <div class="hm-val bad">37.1%</div>
-                    <div class="hm-n">n=28, 1件</div>
-                </td>
-                <td class="heat-5">
-                    <div class="hm-val good">245.3%</div>
-                    <div class="hm-n">n=17, 1件 ⚠n少</div>
-                </td>
-            </tr>
-            <tr>
-                <td><strong>採点2位</strong></td>
-                <td class="heat-1">
-                    <div class="hm-val bad">62.6%</div>
-                    <div class="hm-n">n=85, 22件</div>
-                </td>
-                <td class="heat-1">
-                    <div class="hm-val bad">69.3%</div>
-                    <div class="hm-n">n=151, 22件</div>
-                </td>
-                <td class="heat-1">
-                    <div class="hm-val bad">62.9%</div>
-                    <div class="hm-n">n=119, 9件</div>
-                </td>
-                <td class="heat-1">
-                    <div class="hm-val bad">51.3%</div>
-                    <div class="hm-n">n=30, 1件</div>
-                </td>
-                <td class="heat-3">
-                    <div class="hm-val good">104.3%</div>
-                    <div class="hm-n">n=21, 1件 ⚠n少</div>
-                </td>
-            </tr>
-            <tr>
-                <td><strong>採点3位</strong></td>
-                <td class="heat-2">
-                    <div class="hm-val warn">91.6%</div>
-                    <div class="hm-n">n=51, 17件</div>
-                </td>
-                <td class="heat-1">
-                    <div class="hm-val bad">68.5%</div>
-                    <div class="hm-n">n=114, 16件</div>
-                </td>
-                <td class="heat-2">
-                    <div class="hm-val warn">83.6%</div>
-                    <div class="hm-n">n=122, 10件</div>
-                </td>
-                <td class="heat-5">
-                    <div class="hm-val good">172.4%</div>
-                    <div class="hm-n">n=72, 7件 ★</div>
-                </td>
-                <td class="heat-0">
-                    <div class="hm-val dim">0.0%</div>
-                    <div class="hm-n">n=47, 0件</div>
-                </td>
-            </tr>
-            <tr>
-                <td><strong>採点4位</strong></td>
-                <td class="heat-2">
-                    <div class="hm-val warn">75.5%</div>
-                    <div class="hm-n">n=29, 10件</div>
-                </td>
-                <td class="heat-1">
-                    <div class="hm-val bad">37.9%</div>
-                    <div class="hm-n">n=105, 8件</div>
-                </td>
-                <td class="heat-3">
-                    <div class="hm-val good">101.7%</div>
-                    <div class="hm-n">n=139, 13件</div>
-                </td>
-                <td class="heat-2">
-                    <div class="hm-val warn">73.8%</div>
-                    <div class="hm-n">n=82, 3件</div>
-                </td>
-                <td class="heat-1">
-                    <div class="hm-val bad">51.6%</div>
-                    <div class="hm-n">n=51, 1件</div>
-                </td>
-            </tr>
-            <tr>
-                <td><strong>採点5位</strong></td>
-                <td class="heat-1">
-                    <div class="hm-val bad">47.9%</div>
-                    <div class="hm-n">n=24, 4件</div>
-                </td>
-                <td class="heat-2">
-                    <div class="hm-val warn">81.7%</div>
-                    <div class="hm-n">n=69, 12件</div>
-                </td>
-                <td class="heat-4">
-                    <div class="hm-val good">145.3%</div>
-                    <div class="hm-n">n=139, 20件 ★</div>
-                </td>
-                <td class="heat-2">
-                    <div class="hm-val warn">92.5%</div>
-                    <div class="hm-n">n=95, 4件</div>
-                </td>
-                <td class="heat-0">
-                    <div class="hm-val dim">0.0%</div>
-                    <div class="hm-n">n=79, 0件</div>
-                </td>
-            </tr>
-            <tr>
-                <td><strong>採点6位</strong></td>
-                <td class="heat-2">
-                    <div class="hm-val warn">99.6%</div>
-                    <div class="hm-n">n=23, 7件</div>
-                </td>
-                <td class="heat-1">
-                    <div class="hm-val bad">46.9%</div>
-                    <div class="hm-n">n=58, 5件</div>
-                </td>
-                <td class="heat-1">
-                    <div class="hm-val bad">37.5%</div>
-                    <div class="hm-n">n=112, 4件</div>
-                </td>
-                <td class="heat-1">
-                    <div class="hm-val bad">54.3%</div>
-                    <div class="hm-n">n=113, 2件</div>
-                </td>
-                <td class="heat-0">
-                    <div class="hm-val dim">15.9%</div>
-                    <div class="hm-n">n=100, 1件</div>
-                </td>
-            </tr>
-        </tbody>
-    </table>
-
-    <div class="insight-box">
-        <div class="label">ヒートマップ読み方</div>
-        <strong style="color:var(--green2)">単勝で期待値プラスのゾーン</strong>（ROI100%超）:
-        採点1位&amp;4〜6人気(109%), 採点3位&amp;7〜9人気(172%), 採点4位&amp;4〜6人気(102%), 採点5位&amp;4〜6人気(145%)。
-        <br><br>
-        <strong style="color:var(--red2)">採点2位は単勝でどの人気帯も赤字</strong>。採点2位の単勝はすべて期待値マイナス。
-        これは採点2位の馬が「市場とのズレが少なく、オッズに対して勝率が見合わない」ことを示す。
-    </div>
+  <div class="section-title">単勝ROI ヒートマップ — 採点順位 × 人気グループ</div>
+  <div class="section-desc">セルの色が濃いほど期待値が高い。100%以上 = 期待値プラス（黒字）</div>
+  <table class="heatmap">
+    <thead><tr><th>採点順位</th><th>1人気</th><th>2〜3人気</th><th>4〜6人気</th><th>7〜9人気</th><th>10人気以下</th></tr></thead>
+    <tbody><tr><td><strong>採点1位</strong></td><td class="heat-2"><div class="hm-val warn">89.3%</div><div class="hm-n">n=155</div></td><td class="heat-1"><div class="hm-val bad">60.3%</div><div class="hm-n">n=168</div></td><td class="heat-2"><div class="hm-val bad">76.2%</div><div class="hm-n">n=95</div></td><td class="heat-2"><div class="hm-val warn">88.6%</div><div class="hm-n">n=49</div></td><td class="heat-5"><div class="hm-val good">181.3%</div><div class="hm-n">n=23 ★</div></td></tr><tr><td><strong>採点2位</strong></td><td class="heat-2"><div class="hm-val warn">86.1%</div><div class="hm-n">n=123</div></td><td class="heat-2"><div class="hm-val bad">77.5%</div><div class="hm-n">n=140</div></td><td class="heat-2"><div class="hm-val bad">72.8%</div><div class="hm-n">n=131</div></td><td class="heat-4"><div class="hm-val good">116.2%</div><div class="hm-n">n=60</div></td><td class="heat-2"><div class="hm-val bad">73.1%</div><div class="hm-n">n=36</div></td></tr><tr><td><strong>採点3位</strong></td><td class="heat-2"><div class="hm-val bad">78.3%</div><div class="hm-n">n=69</div></td><td class="heat-1"><div class="hm-val bad">60.5%</div><div class="hm-n">n=148</div></td><td class="heat-1"><div class="hm-val bad">42.5%</div><div class="hm-n">n=138</div></td><td class="heat-4"><div class="hm-val good">120.6%</div><div class="hm-n">n=78</div></td><td class="heat-2"><div class="hm-val warn">89.3%</div><div class="hm-n">n=57</div></td></tr><tr><td><strong>採点4位</strong></td><td class="heat-1"><div class="hm-val bad">52.1%</div><div class="hm-n">n=55</div></td><td class="heat-2"><div class="hm-val warn">80.9%</div><div class="hm-n">n=116</div></td><td class="heat-2"><div class="hm-val warn">86.3%</div><div class="hm-n">n=148</div></td><td class="heat-5"><div class="hm-val good">200.0%</div><div class="hm-n">n=98 ★</div></td><td class="heat-2"><div class="hm-val warn">82.1%</div><div class="hm-n">n=73</div></td></tr><tr><td><strong>採点5位</strong></td><td class="heat-1"><div class="hm-val bad">57.6%</div><div class="hm-n">n=34</div></td><td class="heat-1"><div class="hm-val bad">64.3%</div><div class="hm-n">n=107</div></td><td class="heat-2"><div class="hm-val warn">88.3%</div><div class="hm-n">n=151</div></td><td class="heat-3"><div class="hm-val warn">91.7%</div><div class="hm-n">n=96</div></td><td class="heat-3"><div class="hm-val warn">92.7%</div><div class="hm-n">n=102</div></td></tr></tbody>
+  </table>
+  <div class="insight-box">
+    <div class="label">ヒートマップ読み方</div>
+    ROI 100%超 = 緑系セル。単勝で期待値プラスになる採点順位×人気の組み合わせに注目。
+    採点2位はどの人気帯でも単勝ROIが低い傾向（馬連の相手としての役割）。
+  </div>
 </div>
 
 <!-- ④ 馬連ROI 分析 -->
 <div class="section">
-    <div class="section-title">馬連（採点1位×2位）ROI — 採点2位の人気が鍵</div>
-    <div class="section-desc">採点1位と2位の馬連を毎回1点100円で購入した場合のROI。n=384レース。</div>
-
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
-        <div>
-            <div style="font-size:12px;color:var(--muted);margin-bottom:10px;font-weight:700">採点2位の人気グループ別 馬連ROI</div>
-            <table class="prof-table">
-                <thead><tr><th>採点2位の人気</th><th>n</th><th>的中率</th><th>馬連ROI</th></tr></thead>
-                <tbody>
-                    <tr>
-                        <td><strong>1人気</strong></td><td>75</td>
-                        <td>10.7%</td>
-                        <td class="bad">75.7%</td>
-                    </tr>
-                    <tr style="background:rgba(46,160,67,0.12)">
-                        <td><strong style="color:var(--green2)">2〜3人気 ★</strong></td><td>144</td>
-                        <td class="good">17.4%</td>
-                        <td class="good">168.3%</td>
-                    </tr>
-                    <tr>
-                        <td><strong>4〜6人気</strong></td><td>114</td>
-                        <td class="bad">1.8%</td>
-                        <td class="bad">65.2%</td>
-                    </tr>
-                    <tr>
-                        <td><strong>7〜9人気</strong></td><td>30</td>
-                        <td class="warn">6.7%</td>
-                        <td class="good">267.7%</td>
-                    </tr>
-                    <tr>
-                        <td><strong>10人気以下</strong></td><td>21</td>
-                        <td class="bad">0.0%</td>
-                        <td class="bad">0.0%</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-        <div>
-            <div style="font-size:12px;color:var(--muted);margin-bottom:10px;font-weight:700">採点1位の人気グループ別 馬連ROI</div>
-            <table class="prof-table">
-                <thead><tr><th>採点1位の人気</th><th>n</th><th>的中率</th><th>馬連ROI</th></tr></thead>
-                <tbody>
-                    <tr style="background:rgba(46,160,67,0.08)">
-                        <td><strong>1人気</strong></td><td>133</td>
-                        <td class="good">15.0%</td>
-                        <td class="warn">98.3%</td>
-                    </tr>
-                    <tr style="background:rgba(46,160,67,0.08)">
-                        <td><strong>2〜3人気</strong></td><td>138</td>
-                        <td>8.7%</td>
-                        <td class="good">109.6%</td>
-                    </tr>
-                    <tr style="background:rgba(46,160,67,0.12)">
-                        <td><strong style="color:var(--green2)">4〜6人気 ★</strong></td><td>70</td>
-                        <td>5.7%</td>
-                        <td class="good">149.1%</td>
-                    </tr>
-                    <tr>
-                        <td><strong>7〜9人気</strong></td><td>27</td>
-                        <td class="bad">0.0%</td>
-                        <td class="bad">0.0%</td>
-                    </tr>
-                    <tr>
-                        <td><strong>10人気以下</strong></td><td>16</td>
-                        <td>6.2%</td>
-                        <td class="good" style="font-size:11px">421.3%⚠n少</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
+  <div class="section-title">馬連（採点1位×2位）ROI — 採点2位の人気が鍵</div>
+  <div class="section-desc">採点1位と2位の馬連を毎回1点100円で購入した場合のROI。n=490レース。</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+    <div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:10px;font-weight:700">採点2位の人気グループ別 馬連ROI</div>
+      <table class="prof-table">
+        <thead><tr><th>採点2位の人気</th><th>n</th><th>的中率</th><th>馬連ROI</th></tr></thead>
+        <tbody><tr style="background:rgba(46,160,67,0.12)"><td><strong  style=color:var(--green2)>1人気 ★</strong></td><td>123</td><td class="bad">9.8%</td><td class="good">681.7% ★</td></tr><tr style="background:rgba(46,160,67,0.12)"><td><strong  style=color:var(--green2)>2〜3人気 ★</strong></td><td>140</td><td class="bad">13.6%</td><td class="good">224.8% ★</td></tr><tr style="background:rgba(46,160,67,0.12)"><td><strong  style=color:var(--green2)>4〜6人気 ★</strong></td><td>131</td><td class="bad">6.1%</td><td class="good">166.4% ★</td></tr><tr style="background:rgba(46,160,67,0.12)"><td><strong  style=color:var(--green2)>7〜9人気 ★</strong></td><td>60</td><td class="bad">10.0%</td><td class="good">358.2% ★</td></tr><tr><td><strong>10人気以下</strong></td><td>36</td><td class="bad">2.8%</td><td class="good">124.7%</td></tr></tbody>
+      </table>
     </div>
-
-    <div class="insight-box">
-        <div class="label">なぜ採点2位=2〜3人気で馬連ROIが高い？</div>
-        採点システムが2位に置く馬が、市場で2〜3番手と評価されているとき、これは「2頭が共に信頼できる」状態を示す。
-        採点2位が1人気になると「2位の馬が本命視されすぎてオッズが低くなる」ためROI下落。
-        採点2位が4人気以下になると「2位の馬が市場にも軽視されており、実際に来ない」ためROI下落。
-        2〜3人気帯が「採点と市場の両方が2番手として認める」スイートスポット。
+    <div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:10px;font-weight:700">採点1位の人気グループ別 馬連ROI</div>
+      <table class="prof-table">
+        <thead><tr><th>採点1位の人気</th><th>n</th><th>的中率</th><th>馬連ROI</th></tr></thead>
+        <tbody><tr style="background:rgba(46,160,67,0.12)"><td><strong  style=color:var(--green2)>1人気 ★</strong></td><td>155</td><td class="bad">13.5%</td><td class="good">167.0% ★</td></tr><tr><td><strong>2〜3人気</strong></td><td>168</td><td class="bad">8.9%</td><td class="warn">94.6%</td></tr><tr style="background:rgba(46,160,67,0.12)"><td><strong  style=color:var(--green2)>4〜6人気 ★</strong></td><td>95</td><td class="bad">6.3%</td><td class="good">258.6% ★</td></tr><tr style="background:rgba(46,160,67,0.12)"><td><strong  style=color:var(--green2)>7〜9人気 ★</strong></td><td>49</td><td class="bad">6.1%</td><td class="good">1836.7% ★</td></tr><tr style="background:rgba(46,160,67,0.12)"><td><strong  style=color:var(--green2)>10人気以下 ★</strong></td><td>23</td><td class="bad">4.3%</td><td class="good">293.0% ★</td></tr></tbody>
+      </table>
     </div>
-
-    <div class="insight-box" style="border-left-color:var(--orange2)">
-        <div class="label" style="color:var(--orange2)">採点1位=4〜6人気のとき馬連ROI149%の意味</div>
-        採点1位が市場4〜6人気の場合、システムと市場の評価が乖離している。この乖離が実際には当システムの評価が正しいことが多く、
-        1位馬が勝ったとき（1着率14.3%）は馬連配当が高めになるため、高ROIに繋がる。
-    </div>
+  </div>
+  <div class="insight-box">
+    <div class="label">なぜ採点2位=1人気で馬連ROIが高い？</div>
+    採点システムが2位に置く馬が市場で同様に評価されているとき、2頭が共に信頼できる状態を示す。
+    採点2位が1人気になるとオッズが下がりROI低下。4人気以下になると馬連の2番手として機能しない。
+  </div>
 </div>
 
 <!-- ⑤ クロス表 -->
 <div class="section">
-    <div class="section-title">採点1位×2位 人気クロス表 — 馬連的中率</div>
-    <div class="section-desc">行=採点1位の人気グループ / 列=採点2位の人気グループ。セルは「的中件数/レース数=的中率」</div>
-    <div class="cross-wrap">
-        <table class="cross-table">
-            <thead>
-                <tr>
-                    <th>1位↓ / 2位→</th>
-                    <th>1人気</th>
-                    <th>2〜3人気</th>
-                    <th>4〜6人気</th>
-                    <th>7〜9人気</th>
-                    <th>10人気以下</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td><strong>1人気</strong></td>
-                    <td class="heat-0"><div class="cross-hit dim">0/0</div><div class="cross-n">—</div></td>
-                    <td class="heat-5" style="background:rgba(46,160,67,0.40)">
-                        <div class="cross-hit good">19/71</div>
-                        <div class="cross-n" style="color:var(--green2);font-weight:700">27% ★★★</div>
-                    </td>
-                    <td class="heat-0"><div class="cross-hit dim">0/44</div><div class="cross-n">0%</div></td>
-                    <td class="heat-2"><div class="cross-hit warn">1/11</div><div class="cross-n">9%</div></td>
-                    <td class="heat-0"><div class="cross-hit dim">0/7</div><div class="cross-n">0%</div></td>
-                </tr>
-                <tr>
-                    <td><strong>2〜3人気</strong></td>
-                    <td class="heat-4" style="background:rgba(46,160,67,0.25)">
-                        <div class="cross-hit good">8/47</div>
-                        <div class="cross-n">17%</div>
-                    </td>
-                    <td class="heat-2"><div class="cross-hit warn">2/29</div><div class="cross-n">7%</div></td>
-                    <td class="heat-1"><div class="cross-hit dim">1/44</div><div class="cross-n">2%</div></td>
-                    <td class="heat-2"><div class="cross-hit warn">1/10</div><div class="cross-n">10%</div></td>
-                    <td class="heat-0"><div class="cross-hit dim">0/8</div><div class="cross-n">0%</div></td>
-                </tr>
-                <tr>
-                    <td><strong>4〜6人気</strong></td>
-                    <td class="heat-0"><div class="cross-hit dim">0/20</div><div class="cross-n">0%</div></td>
-                    <td class="heat-3">
-                        <div class="cross-hit warn">3/31</div>
-                        <div class="cross-n">10%</div>
-                    </td>
-                    <td class="heat-2"><div class="cross-hit warn">1/9</div><div class="cross-n">11%</div></td>
-                    <td class="heat-0"><div class="cross-hit dim">0/7</div><div class="cross-n">0%</div></td>
-                    <td class="heat-0"><div class="cross-hit dim">0/3</div><div class="cross-n">—</div></td>
-                </tr>
-                <tr>
-                    <td><strong>7〜9人気</strong></td>
-                    <td class="heat-0"><div class="cross-hit dim">0/6</div><div class="cross-n">0%</div></td>
-                    <td class="heat-0"><div class="cross-hit dim">0/9</div><div class="cross-n">0%</div></td>
-                    <td class="heat-0"><div class="cross-hit dim">0/9</div><div class="cross-n">0%</div></td>
-                    <td colspan="2" class="heat-0"><div class="cross-n dim">n不足</div></td>
-                </tr>
-                <tr>
-                    <td><strong>10人気以下</strong></td>
-                    <td colspan="2" class="heat-0"><div class="cross-n dim">n不足</div></td>
-                    <td class="heat-0"><div class="cross-hit dim">0/8</div><div class="cross-n">0%</div></td>
-                    <td colspan="2" class="heat-0"><div class="cross-n dim">n不足</div></td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-
-    <div class="insight-box" style="margin-top:14px">
-        <div class="label">クロス表の読み方</div>
-        <strong style="color:var(--green2)">採点1位=1人気 × 採点2位=2〜3人気</strong> が圧倒的ベスト（27%、n=71）。
-        「本命 vs 対抗」の古典的な構図が機能している。<br><br>
-        逆に <strong style="color:var(--red2)">採点1位=1人気 × 採点2位=4人気以上</strong> はほぼ壊滅（0/44=0%）。
-        採点システムの1位と2位が市場で大きく評価乖離しているとき、2位は来ない。<br><br>
-        <strong style="color:var(--orange2)">採点1位=2〜3人気 × 採点2位=1人気</strong> の17%（n=47）も有効。
-        「市場は2位馬を本命視しているが採点は1位馬が上」という逆転構図。
-    </div>
+  <div class="section-title">採点1位×2位 人気クロス表 — 馬連的中率</div>
+  <div class="section-desc">行=採点1位の人気グループ / 列=採点2位の人気グループ。セルは「的中件数/レース数=的中率」</div>
+  <div class="cross-wrap">
+    <table class="cross-table">
+      <thead><tr><th>1位↓ / 2位→</th><th>1人気</th><th>2〜3人気</th><th>4〜6人気</th><th>7〜9人気</th><th>10人気以下</th></tr></thead>
+      <tbody><tr><td><strong>1人気</strong></td><td class="heat-0"><div class="cross-hit dim">—</div><div class="cross-n">同一</div></td><td class="heat-4"><div class="cross-hit good">12/65</div><div class="cross-n">18% ★★</div></td><td class="heat-2"><div class="cross-hit dim">4/55</div><div class="cross-n">7%</div></td><td class="heat-5"><div class="cross-hit good">4/20</div><div class="cross-n">20% ★★★</div></td><td class="heat-2"><div class="cross-hit warn">1/11</div><div class="cross-n">9%</div></td></tr><tr><td><strong>2〜3人気</strong></td><td class="heat-3"><div class="cross-hit warn">9/69</div><div class="cross-n">13% ★</div></td><td class="heat-3"><div class="cross-hit warn">3/28</div><div class="cross-n">11% ★</div></td><td class="heat-2"><div class="cross-hit dim">2/40</div><div class="cross-n">5%</div></td><td class="heat-2"><div class="cross-hit dim">1/19</div><div class="cross-n">5%</div></td><td class="heat-1"><div class="cross-hit dim">0/12</div><div class="cross-n">0%</div></td></tr><tr><td><strong>4〜6人気</strong></td><td class="heat-2"><div class="cross-hit dim">2/31</div><div class="cross-n">6%</div></td><td class="heat-2"><div class="cross-hit dim">2/31</div><div class="cross-n">6%</div></td><td class="heat-2"><div class="cross-hit dim">1/14</div><div class="cross-n">7%</div></td><td class="heat-2"><div class="cross-hit dim">1/14</div><div class="cross-n">7%</div></td><td class="heat-1"><div class="cross-hit dim">0/5</div><div class="cross-n">0%</div></td></tr><tr><td><strong>7〜9人気</strong></td><td class="heat-2"><div class="cross-hit dim">1/14</div><div class="cross-n">7%</div></td><td class="heat-3"><div class="cross-hit warn">1/10</div><div class="cross-n">10% ★</div></td><td class="heat-2"><div class="cross-hit dim">1/15</div><div class="cross-n">7%</div></td><td class="heat-0"><div class="cross-hit dim">0/4</div><div class="cross-n">n少</div></td><td class="heat-1"><div class="cross-hit dim">0/6</div><div class="cross-n">0%</div></td></tr><tr><td><strong>10人気以下</strong></td><td class="heat-1"><div class="cross-hit dim">0/5</div><div class="cross-n">0%</div></td><td class="heat-4"><div class="cross-hit good">1/6</div><div class="cross-n">17% ★★</div></td><td class="heat-1"><div class="cross-hit dim">0/7</div><div class="cross-n">0%</div></td><td class="heat-0"><div class="cross-hit dim">0/3</div><div class="cross-n">n少</div></td><td class="heat-0"><div class="cross-hit dim">0/2</div><div class="cross-n">n少</div></td></tr></tbody>
+    </table>
+  </div>
+  <div class="insight-box" style="margin-top:14px">
+    <div class="label">クロス表の読み方</div>
+    ★★★ = 的中率20%超 / ★★ = 15%超 / ★ = 10%超。
+    採点1位×2位の人気の組み合わせで馬連の収益性が大きく変わる。
+    逆に採点1位=1人気 × 採点2位=4人気以上は的中率が低い傾向に注意。
+  </div>
 </div>
 
-<!-- ⑥ スコア差と1着率 -->
+<!-- ⑥ スコア差 × 採点1位の人気 -->
 <div class="section">
-    <div class="section-title">スコア差 × 採点1位の人気 — 1着率・馬連的中率</div>
-    <table class="prof-table">
-        <thead>
-            <tr><th>採点1位の人気</th><th>スコア差</th><th>n</th><th>1着率</th><th>3着内率</th><th>馬連的中率</th></tr>
-        </thead>
-        <tbody>
-            <tr style="background:rgba(46,160,67,0.12)">
-                <td rowspan="4"><strong>1人気</strong><br><span class="dim" style="font-size:11px">n=124</span></td>
-                <td>0〜1.5pt</td><td>49</td>
-                <td class="good">49.0%</td><td class="good">77.6%</td><td class="good">18.4%</td>
-            </tr>
-            <tr style="background:rgba(46,160,67,0.08)">
-                <td>1.5〜3pt</td><td>31</td>
-                <td class="warn">29.0%</td><td class="good">61.3%</td><td>9.7%</td>
-            </tr>
-            <tr style="background:rgba(46,160,67,0.12)">
-                <td>3〜5pt</td><td>27</td>
-                <td class="good">40.7%</td><td class="good" style="color:var(--green2)">88.9% ★</td><td>18.5%</td>
-            </tr>
-            <tr>
-                <td>5pt以上</td><td>17</td>
-                <td class="warn">29.4%</td><td class="good">70.6%</td><td>11.8%</td>
-            </tr>
-            <tr>
-                <td rowspan="4"><strong>2〜3人気</strong><br><span class="dim" style="font-size:11px">n=129</span></td>
-                <td>0〜1.5pt</td><td>55</td><td class="warn">16.4%</td><td>52.7%</td><td>7.3%</td>
-            </tr>
-            <tr>
-                <td>1.5〜3pt</td><td>33</td><td class="warn">15.2%</td><td>36.4%</td><td>9.1%</td>
-            </tr>
-            <tr>
-                <td>3〜5pt</td><td>28</td><td class="warn">21.4%</td><td>46.4%</td><td>14.3%</td>
-            </tr>
-            <tr>
-                <td>5pt以上</td><td>13</td><td class="bad">0.0%</td><td>46.2%</td><td>0.0%</td>
-            </tr>
-            <tr>
-                <td rowspan="3"><strong>4〜6人気</strong><br><span class="dim" style="font-size:11px">n=65</span></td>
-                <td>0〜1.5pt</td><td>36</td><td class="warn">16.7%</td><td>47.2%</td><td>8.3%</td>
-            </tr>
-            <tr>
-                <td>1.5〜3pt</td><td>19</td><td>10.5%</td><td>31.6%</td><td class="bad">0.0%</td>
-            </tr>
-            <tr>
-                <td>3〜5pt</td><td>9</td><td>11.1%</td><td>22.2%</td><td class="bad">0.0%</td>
-            </tr>
-        </tbody>
-    </table>
-
-    <div class="insight-box" style="margin-top:14px">
-        <div class="label">スコア差3〜5ptの謎</div>
-        採点1位=1人気 かつ スコア差3〜5ptのとき、<strong style="color:var(--green2)">3着内率88.9%</strong>（n=27）という驚異的な数値。
-        この状況は「本命が市場と採点で一致し、かつ圧倒的に力が上」の状態。
-        ただし馬連的中率18.5%は普通で、2位馬が同着3内に来ない（1位が1着、2位は外れることも多い）。
-        <strong>三連複でのBOX戦略が有効</strong>な状況といえる。<br><br>
-        一方 採点1位=2〜3人気 かつ スコア差5pt以上では1着率0%（n=13）。市場2〜3人気だが採点でかなり上位の馬が、
-        差が大きいほど「採点システムが過大評価している」可能性を示唆。
-    </div>
+  <div class="section-title">スコア差 × 採点1位の人気 — 1着率・馬連的中率</div>
+  <table class="prof-table">
+    <thead><tr><th>採点1位の人気</th><th>スコア差</th><th>n</th><th>1着率</th><th>3着内率</th><th>馬連的中率</th></tr></thead>
+    <tbody><tr style="background:rgba(46,160,67,0.08)"><td rowspan="4"><strong>1人気</strong><br><span class="dim" style="font-size:11px">n=155</span></td><td>0〜1.5pt</td><td>50</td><td class="good">36.0%</td><td class="good">80.0%</td><td class="warn">18.0%</td></tr><tr style="background:rgba(46,160,67,0.08)"><td>1.5〜3pt</td><td>43</td><td class="good">37.2%</td><td class="good">76.7%</td><td class="bad">9.3%</td></tr><tr style="background:rgba(46,160,67,0.08)"><td>3〜5pt</td><td>36</td><td class="good">44.4%</td><td class="good">69.4%</td><td class="bad">11.1%</td></tr><tr style="background:rgba(46,160,67,0.08)"><td>5pt以上</td><td>26</td><td class="good">38.5%</td><td class="good">76.9%</td><td class="bad">15.4%</td></tr><tr style="background:rgba(46,160,67,0.08)"><td rowspan="4"><strong>2〜3人気</strong><br><span class="dim" style="font-size:11px">n=168</span></td><td>0〜1.5pt</td><td>72</td><td class="bad">12.5%</td><td class="warn">54.2%</td><td class="bad">9.7%</td></tr><tr style="background:rgba(46,160,67,0.08)"><td>1.5〜3pt</td><td>46</td><td class="warn">19.6%</td><td class="warn">41.3%</td><td class="bad">8.7%</td></tr><tr style="background:rgba(46,160,67,0.08)"><td>3〜5pt</td><td>29</td><td class="bad">6.9%</td><td class="good">55.2%</td><td class="bad">13.8%</td></tr><tr style="background:rgba(46,160,67,0.08)"><td>5pt以上</td><td>21</td><td class="bad">9.5%</td><td class="warn">38.1%</td><td class="bad">0.0%</td></tr><tr style="background:rgba(46,160,67,0.08)"><td rowspan="4"><strong>4〜6人気</strong><br><span class="dim" style="font-size:11px">n=95</span></td><td>0〜1.5pt</td><td>55</td><td class="bad">9.1%</td><td class="warn">40.0%</td><td class="bad">10.9%</td></tr><tr style="background:rgba(46,160,67,0.08)"><td>1.5〜3pt</td><td>29</td><td class="bad">6.9%</td><td class="">17.2%</td><td class="bad">0.0%</td></tr><tr style="background:rgba(46,160,67,0.08)"><td>3〜5pt</td><td>8</td><td class="bad">12.5%</td><td class="warn">37.5%</td><td class="bad">0.0%</td></tr><tr style="background:rgba(46,160,67,0.08)"><td>5pt以上</td><td>3</td><td class="bad">0.0%</td><td class="">33.3%</td><td class="bad">0.0%</td></tr></tbody>
+  </table>
 </div>
 
 <!-- ⑦ 買い目推奨ルール -->
 <div class="section">
-    <div class="section-title">買い目推奨ルール — データ根拠付き</div>
-    <div class="section-desc">以下はバックテスト結果に基づく。現行の見送りルール（乖離3〜5pt、18頭、重賞等）との組み合わせで使用すること。</div>
-    <div class="rules-grid">
-
-        <div class="rule-card buy">
-            <span class="rule-badge buy">★ 買い — 最優先</span>
-            <div class="rule-title">採点1位=1人気 × 採点2位=2〜3人気</div>
-            <div class="rule-desc">最高の馬連的中率27%（n=71）。「本命×対抗」の王道構図。スコア差0〜1.5ptで1位の1着率49%・3着内率77.6%。</div>
-            <div class="rule-roi good">馬連ROI: 約168%（2位2〜3人気全体）</div>
-        </div>
-
-        <div class="rule-card buy">
-            <span class="rule-badge buy">★ 買い</span>
-            <div class="rule-title">採点2位=2〜3人気のとき馬連1点</div>
-            <div class="rule-desc">採点1位の人気に関わらず、採点2位が2〜3人気のとき馬連ROI168%。これが現行の馬連戦略ROI120〜260%の主因。</div>
-            <div class="rule-roi good">馬連ROI: 168.3%（n=144）</div>
-        </div>
-
-        <div class="rule-card buy">
-            <span class="rule-badge buy">買い — 単勝</span>
-            <div class="rule-title">採点5位 × 市場4〜6人気</div>
-            <div class="rule-desc">単勝ROI145.3%（n=139, 20件的中）。採点で5位に沈んでいるが市場が4〜6番手と評価する馬は、実際の勝率がオッズを上回る。</div>
-            <div class="rule-roi good">単勝ROI: 145.3%</div>
-        </div>
-
-        <div class="rule-card buy">
-            <span class="rule-badge buy">買い — 単勝（高配当）</span>
-            <div class="rule-title">採点3位 × 市場7〜9人気</div>
-            <div class="rule-desc">単勝ROI172.4%（n=72, 7件）。採点は3位と高いが市場が7〜9人気と軽視している馬。「市場が見逃した穴」候補。高配当×そこそこの的中率。</div>
-            <div class="rule-roi good">単勝ROI: 172.4%</div>
-        </div>
-
-        <div class="rule-card buy">
-            <span class="rule-badge buy">買い — 単勝</span>
-            <div class="rule-title">採点1位 × 市場4〜6人気</div>
-            <div class="rule-desc">単勝ROI109.3%（n=73, 10件）。採点1位なのに市場4〜6人気＝システムと市場の乖離あり。馬連ROI149.1%でも黒字。</div>
-            <div class="rule-roi good">単勝ROI: 109%, 馬連ROI: 149%</div>
-        </div>
-
-        <div class="rule-card caution">
-            <span class="rule-badge caution">注意</span>
-            <div class="rule-title">採点1位=1人気 × スコア差3〜5pt</div>
-            <div class="rule-desc">3着内率88.9%（n=27）という高水準。ただし馬連的中率は18.5%と普通→三連複BOXが向いている。なお3〜5ptは現行の「見送りゾーン」と重なるため要確認。</div>
-            <div class="rule-roi warn">三連複推奨。馬連はそこそこ</div>
-        </div>
-
-        <div class="rule-card pass">
-            <span class="rule-badge pass">見送り</span>
-            <div class="rule-title">採点1位=7人気以上</div>
-            <div class="rule-desc">馬連0的中（n=27）。単勝1着率3.7%、3着内率18.8%。採点1位が市場で7人気以下のレースは「採点と市場の乖離が大きすぎ」て信頼できない。</div>
-            <div class="rule-roi bad">馬連ROI: 0%</div>
-        </div>
-
-        <div class="rule-card pass">
-            <span class="rule-badge pass">見送り</span>
-            <div class="rule-title">採点2位=4〜6人気（単独）</div>
-            <div class="rule-desc">馬連的中率1.8%、ROI65.2%（n=114）。採点2位が市場4人気以下のとき、「2位の馬が来ない」パターンが多発。馬連の軸にならない。</div>
-            <div class="rule-roi bad">馬連ROI: 65.2%</div>
-        </div>
-
-        <div class="rule-card pass">
-            <span class="rule-badge pass">見送り</span>
-            <div class="rule-title">採点2位=10人気以下</div>
-            <div class="rule-desc">馬連0的中（n=21）。採点2位の馬が市場で10人気以下はもはや「単なる穴馬」。採点システムの2位評価が機能しない。</div>
-            <div class="rule-roi bad">馬連ROI: 0%</div>
-        </div>
-
+  <div class="section-title">買い目推奨ルール — データ根拠付き</div>
+  <div class="section-desc">以下はバックテスト結果に基づく。現行の見送りルール（乖離3〜5pt、18頭、重賞等）との組み合わせで使用すること。</div>
+  <div class="rules-grid">
+    <div class="rule-card buy">
+      <span class="rule-badge buy">★ 買い — 最優先</span>
+      <div class="rule-title">採点1位=1人気 × 採点2位=7〜9人気</div>
+      <div class="rule-desc">最高の馬連的中率20%（n=20）。採点と市場が一致した最強構図。</div>
+      <div class="rule-roi good">馬連ROI: 602%</div>
     </div>
-</div>
-
-<!-- ⑧ サマリー表 -->
-<div class="section">
-    <div class="section-title">買い判断フローチャート</div>
-    <div style="background:var(--bg2);border-radius:8px;padding:20px;border:1px solid var(--border);font-size:13px;line-height:2.0">
-        <div style="color:var(--gold2);font-weight:700;margin-bottom:12px">レース選択フロー（現行見送りルール通過後）</div>
-        <div style="padding-left:0">
-            <div style="margin-bottom:8px">
-                <span style="color:var(--muted)">Step 1</span>
-                採点1位の市場人気を確認 →
-                <span class="bad">7人気以上なら即見送り</span>（馬連ROI0%）
-            </div>
-            <div style="margin-bottom:8px">
-                <span style="color:var(--muted)">Step 2</span>
-                採点2位の市場人気を確認 →
-                <span class="good">2〜3人気なら馬連買い推奨</span>（ROI168%）
-            </div>
-            <div style="margin-bottom:8px">
-                <span style="color:var(--muted)">Step 3</span>
-                採点2位が1人気 →
-                <span class="warn">採点1位が1人気なら馬連OK（ROI98%）、2〜3人気なら馬連OK（ROI110%）</span>
-            </div>
-            <div style="margin-bottom:8px">
-                <span style="color:var(--muted)">Step 4</span>
-                採点2位が4人気以下 →
-                <span class="bad">馬連は見送り。三連複BOXのみ検討</span>
-            </div>
-            <div style="margin-bottom:8px">
-                <span style="color:var(--muted)">Step 5</span>
-                単勝サブ検討 → 採点3位 or 5位が4〜9人気なら単勝追加（ROI145〜172%）
-            </div>
-        </div>
+    <div class="rule-card buy">
+      <span class="rule-badge buy">★ 買い</span>
+      <div class="rule-title">採点2位=1人気のとき馬連1点</div>
+      <div class="rule-desc">採点1位の人気に関わらず、採点2位が1人気のとき馬連ROI682%（n=123）。現行馬連戦略の主因。</div>
+      <div class="rule-roi good">馬連ROI: 682%</div>
     </div>
+    <div class="rule-card pass">
+      <span class="rule-badge pass">見送り</span>
+      <div class="rule-title">採点1位=7人気以上</div>
+      <div class="rule-desc">馬連的中4件/n=72レース（5.6%）。採点と市場の乖離が大きすぎて信頼できない。</div>
+      <div class="rule-roi bad">馬連的中率: 5.6%</div>
+    </div>
+    <div class="rule-card pass">
+      <span class="rule-badge pass">見送り</span>
+      <div class="rule-title">採点2位=10人気以下</div>
+      <div class="rule-desc">馬連的中率2.8%（n=36）。採点2位が大穴では馬連の軸にならない。</div>
+      <div class="rule-roi bad">馬連ROI: 125%</div>
+    </div>
+  </div>
 </div>
 
 <!-- フッター -->
 <div style="padding:16px 0;text-align:center;color:var(--muted);font-size:11px;border-top:1px solid var(--border);margin-top:8px">
-    競馬予想システム バックテスト分析 · 対象: 2025/12〜2026/06 · n=384レース · 生成日: 2026-06-27
+  競馬予想システム バックテスト分析 · 対象: 2025/12〜2026/06 · n=490レース · 2年縛りロジック · 生成日: 2026-06-28
 </div>
 
-</div><!-- /page -->
+</div>
 </body>
 </html>

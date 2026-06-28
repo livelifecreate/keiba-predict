@@ -32,7 +32,7 @@ import re
 import requests
 from bs4 import BeautifulSoup
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Optional
 
 # -------------------------------------------------------------------
@@ -1219,10 +1219,16 @@ def score_all(entries: list, race_info, training_data: dict = None,
     all_last3f = []
     all_weights = [e.weight_carried for e in entries]
 
+    # 2年縛り: レース日から2年以内のデータのみ使用（古い実績の過大評価を防ぐ）
+    _race_dt   = parse_date(race_date) if race_date else None
+    _cutoff_dt = _race_dt - timedelta(days=365 * 2) if _race_dt else None
+
     all_recent: list[list] = []
     for entry in entries:
         pasts = [parse_past_race(r) for r in (entry.recent_races or []) if r]
         pasts = [p for p in pasts if p]
+        if _cutoff_dt:
+            pasts = [p for p in pasts if (parse_date(p.date) or _cutoff_dt) >= _cutoff_dt]
         all_recent.append(pasts)
         all_last3f.append(pasts[0].last_3f if pasts else 0.0)
 

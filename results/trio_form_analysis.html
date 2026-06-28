@@ -2,89 +2,52 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>三連複フォーメーション別ROI分析</title>
+<title>三連複フォーメーション別ROI分析（2年縛り版）</title>
 <style>
-:root {
-  --bg:    #0F1923;
-  --bg2:   #162030;
-  --bg3:   #1C2A3E;
-  --gold:  #C9A227;
-  --gold2: #E6C060;
-  --cream: #F2EDE4;
-  --muted: #7A9BB5;
-  --green: #3DB87A;
-  --red:   #E05252;
-  --blue:  #4A9EDB;
-  --orange:#E09040;
-}
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { background: var(--bg); color: var(--cream); font-family: 'Hiragino Sans','Yu Gothic',sans-serif; padding: 32px 24px; }
-
-h1 { font-size: 1.5rem; color: var(--gold); border-bottom: 2px solid var(--gold); padding-bottom: 10px; margin-bottom: 6px; }
-.subtitle { color: var(--muted); font-size: 0.82rem; margin-bottom: 24px; }
-
-/* Pattern legend */
-.legend { background: var(--bg2); border: 1px solid #253548; border-radius: 8px; padding: 16px 20px; margin-bottom: 28px; display: flex; flex-wrap: wrap; gap: 10px 28px; }
-.legend-item { font-size: 0.82rem; }
-.legend-item .num { color: var(--gold2); font-weight: bold; }
-.legend-item .pts { color: var(--muted); }
-
-.section-title { font-size: 1.1rem; color: var(--gold2); margin: 28px 0 12px; padding-left: 10px; border-left: 3px solid var(--gold); }
-
-.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 28px; }
-@media(max-width:860px){ .grid2 { grid-template-columns: 1fr; } }
-
-.card { background: var(--bg2); border-radius: 10px; padding: 18px; border: 1px solid #253548; }
-.card h3 { font-size: 1rem; color: var(--gold2); margin-bottom: 14px; }
-.card h3 .n { font-size:0.76rem; color:var(--muted); font-weight:normal; }
-
-table { width:100%; border-collapse:collapse; font-size:0.84rem; }
-thead th { color:var(--muted); font-weight:normal; padding:5px 8px; font-size:0.74rem; border-bottom:1px solid #253548; text-align:right; }
-thead th:first-child { text-align:left; }
-tbody tr { border-bottom:1px solid #1a2a3a; transition:background 0.1s; }
-tbody tr:hover { background:var(--bg3); }
-tbody td { padding:8px 8px; text-align:right; }
-tbody td:first-child { text-align:left; font-size:0.82rem; }
-
-.num-badge { display:inline-block; width:20px; height:20px; border-radius:50%; text-align:center; line-height:20px; font-size:0.72rem; font-weight:bold; margin-right:4px; }
-.n1 { background:#C9A227; color:#000; }
-.n2 { background:#4A9EDB; color:#fff; }
-.n3 { background:#3DB87A; color:#fff; }
-.n4 { background:#E09040; color:#fff; }
-.n5 { background:#9B6DDB; color:#fff; }
-.n6 { background:#E05252; color:#fff; }
-
-.pts-badge { font-size:0.72rem; color:var(--muted); }
-.roi-val { font-weight: bold; font-size: 0.95rem; }
-.roi-hi   { color: var(--green); }
-.roi-near { color: var(--gold2); }
-.roi-low  { color: var(--red); }
-.hit-rate { color: var(--blue); }
-.hit-frac { font-size: 0.74rem; color: var(--muted); }
-.invest { font-size: 0.74rem; color: var(--muted); }
-.collect { font-size: 0.74rem; }
-
-.best-row { background: rgba(61,184,122,0.07) !important; }
-.star { color: var(--gold); font-size: 0.8rem; margin-left: 3px; }
-
-.bar-bg { width:60px; height:6px; background:#1e2e42; border-radius:3px; overflow:hidden; display:inline-block; vertical-align:middle; }
-.bar-fill { height:100%; border-radius:3px; }
-
-/* Summary comparison table */
-.summary-table { width:100%; border-collapse:collapse; font-size:0.84rem; margin-top:10px; }
-.summary-table th { color:var(--muted); font-weight:normal; padding:6px 10px; font-size:0.74rem; border-bottom:2px solid #253548; text-align:right; }
-.summary-table th:first-child { text-align:left; }
-.summary-table td { padding:8px 10px; text-align:right; border-bottom:1px solid #1a2a3a; }
-.summary-table td:first-child { text-align:left; }
-.summary-table tr:hover td { background: var(--bg3); }
+:root{--bg:#0F1923;--bg2:#162030;--bg3:#1C2A3E;--gold:#C9A227;--gold2:#E6C060;--cream:#F2EDE4;--muted:#7A9BB5;--green:#3DB87A;--red:#E05252;--blue:#4A9EDB;--orange:#E09040;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--cream);font-family:'Hiragino Sans','Yu Gothic',sans-serif;padding:32px 24px;}
+h1{font-size:1.5rem;color:var(--gold);border-bottom:2px solid var(--gold);padding-bottom:10px;margin-bottom:6px;}
+.subtitle{color:var(--muted);font-size:0.82rem;margin-bottom:24px;}
+.legend{background:var(--bg2);border:1px solid #253548;border-radius:8px;padding:16px 20px;margin-bottom:28px;display:flex;flex-wrap:wrap;gap:10px 28px;}
+.legend-item{font-size:0.82rem;}
+.legend-item .num{color:var(--gold2);font-weight:bold;}
+.legend-item .pts{color:var(--muted);}
+.section-title{font-size:1.1rem;color:var(--gold2);margin:28px 0 12px;padding-left:10px;border-left:3px solid var(--gold);}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:28px;}
+@media(max-width:860px){.grid2{grid-template-columns:1fr;}}
+.card{background:var(--bg2);border-radius:10px;padding:18px;border:1px solid #253548;}
+.card h3{font-size:1rem;color:var(--gold2);margin-bottom:14px;}
+.card h3 .n{font-size:0.76rem;color:var(--muted);font-weight:normal;}
+table{width:100%;border-collapse:collapse;font-size:0.84rem;}
+thead th{color:var(--muted);font-weight:normal;padding:5px 8px;font-size:0.74rem;border-bottom:1px solid #253548;text-align:right;}
+thead th:first-child{text-align:left;}
+tbody tr{border-bottom:1px solid #1a2a3a;transition:background 0.1s;}
+tbody tr:hover{background:var(--bg3);}
+tbody td{padding:8px 8px;text-align:right;}
+tbody td:first-child{text-align:left;font-size:0.82rem;}
+.num-badge{display:inline-block;width:20px;height:20px;border-radius:50%;text-align:center;line-height:20px;font-size:0.72rem;font-weight:bold;margin-right:4px;}
+.n1{background:#C9A227;color:#000;}.n2{background:#4A9EDB;color:#fff;}.n3{background:#3DB87A;color:#fff;}
+.n4{background:#E09040;color:#fff;}.n5{background:#9B6DDB;color:#fff;}.n6{background:#E05252;color:#fff;}
+.pts-badge{font-size:0.72rem;color:var(--muted);}
+.roi-val{font-weight:bold;font-size:0.95rem;}
+.roi-hi{color:var(--green);}.roi-near{color:var(--gold2);}.roi-low{color:var(--red);}
+.hit-rate{color:var(--blue);}.hit-frac{font-size:0.74rem;color:var(--muted);}
+.best-row{background:rgba(61,184,122,0.07)!important;}
+.star{color:var(--gold);font-size:0.8rem;margin-left:3px;}
+.summary-table{width:100%;border-collapse:collapse;font-size:0.84rem;margin-top:10px;}
+.summary-table th{color:var(--muted);font-weight:normal;padding:6px 10px;font-size:0.74rem;border-bottom:2px solid #253548;text-align:right;}
+.summary-table th:first-child{text-align:left;}
+.summary-table td{padding:8px 10px;text-align:right;border-bottom:1px solid #1a2a3a;}
+.summary-table td:first-child{text-align:left;}
+.summary-table tr:hover td{background:var(--bg3);}
 </style>
 </head>
 <body>
 
 <h1>三連複 フォーメーション別 ROI分析</h1>
-<p class="subtitle">対象: 2025/12〜2026/06 ／ 2勝クラス以上 ／ 1点=100円固定 ／ n=処理レース数（払戻データありのみ）</p>
+<p class="subtitle">対象: 2025/12〜2026/06 ／ <strong>2年縛りロジック（2026-06-28更新）</strong> ／ 2勝クラス以上 ／ 1点=100円固定</p>
 
-<!-- パターン凡例 -->
 <div class="legend">
   <div class="legend-item"><span class="num-badge n1">①</span><b>1-2345-2345</b> <span class="pts">6点</span> — rank1軸 × rank2-5 × rank2-5</div>
   <div class="legend-item"><span class="num-badge n2">②</span><b>12-12345-12345</b> <span class="pts">9点</span> — {rank1or2}を含む上位5頭の全3頭組</div>
@@ -97,228 +60,253 @@ tbody td:first-child { text-align:left; font-size:0.82rem; }
 <div class="section-title">クラス別 詳細</div>
 <div class="grid2">
 
-<!-- 2勝クラス -->
 <div class="card">
-  <h3>2勝クラス <span class="n">n=116R</span></h3>
+  <h3>2勝クラス <span class="n">n=186R</span></h3>
   <table>
     <thead><tr><th>パターン</th><th>点数</th><th>的中率</th><th>的中</th><th>ROI</th></tr></thead>
     <tbody>
       <tr>
-        <td><span class="num-badge n1">①</span></td><td class="pts-badge">6点</td>
-        <td class="hit-rate">16.4%</td><td class="hit-frac">19/116</td>
-        <td><span class="roi-val roi-low">63.4%</span></td>
+        <td><span class="num-badge n1">①</span></td>
+        <td class="pts-badge">6点</td>
+        <td class="hit-rate">18.3%</td>
+        <td class="hit-frac">34/186</td>
+        <td><span class="roi-val roi-low">77.3%</span></td>
       </tr>
       <tr>
-        <td><span class="num-badge n2">②</span></td><td class="pts-badge">9点</td>
-        <td class="hit-rate">19.0%</td><td class="hit-frac">22/116</td>
-        <td><span class="roi-val roi-low">54.8%</span></td>
+        <td><span class="num-badge n2">②</span></td>
+        <td class="pts-badge">9点</td>
+        <td class="hit-rate">21.5%</td>
+        <td class="hit-frac">40/186</td>
+        <td><span class="roi-val roi-low">63.9%</span></td>
       </tr>
       <tr>
-        <td><span class="num-badge n3">③</span></td><td class="pts-badge">10点</td>
-        <td class="hit-rate">20.7%</td><td class="hit-frac">24/116</td>
-        <td><span class="roi-val roi-low">59.1%</span></td>
+        <td><span class="num-badge n3">③</span></td>
+        <td class="pts-badge">10点</td>
+        <td class="hit-rate">22.6%</td>
+        <td class="hit-frac">42/186</td>
+        <td><span class="roi-val roi-low">61.5%</span></td>
       </tr>
+      <tr>
+        <td><span class="num-badge n4">④</span></td>
+        <td class="pts-badge">10点</td>
+        <td class="hit-rate">22.6%</td>
+        <td class="hit-frac">42/186</td>
+        <td><span class="roi-val roi-low">64.4%</span></td>
+      </tr>
+      <tr>
+        <td><span class="num-badge n5">⑤</span></td>
+        <td class="pts-badge">16点</td>
+        <td class="hit-rate">26.3%</td>
+        <td class="hit-frac">49/186</td>
+        <td><span class="roi-val roi-low">47.9%</span></td>
+      </tr>
+      <tr>
+        <td><span class="num-badge n6">⑥</span></td>
+        <td class="pts-badge">12点</td>
+        <td class="hit-rate">26.3%</td>
+        <td class="hit-frac">49/186</td>
+        <td><span class="roi-val roi-low">78.5%</span></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+<div class="card">
+  <h3>3勝クラス <span class="n">n=129R</span></h3>
+  <table>
+    <thead><tr><th>パターン</th><th>点数</th><th>的中率</th><th>的中</th><th>ROI</th></tr></thead>
+    <tbody>
       <tr class="best-row">
-        <td><span class="num-badge n4">④</span></td><td class="pts-badge">10点</td>
-        <td class="hit-rate">21.6%</td><td class="hit-frac">25/116</td>
-        <td><span class="roi-val roi-hi">110.8%<span class="star">★</span></span></td>
+        <td><span class="num-badge n1">①</span></td>
+        <td class="pts-badge">6点</td>
+        <td class="hit-rate">12.4%</td>
+        <td class="hit-frac">16/129</td>
+        <td><span class="roi-val roi-hi">112.4%<span class="star">★</span></span></td>
       </tr>
       <tr>
-        <td><span class="num-badge n5">⑤</span></td><td class="pts-badge">16点</td>
-        <td class="hit-rate">26.7%</td><td class="hit-frac">31/116</td>
-        <td><span class="roi-val roi-low">81.6%</span></td>
+        <td><span class="num-badge n2">②</span></td>
+        <td class="pts-badge">9点</td>
+        <td class="hit-rate">16.3%</td>
+        <td class="hit-frac">21/129</td>
+        <td><span class="roi-val roi-low">84.2%</span></td>
       </tr>
       <tr>
-        <td><span class="num-badge n6">⑥</span></td><td class="pts-badge">12点</td>
-        <td class="hit-rate">23.3%</td><td class="hit-frac">27/116</td>
-        <td><span class="roi-val roi-low">46.9%</span></td>
+        <td><span class="num-badge n3">③</span></td>
+        <td class="pts-badge">10点</td>
+        <td class="hit-rate">16.3%</td>
+        <td class="hit-frac">21/129</td>
+        <td><span class="roi-val roi-low">75.8%</span></td>
+      </tr>
+      <tr>
+        <td><span class="num-badge n4">④</span></td>
+        <td class="pts-badge">10点</td>
+        <td class="hit-rate">20.2%</td>
+        <td class="hit-frac">26/129</td>
+        <td><span class="roi-val roi-near">103.3%<span class="star">★</span></span></td>
+      </tr>
+      <tr>
+        <td><span class="num-badge n5">⑤</span></td>
+        <td class="pts-badge">16点</td>
+        <td class="hit-rate">27.1%</td>
+        <td class="hit-frac">35/129</td>
+        <td><span class="roi-val roi-low">77.3%</span></td>
+      </tr>
+      <tr>
+        <td><span class="num-badge n6">⑥</span></td>
+        <td class="pts-badge">12点</td>
+        <td class="hit-rate">23.3%</td>
+        <td class="hit-frac">30/129</td>
+        <td><span class="roi-val roi-near">107.8%<span class="star">★</span></span></td>
       </tr>
     </tbody>
   </table>
 </div>
-
-<!-- 3勝クラス -->
 <div class="card">
-  <h3>3勝クラス <span class="n">n=77R</span></h3>
+  <h3>OP <span class="n">n=81R</span></h3>
   <table>
     <thead><tr><th>パターン</th><th>点数</th><th>的中率</th><th>的中</th><th>ROI</th></tr></thead>
     <tbody>
-      <tr>
-        <td><span class="num-badge n1">①</span></td><td class="pts-badge">6点</td>
-        <td class="hit-rate">13.0%</td><td class="hit-frac">10/77</td>
-        <td><span class="roi-val roi-low">59.9%</span></td>
-      </tr>
-      <tr>
-        <td><span class="num-badge n2">②</span></td><td class="pts-badge">9点</td>
-        <td class="hit-rate">18.2%</td><td class="hit-frac">14/77</td>
-        <td><span class="roi-val roi-low">50.2%</span></td>
-      </tr>
-      <tr>
-        <td><span class="num-badge n3">③</span></td><td class="pts-badge">10点</td>
-        <td class="hit-rate">20.8%</td><td class="hit-frac">16/77</td>
-        <td><span class="roi-val roi-low">55.6%</span></td>
-      </tr>
-      <tr>
-        <td><span class="num-badge n4">④</span></td><td class="pts-badge">10点</td>
-        <td class="hit-rate">19.5%</td><td class="hit-frac">15/77</td>
-        <td><span class="roi-val roi-low">89.8%</span></td>
-      </tr>
-      <tr>
-        <td><span class="num-badge n5">⑤</span></td><td class="pts-badge">16点</td>
-        <td class="hit-rate">28.6%</td><td class="hit-frac">22/77</td>
-        <td><span class="roi-val roi-low">69.2%</span></td>
-      </tr>
       <tr class="best-row">
-        <td><span class="num-badge n6">⑥</span></td><td class="pts-badge">12点</td>
-        <td class="hit-rate">20.8%</td><td class="hit-frac">16/77</td>
-        <td><span class="roi-val roi-near">95.9%</span></td>
+        <td><span class="num-badge n1">①</span></td>
+        <td class="pts-badge">6点</td>
+        <td class="hit-rate">17.3%</td>
+        <td class="hit-frac">14/81</td>
+        <td><span class="roi-val roi-hi">191.4%<span class="star">★★</span></span></td>
+      </tr>
+      <tr>
+        <td><span class="num-badge n2">②</span></td>
+        <td class="pts-badge">9点</td>
+        <td class="hit-rate">18.5%</td>
+        <td class="hit-frac">15/81</td>
+        <td><span class="roi-val roi-hi">128.6%<span class="star">★</span></span></td>
+      </tr>
+      <tr>
+        <td><span class="num-badge n3">③</span></td>
+        <td class="pts-badge">10点</td>
+        <td class="hit-rate">18.5%</td>
+        <td class="hit-frac">15/81</td>
+        <td><span class="roi-val roi-hi">115.7%<span class="star">★</span></span></td>
+      </tr>
+      <tr>
+        <td><span class="num-badge n4">④</span></td>
+        <td class="pts-badge">10点</td>
+        <td class="hit-rate">19.8%</td>
+        <td class="hit-frac">16/81</td>
+        <td><span class="roi-val roi-hi">127.7%<span class="star">★</span></span></td>
+      </tr>
+      <tr>
+        <td><span class="num-badge n5">⑤</span></td>
+        <td class="pts-badge">16点</td>
+        <td class="hit-rate">23.5%</td>
+        <td class="hit-frac">19/81</td>
+        <td><span class="roi-val roi-near">98.6%</span></td>
+      </tr>
+      <tr>
+        <td><span class="num-badge n6">⑥</span></td>
+        <td class="pts-badge">12点</td>
+        <td class="hit-rate">23.5%</td>
+        <td class="hit-frac">19/81</td>
+        <td><span class="roi-val roi-hi">131.5%<span class="star">★</span></span></td>
       </tr>
     </tbody>
   </table>
 </div>
-
-<!-- OP -->
 <div class="card">
-  <h3>OP <span class="n">n=49R</span></h3>
+  <h3>重賞 <span class="n">n=77R ／ 見送り対象</span></h3>
   <table>
     <thead><tr><th>パターン</th><th>点数</th><th>的中率</th><th>的中</th><th>ROI</th></tr></thead>
     <tbody>
       <tr>
-        <td><span class="num-badge n1">①</span></td><td class="pts-badge">6点</td>
-        <td class="hit-rate">22.4%</td><td class="hit-frac">11/49</td>
-        <td><span class="roi-val roi-hi">198.8%<span class="star">★★</span></span></td>
-      </tr>
-      <tr class="best-row">
-        <td><span class="num-badge n2">②</span></td><td class="pts-badge">9点</td>
-        <td class="hit-rate">26.5%</td><td class="hit-frac">13/49</td>
-        <td><span class="roi-val roi-hi">222.5%<span class="star">★★</span></span></td>
+        <td><span class="num-badge n1">①</span></td>
+        <td class="pts-badge">6点</td>
+        <td class="hit-rate">6.5%</td>
+        <td class="hit-frac">5/77</td>
+        <td><span class="roi-val roi-low">29.6%</span></td>
       </tr>
       <tr>
-        <td><span class="num-badge n3">③</span></td><td class="pts-badge">10点</td>
-        <td class="hit-rate">26.5%</td><td class="hit-frac">13/49</td>
-        <td><span class="roi-val roi-hi">200.3%<span class="star">★★</span></span></td>
+        <td><span class="num-badge n2">②</span></td>
+        <td class="pts-badge">9点</td>
+        <td class="hit-rate">7.8%</td>
+        <td class="hit-frac">6/77</td>
+        <td><span class="roi-val roi-low">24.4%</span></td>
       </tr>
       <tr>
-        <td><span class="num-badge n4">④</span></td><td class="pts-badge">10点</td>
-        <td class="hit-rate">24.5%</td><td class="hit-frac">12/49</td>
-        <td><span class="roi-val roi-hi">122.2%<span class="star">★</span></span></td>
+        <td><span class="num-badge n3">③</span></td>
+        <td class="pts-badge">10点</td>
+        <td class="hit-rate">9.1%</td>
+        <td class="hit-frac">7/77</td>
+        <td><span class="roi-val roi-low">23.9%</span></td>
       </tr>
       <tr>
-        <td><span class="num-badge n5">⑤</span></td><td class="pts-badge">16点</td>
-        <td class="hit-rate">28.6%</td><td class="hit-frac">14/49</td>
-        <td><span class="roi-val roi-hi">127.0%<span class="star">★</span></span></td>
+        <td><span class="num-badge n4">④</span></td>
+        <td class="pts-badge">10点</td>
+        <td class="hit-rate">9.1%</td>
+        <td class="hit-frac">7/77</td>
+        <td><span class="roi-val roi-low">22.2%</span></td>
       </tr>
       <tr>
-        <td><span class="num-badge n6">⑥</span></td><td class="pts-badge">12点</td>
-        <td class="hit-rate">24.5%</td><td class="hit-frac">12/49</td>
-        <td><span class="roi-val roi-hi">101.8%<span class="star">★</span></span></td>
+        <td><span class="num-badge n5">⑤</span></td>
+        <td class="pts-badge">16点</td>
+        <td class="hit-rate">11.7%</td>
+        <td class="hit-frac">9/77</td>
+        <td><span class="roi-val roi-low">35.0%</span></td>
+      </tr>
+      <tr>
+        <td><span class="num-badge n6">⑥</span></td>
+        <td class="pts-badge">12点</td>
+        <td class="hit-rate">11.7%</td>
+        <td class="hit-frac">9/77</td>
+        <td><span class="roi-val roi-low">37.5%</span></td>
       </tr>
     </tbody>
   </table>
 </div>
-
-<!-- 重賞 -->
-<div class="card">
-  <h3>重賞 <span class="n">n=49R ／ 見送り対象</span></h3>
-  <table>
-    <thead><tr><th>パターン</th><th>点数</th><th>的中率</th><th>的中</th><th>ROI</th></tr></thead>
-    <tbody>
-      <tr>
-        <td><span class="num-badge n1">①</span></td><td class="pts-badge">6点</td>
-        <td class="hit-rate">8.2%</td><td class="hit-frac">4/49</td>
-        <td><span class="roi-val roi-low">14.4%</span></td>
-      </tr>
-      <tr>
-        <td><span class="num-badge n2">②</span></td><td class="pts-badge">9点</td>
-        <td class="hit-rate">14.3%</td><td class="hit-frac">7/49</td>
-        <td><span class="roi-val roi-low">23.7%</span></td>
-      </tr>
-      <tr>
-        <td><span class="num-badge n3">③</span></td><td class="pts-badge">10点</td>
-        <td class="hit-rate">14.3%</td><td class="hit-frac">7/49</td>
-        <td><span class="roi-val roi-low">21.3%</span></td>
-      </tr>
-      <tr>
-        <td><span class="num-badge n4">④</span></td><td class="pts-badge">10点</td>
-        <td class="hit-rate">10.2%</td><td class="hit-frac">5/49</td>
-        <td><span class="roi-val roi-low">11.7%</span></td>
-      </tr>
-      <tr>
-        <td><span class="num-badge n5">⑤</span></td><td class="pts-badge">16点</td>
-        <td class="hit-rate">16.3%</td><td class="hit-frac">8/49</td>
-        <td><span class="roi-val roi-low">15.2%</span></td>
-      </tr>
-      <tr>
-        <td><span class="num-badge n6">⑥</span></td><td class="pts-badge">12点</td>
-        <td class="hit-rate">10.2%</td><td class="hit-frac">5/49</td>
-        <td><span class="roi-val roi-low">9.7%</span></td>
-      </tr>
-    </tbody>
-  </table>
 </div>
 
-</div><!-- /grid2 -->
-
-<!-- 横断比較 -->
 <div class="section-title">クラス横断 ROI比較</div>
+
 <div class="card" style="margin-bottom:28px">
   <table class="summary-table">
-    <thead>
-      <tr>
-        <th>パターン</th><th>点数</th>
-        <th>2勝 ROI</th><th>3勝 ROI</th><th>OP ROI</th><th>重賞 ROI</th>
-      </tr>
-    </thead>
+    <thead><tr>
+      <th>パターン</th><th>点数</th>
+      <th>2勝 ROI</th><th>3勝 ROI</th><th>OP ROI</th><th>重賞 ROI</th>
+    </tr></thead>
     <tbody>
-      <tr>
-        <td><span class="num-badge n1">①</span> 1-2345-2345</td><td class="pts-badge">6点</td>
-        <td style="color:#E05252">63.4%</td>
-        <td style="color:#E05252">59.9%</td>
-        <td style="color:#3DB87A"><b>198.8%</b></td>
-        <td style="color:#E05252">14.4%</td>
-      </tr>
       <tr class="best-row">
-        <td><span class="num-badge n2">②</span> 12-12345-12345</td><td class="pts-badge">9点</td>
-        <td style="color:#E05252">54.8%</td>
-        <td style="color:#E05252">50.2%</td>
-        <td style="color:#3DB87A"><b>222.5% ★</b></td>
-        <td style="color:#E05252">23.7%</td>
+        <td><span class="num-badge n1">①</span> 1-2345-2345</td>
+        <td class="pts-badge">6点</td>
+        <td style="color:#E05252">77.3%</td><td style="color:#3DB87A">112.4%</td><td style="color:#3DB87A"><b>191.4%★</b></td><td style="color:#E05252">29.6%</td>
       </tr>
       <tr>
-        <td><span class="num-badge n3">③</span> 5頭BOX</td><td class="pts-badge">10点</td>
-        <td style="color:#E05252">59.1%</td>
-        <td style="color:#E05252">55.6%</td>
-        <td style="color:#3DB87A"><b>200.3%</b></td>
-        <td style="color:#E05252">21.3%</td>
+        <td><span class="num-badge n2">②</span> 12-12345-12345</td>
+        <td class="pts-badge">9点</td>
+        <td style="color:#E05252">63.9%</td><td style="color:#E05252">84.2%</td><td style="color:#3DB87A"><b>128.6%</b></td><td style="color:#E05252">24.4%</td>
       </tr>
       <tr>
-        <td><span class="num-badge n4">④</span> 1-23456-23456</td><td class="pts-badge">10点</td>
-        <td style="color:#3DB87A"><b>110.8%</b></td>
-        <td style="color:#E05252">89.8%</td>
-        <td style="color:#3DB87A">122.2%</td>
-        <td style="color:#E05252">11.7%</td>
+        <td><span class="num-badge n3">③</span> 5頭BOX</td>
+        <td class="pts-badge">10点</td>
+        <td style="color:#E05252">61.5%</td><td style="color:#E05252">75.8%</td><td style="color:#3DB87A"><b>115.7%</b></td><td style="color:#E05252">23.9%</td>
       </tr>
       <tr>
-        <td><span class="num-badge n5">⑤</span> 12-123456-123456</td><td class="pts-badge">16点</td>
-        <td style="color:#E05252">81.6%</td>
-        <td style="color:#E05252">69.2%</td>
-        <td style="color:#3DB87A">127.0%</td>
-        <td style="color:#E05252">15.2%</td>
+        <td><span class="num-badge n4">④</span> 1-23456-23456</td>
+        <td class="pts-badge">10点</td>
+        <td style="color:#E05252">64.4%</td><td style="color:#E0C040">103.3%</td><td style="color:#3DB87A"><b>127.7%</b></td><td style="color:#E05252">22.2%</td>
       </tr>
       <tr>
-        <td><span class="num-badge n6">⑥</span> 1-234-234567</td><td class="pts-badge">12点</td>
-        <td style="color:#E05252">46.9%</td>
-        <td style="color:#E0C040">95.9%</td>
-        <td style="color:#3DB87A">101.8%</td>
-        <td style="color:#E05252">9.7%</td>
+        <td><span class="num-badge n5">⑤</span> 12-123456-123456</td>
+        <td class="pts-badge">16点</td>
+        <td style="color:#E05252">47.9%</td><td style="color:#E05252">77.3%</td><td style="color:#E0C040"><b>98.6%</b></td><td style="color:#E05252">35.0%</td>
+      </tr>
+      <tr>
+        <td><span class="num-badge n6">⑥</span> 1-234-234567</td>
+        <td class="pts-badge">12点</td>
+        <td style="color:#E05252">78.5%</td><td style="color:#E0C040">107.8%</td><td style="color:#3DB87A"><b>131.5%</b></td><td style="color:#E05252">37.5%</td>
       </tr>
     </tbody>
   </table>
 </div>
 
 <p style="color:var(--muted);font-size:0.75rem;margin-top:8px">
-  ★ = 最高ROI ／ ② ③ がOPで同的中数（13/49）= rank3-4-5の3頭決着はゼロ件 ／ 重賞は全パターン見送り確定
+  ★★ = ROI 150%超 ／ ★ = ROI 100%超（黒字）／ 重賞は全パターン見送り確定
 </p>
-
 </body>
 </html>

@@ -2,364 +2,327 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>馬連・ワイド 買い方別ROI分析</title>
+<title>馬連・ワイド 買い方別ROI分析（2年縛り版）</title>
 <style>
 :root {
-  --bg:    #0F1923;
-  --bg2:   #162030;
-  --bg3:   #1C2A3E;
-  --gold:  #C9A227;
-  --gold2: #E6C060;
-  --cream: #F2EDE4;
-  --muted: #7A9BB5;
-  --green: #3DB87A;
-  --red:   #E05252;
-  --blue:  #4A9EDB;
-  --purple:#9B6DDB;
+  --bg:#0F1923;--bg2:#162030;--bg3:#1C2A3E;
+  --gold:#C9A227;--gold2:#E6C060;--cream:#F2EDE4;
+  --muted:#7A9BB5;--green:#3DB87A;--red:#E05252;--blue:#4A9EDB;--purple:#9B6DDB;
 }
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body { background: var(--bg); color: var(--cream); font-family: 'Hiragino Sans','Yu Gothic',sans-serif; padding: 32px 24px; }
-
-h1 { font-size: 1.5rem; color: var(--gold); border-bottom: 2px solid var(--gold); padding-bottom: 10px; margin-bottom: 6px; }
-.subtitle { color: var(--muted); font-size: 0.82rem; margin-bottom: 28px; }
-
-.section-title { font-size: 1.1rem; color: var(--gold2); margin: 28px 0 12px; padding-left: 10px; border-left: 3px solid var(--gold); }
-
-.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 28px; }
-@media(max-width:860px){ .grid2 { grid-template-columns: 1fr; } }
-
-.card { background: var(--bg2); border-radius: 10px; padding: 18px; border: 1px solid #253548; }
-.card h3 { font-size: 1rem; color: var(--gold2); margin-bottom: 14px; display:flex; align-items:center; gap:8px; }
-.card h3 .n { font-size:0.76rem; color:var(--muted); font-weight:normal; }
-
-table { width:100%; border-collapse:collapse; font-size:0.85rem; }
-thead th { color:var(--muted); font-weight:normal; padding:5px 8px; font-size:0.75rem; border-bottom:1px solid #253548; }
-thead th:first-child { text-align:left; }
-thead th:not(:first-child) { text-align:right; }
-tbody tr { border-bottom:1px solid #1a2a3a; transition:background 0.12s; }
-tbody tr:hover { background:var(--bg3); }
-tbody td { padding:9px 8px; text-align:right; }
-tbody td:first-child { text-align:left; }
-
-.bet-name { display:flex; align-items:center; gap:6px; }
-.badge { font-size:0.68rem; padding:2px 6px; border-radius:3px; font-weight:bold; white-space:nowrap; }
-.badge-b { background:#1a3050; color:var(--blue); }
-.badge-w { background:#1a3040; color:#50C8A0; }
-
-.pts { font-size:0.72rem; color:var(--muted); }
-
-.roi-val { font-weight:bold; font-size:0.95rem; }
-.roi-hi   { color:var(--green); }
-.roi-near { color:var(--gold2); }
-.roi-low  { color:var(--red); }
-
-.hit-rate { color:var(--blue); font-size:0.88rem; }
-.hit-frac { font-size:0.75rem; color:var(--muted); }
-
-.bar-cell { width:80px; }
-.bar-bg { width:76px; height:7px; background:#1e2e42; border-radius:3px; overflow:hidden; display:inline-block; }
-.bar-fill { height:100%; border-radius:3px; }
-
-.star { color:var(--gold); margin-left:4px; font-size:0.8rem; }
-
-.invest { font-size:0.75rem; color:var(--muted); }
-.collect { font-size:0.75rem; }
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--cream);font-family:'Hiragino Sans','Yu Gothic',sans-serif;padding:32px 24px;}
+h1{font-size:1.5rem;color:var(--gold);border-bottom:2px solid var(--gold);padding-bottom:10px;margin-bottom:6px;}
+.subtitle{color:var(--muted);font-size:0.82rem;margin-bottom:28px;}
+.section-title{font-size:1.1rem;color:var(--gold2);margin:28px 0 12px;padding-left:10px;border-left:3px solid var(--gold);}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:28px;}
+@media(max-width:860px){.grid2{grid-template-columns:1fr;}}
+.card{background:var(--bg2);border-radius:10px;padding:18px;border:1px solid #253548;}
+.card h3{font-size:1rem;color:var(--gold2);margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+.card h3 .n{font-size:0.76rem;color:var(--muted);font-weight:normal;}
+table{width:100%;border-collapse:collapse;font-size:0.85rem;}
+thead th{color:var(--muted);font-weight:normal;padding:5px 8px;font-size:0.75rem;border-bottom:1px solid #253548;}
+thead th:first-child{text-align:left;}
+thead th:not(:first-child){text-align:right;}
+tbody tr{border-bottom:1px solid #1a2a3a;transition:background 0.12s;}
+tbody tr:hover{background:var(--bg3);}
+tbody td{padding:9px 8px;text-align:right;}
+tbody td:first-child{text-align:left;}
+.bet-name{display:flex;align-items:center;gap:6px;}
+.badge{font-size:0.68rem;padding:2px 6px;border-radius:3px;font-weight:bold;white-space:nowrap;}
+.badge-b{background:#1a3050;color:var(--blue);}
+.badge-w{background:#1a3040;color:#50C8A0;}
+.pts{font-size:0.72rem;color:var(--muted);}
+.roi-val{font-weight:bold;font-size:0.95rem;}
+.roi-hi{color:var(--green);}
+.roi-near{color:var(--gold2);}
+.roi-low{color:var(--red);}
+.hit-rate{color:var(--blue);font-size:0.88rem;}
+.hit-frac{font-size:0.75rem;color:var(--muted);}
+.bar-cell{width:80px;}
+.bar-bg{width:76px;height:7px;background:#1e2e42;border-radius:3px;overflow:hidden;display:inline-block;}
+.bar-fill{height:100%;border-radius:3px;}
+.star{color:var(--gold);margin-left:4px;font-size:0.8rem;}
+.invest{font-size:0.75rem;color:var(--muted);}
+.collect{font-size:0.75rem;}
 </style>
 </head>
 <body>
 
 <h1>馬連・ワイド 買い方別ROI分析</h1>
-<p class="subtitle">対象: 2025/12〜2026/06 ／ 現行採点ロジック（調教あり）／ 点数は1点=100円固定</p>
+<p class="subtitle">対象: 2025/12〜2026/06 ／ <strong>2年縛りロジック（2026-06-28更新）</strong> ／ 調教あり ／ 1点=100円固定</p>
 
 <div class="section-title">馬連</div>
 <div class="grid2">
 
-<!-- 馬連 2勝クラス -->
 <div class="card">
-  <h3>2勝クラス <span class="n">n=145R</span></h3>
+  <h3>2勝クラス <span class="n">n=233R</span></h3>
   <table>
     <thead><tr><th>買い方</th><th>的中率</th><th>的中/n</th><th class="bar-cell"></th><th>ROI</th><th>投資</th><th>回収</th></tr></thead>
     <tbody>
       <tr>
         <td><div class="bet-name"><span class="badge badge-b">馬連</span>1-2 <span class="pts">1点</span></div></td>
-        <td class="hit-rate">8.3%</td><td class="hit-frac">12/145</td>
-        <td><div class="bar-bg"><div class="bar-fill" style="width:8.3%;background:#4A9EDB"></div></div></td>
-        <td><span class="roi-val roi-low">55.2%</span></td>
-        <td class="invest">¥14,500</td><td class="collect" style="color:#E05252">¥8,000</td>
+        <td class="hit-rate">7.3%</td><td class="hit-frac">17/233</td>
+        <td><div class="bar-bg"><div class="bar-fill" style="width:7.3%;background:#4A9EDB"></div></div></td>
+        <td><span class="roi-val roi-hi">375.0%<span class="star">★★</span></span></td>
+        <td class="invest">¥23,300</td><td class="collect" style="color:#3DB87A">¥87,370</td>
       </tr>
       <tr>
         <td><div class="bet-name"><span class="badge badge-b">馬連</span>1-2+1-3 <span class="pts">2点</span></div></td>
-        <td class="hit-rate">13.8%</td><td class="hit-frac">20/145</td>
-        <td><div class="bar-bg"><div class="bar-fill" style="width:13.8%;background:#4A9EDB"></div></div></td>
-        <td><span class="roi-val roi-low">51.0%</span></td>
-        <td class="invest">¥29,000</td><td class="collect" style="color:#E05252">¥14,790</td>
+        <td class="hit-rate">9.0%</td><td class="hit-frac">21/233</td>
+        <td><div class="bar-bg"><div class="bar-fill" style="width:9.0%;background:#4A9EDB"></div></div></td>
+        <td><span class="roi-val roi-hi">197.6%<span class="star">★★</span></span></td>
+        <td class="invest">¥46,600</td><td class="collect" style="color:#3DB87A">¥92,080</td>
       </tr>
       <tr>
         <td><div class="bet-name"><span class="badge badge-b">馬連</span>3点BOX <span class="pts">3点</span></div></td>
-        <td class="hit-rate">17.9%</td><td class="hit-frac">26/145</td>
-        <td><div class="bar-bg"><div class="bar-fill" style="width:17.9%;background:#4A9EDB"></div></div></td>
-        <td><span class="roi-val roi-low">52.1%</span></td>
-        <td class="invest">¥43,500</td><td class="collect" style="color:#E05252">¥22,650</td>
+        <td class="hit-rate">13.7%</td><td class="hit-frac">32/233</td>
+        <td><div class="bar-bg"><div class="bar-fill" style="width:13.7%;background:#4A9EDB"></div></div></td>
+        <td><span class="roi-val roi-hi">148.9%<span class="star">★</span></span></td>
+        <td class="invest">¥69,900</td><td class="collect" style="color:#3DB87A">¥104,050</td>
       </tr>
     </tbody>
   </table>
 </div>
-
-<!-- 馬連 3勝クラス -->
 <div class="card">
-  <h3>3勝クラス <span class="n">n=91R</span></h3>
+  <h3>3勝クラス <span class="n">n=152R</span></h3>
   <table>
     <thead><tr><th>買い方</th><th>的中率</th><th>的中/n</th><th class="bar-cell"></th><th>ROI</th><th>投資</th><th>回収</th></tr></thead>
     <tbody>
       <tr>
         <td><div class="bet-name"><span class="badge badge-b">馬連</span>1-2 <span class="pts">1点</span></div></td>
-        <td class="hit-rate">8.8%</td><td class="hit-frac">8/91</td>
-        <td><div class="bar-bg"><div class="bar-fill" style="width:8.8%;background:#4A9EDB"></div></div></td>
-        <td><span class="roi-val roi-hi">179.1%<span class="star">★</span></span></td>
-        <td class="invest">¥9,100</td><td class="collect" style="color:#3DB87A">¥16,300</td>
-      </tr>
-      <tr>
-        <td><div class="bet-name"><span class="badge badge-b">馬連</span>1-2+1-3 <span class="pts">2点</span></div></td>
-        <td class="hit-rate">16.5%</td><td class="hit-frac">15/91</td>
-        <td><div class="bar-bg"><div class="bar-fill" style="width:16.5%;background:#4A9EDB"></div></div></td>
-        <td><span class="roi-val roi-hi">167.4%<span class="star">★</span></span></td>
-        <td class="invest">¥18,200</td><td class="collect" style="color:#3DB87A">¥30,460</td>
-      </tr>
-      <tr>
-        <td><div class="bet-name"><span class="badge badge-b">馬連</span>3点BOX <span class="pts">3点</span></div></td>
-        <td class="hit-rate">18.7%</td><td class="hit-frac">17/91</td>
-        <td><div class="bar-bg"><div class="bar-fill" style="width:18.7%;background:#4A9EDB"></div></div></td>
-        <td><span class="roi-val roi-hi">122.6%<span class="star">★</span></span></td>
-        <td class="invest">¥27,300</td><td class="collect" style="color:#3DB87A">¥33,460</td>
-      </tr>
-    </tbody>
-  </table>
-</div>
-
-<!-- 馬連 OP -->
-<div class="card">
-  <h3>OP <span class="n">n=66R</span></h3>
-  <table>
-    <thead><tr><th>買い方</th><th>的中率</th><th>的中/n</th><th class="bar-cell"></th><th>ROI</th><th>投資</th><th>回収</th></tr></thead>
-    <tbody>
-      <tr>
-        <td><div class="bet-name"><span class="badge badge-b">馬連</span>1-2 <span class="pts">1点</span></div></td>
-        <td class="hit-rate">10.6%</td><td class="hit-frac">7/66</td>
-        <td><div class="bar-bg"><div class="bar-fill" style="width:10.6%;background:#4A9EDB"></div></div></td>
-        <td><span class="roi-val roi-hi">256.7%<span class="star">★★</span></span></td>
-        <td class="invest">¥6,600</td><td class="collect" style="color:#3DB87A">¥16,940</td>
-      </tr>
-      <tr>
-        <td><div class="bet-name"><span class="badge badge-b">馬連</span>1-2+1-3 <span class="pts">2点</span></div></td>
-        <td class="hit-rate">15.2%</td><td class="hit-frac">10/66</td>
-        <td><div class="bar-bg"><div class="bar-fill" style="width:15.2%;background:#4A9EDB"></div></div></td>
-        <td><span class="roi-val roi-hi">203.3%<span class="star">★★</span></span></td>
-        <td class="invest">¥13,200</td><td class="collect" style="color:#3DB87A">¥26,830</td>
-      </tr>
-      <tr>
-        <td><div class="bet-name"><span class="badge badge-b">馬連</span>3点BOX <span class="pts">3点</span></div></td>
-        <td class="hit-rate">19.7%</td><td class="hit-frac">13/66</td>
-        <td><div class="bar-bg"><div class="bar-fill" style="width:19.7%;background:#4A9EDB"></div></div></td>
-        <td><span class="roi-val roi-hi">185.7%<span class="star">★★</span></span></td>
-        <td class="invest">¥19,800</td><td class="collect" style="color:#3DB87A">¥36,770</td>
-      </tr>
-    </tbody>
-  </table>
-</div>
-
-<!-- 馬連 重賞 -->
-<div class="card">
-  <h3>重賞 <span class="n">n=57R</span></h3>
-  <table>
-    <thead><tr><th>買い方</th><th>的中率</th><th>的中/n</th><th class="bar-cell"></th><th>ROI</th><th>投資</th><th>回収</th></tr></thead>
-    <tbody>
-      <tr>
-        <td><div class="bet-name"><span class="badge badge-b">馬連</span>1-2 <span class="pts">1点</span></div></td>
-        <td class="hit-rate">3.5%</td><td class="hit-frac">2/57</td>
-        <td><div class="bar-bg"><div class="bar-fill" style="width:3.5%;background:#4A9EDB"></div></div></td>
-        <td><span class="roi-val roi-low">32.5%</span></td>
-        <td class="invest">¥5,700</td><td class="collect" style="color:#E05252">¥1,850</td>
-      </tr>
-      <tr>
-        <td><div class="bet-name"><span class="badge badge-b">馬連</span>1-2+1-3 <span class="pts">2点</span></div></td>
-        <td class="hit-rate">8.8%</td><td class="hit-frac">5/57</td>
-        <td><div class="bar-bg"><div class="bar-fill" style="width:8.8%;background:#4A9EDB"></div></div></td>
-        <td><span class="roi-val roi-low">82.5%</span></td>
-        <td class="invest">¥11,400</td><td class="collect" style="color:#E05252">¥9,400</td>
-      </tr>
-      <tr>
-        <td><div class="bet-name"><span class="badge badge-b">馬連</span>3点BOX <span class="pts">3点</span></div></td>
-        <td class="hit-rate">10.5%</td><td class="hit-frac">6/57</td>
+        <td class="hit-rate">10.5%</td><td class="hit-frac">16/152</td>
         <td><div class="bar-bg"><div class="bar-fill" style="width:10.5%;background:#4A9EDB"></div></div></td>
-        <td><span class="roi-val roi-low">61.9%</span></td>
-        <td class="invest">¥17,100</td><td class="collect" style="color:#E05252">¥10,580</td>
+        <td><span class="roi-val roi-hi">255.5%<span class="star">★★</span></span></td>
+        <td class="invest">¥15,200</td><td class="collect" style="color:#3DB87A">¥38,830</td>
+      </tr>
+      <tr>
+        <td><div class="bet-name"><span class="badge badge-b">馬連</span>1-2+1-3 <span class="pts">2点</span></div></td>
+        <td class="hit-rate">15.1%</td><td class="hit-frac">23/152</td>
+        <td><div class="bar-bg"><div class="bar-fill" style="width:15.1%;background:#4A9EDB"></div></div></td>
+        <td><span class="roi-val roi-hi">153.8%<span class="star">★★</span></span></td>
+        <td class="invest">¥30,400</td><td class="collect" style="color:#3DB87A">¥46,760</td>
+      </tr>
+      <tr>
+        <td><div class="bet-name"><span class="badge badge-b">馬連</span>3点BOX <span class="pts">3点</span></div></td>
+        <td class="hit-rate">16.4%</td><td class="hit-frac">25/152</td>
+        <td><div class="bar-bg"><div class="bar-fill" style="width:16.4%;background:#4A9EDB"></div></div></td>
+        <td><span class="roi-val roi-near">109.0%<span class="star">★</span></span></td>
+        <td class="invest">¥45,600</td><td class="collect" style="color:#3DB87A">¥49,720</td>
       </tr>
     </tbody>
   </table>
 </div>
-
-</div><!-- /grid2 馬連 -->
+<div class="card">
+  <h3>OP <span class="n">n=105R</span></h3>
+  <table>
+    <thead><tr><th>買い方</th><th>的中率</th><th>的中/n</th><th class="bar-cell"></th><th>ROI</th><th>投資</th><th>回収</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><div class="bet-name"><span class="badge badge-b">馬連</span>1-2 <span class="pts">1点</span></div></td>
+        <td class="hit-rate">12.4%</td><td class="hit-frac">13/105</td>
+        <td><div class="bar-bg"><div class="bar-fill" style="width:12.4%;background:#4A9EDB"></div></div></td>
+        <td><span class="roi-val roi-hi">351.4%<span class="star">★★</span></span></td>
+        <td class="invest">¥10,500</td><td class="collect" style="color:#3DB87A">¥36,900</td>
+      </tr>
+      <tr>
+        <td><div class="bet-name"><span class="badge badge-b">馬連</span>1-2+1-3 <span class="pts">2点</span></div></td>
+        <td class="hit-rate">14.3%</td><td class="hit-frac">15/105</td>
+        <td><div class="bar-bg"><div class="bar-fill" style="width:14.3%;background:#4A9EDB"></div></div></td>
+        <td><span class="roi-val roi-hi">182.9%<span class="star">★★</span></span></td>
+        <td class="invest">¥21,000</td><td class="collect" style="color:#3DB87A">¥38,410</td>
+      </tr>
+      <tr>
+        <td><div class="bet-name"><span class="badge badge-b">馬連</span>3点BOX <span class="pts">3点</span></div></td>
+        <td class="hit-rate">14.3%</td><td class="hit-frac">15/105</td>
+        <td><div class="bar-bg"><div class="bar-fill" style="width:14.3%;background:#4A9EDB"></div></div></td>
+        <td><span class="roi-val roi-hi">121.9%<span class="star">★</span></span></td>
+        <td class="invest">¥31,500</td><td class="collect" style="color:#3DB87A">¥38,410</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+<div class="card">
+  <h3>重賞 <span class="n">n=92R</span></h3>
+  <table>
+    <thead><tr><th>買い方</th><th>的中率</th><th>的中/n</th><th class="bar-cell"></th><th>ROI</th><th>投資</th><th>回収</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><div class="bet-name"><span class="badge badge-b">馬連</span>1-2 <span class="pts">1点</span></div></td>
+        <td class="hit-rate">1.1%</td><td class="hit-frac">1/92</td>
+        <td><div class="bar-bg"><div class="bar-fill" style="width:1.1%;background:#4A9EDB"></div></div></td>
+        <td><span class="roi-val roi-low">3.3%</span></td>
+        <td class="invest">¥9,200</td><td class="collect" style="color:#E05252">¥300</td>
+      </tr>
+      <tr>
+        <td><div class="bet-name"><span class="badge badge-b">馬連</span>1-2+1-3 <span class="pts">2点</span></div></td>
+        <td class="hit-rate">3.3%</td><td class="hit-frac">3/92</td>
+        <td><div class="bar-bg"><div class="bar-fill" style="width:3.3%;background:#4A9EDB"></div></div></td>
+        <td><span class="roi-val roi-low">12.2%</span></td>
+        <td class="invest">¥18,400</td><td class="collect" style="color:#E05252">¥2,240</td>
+      </tr>
+      <tr>
+        <td><div class="bet-name"><span class="badge badge-b">馬連</span>3点BOX <span class="pts">3点</span></div></td>
+        <td class="hit-rate">7.6%</td><td class="hit-frac">7/92</td>
+        <td><div class="bar-bg"><div class="bar-fill" style="width:7.6%;background:#4A9EDB"></div></div></td>
+        <td><span class="roi-val roi-low">60.1%</span></td>
+        <td class="invest">¥27,600</td><td class="collect" style="color:#E05252">¥16,580</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+</div>
 
 <div class="section-title">ワイド</div>
 <div class="grid2">
 
-<!-- ワイド 2勝クラス -->
 <div class="card">
-  <h3>2勝クラス <span class="n">n=145R</span></h3>
+  <h3>2勝クラス <span class="n">n=233R</span></h3>
   <table>
     <thead><tr><th>買い方</th><th>的中率</th><th>的中/n</th><th class="bar-cell"></th><th>ROI</th><th>投資</th><th>回収</th></tr></thead>
     <tbody>
       <tr>
-        <td><div class="bet-name"><span class="badge badge-w">ワイド</span>1-2 <span class="pts">1点</span></div></td>
-        <td class="hit-rate">15.2%</td><td class="hit-frac">22/145</td>
-        <td><div class="bar-bg"><div class="bar-fill" style="width:15.2%;background:#50C8A0"></div></div></td>
-        <td><span class="roi-val roi-low">45.7%</span></td>
-        <td class="invest">¥14,500</td><td class="collect" style="color:#E05252">¥6,630</td>
+        <td><div class="bet-name"><span class="badge badge-w">ワイ</span>ド1-2 <span class="pts">1点</span></div></td>
+        <td class="hit-rate">18.0%</td><td class="hit-frac">42/233</td>
+        <td><div class="bar-bg"><div class="bar-fill" style="width:18.0%;background:#50C8A0"></div></div></td>
+        <td><span class="roi-val roi-hi">212.7%<span class="star">★★</span></span></td>
+        <td class="invest">¥23,300</td><td class="collect" style="color:#3DB87A">¥49,560</td>
       </tr>
       <tr>
-        <td><div class="bet-name"><span class="badge badge-w">ワイド</span>1-2+1-3 <span class="pts">2点</span></div></td>
-        <td class="hit-rate">28.3%</td><td class="hit-frac">41/145</td>
-        <td><div class="bar-bg"><div class="bar-fill" style="width:28.3%;background:#50C8A0"></div></div></td>
-        <td><span class="roi-val roi-low">62.2%</span></td>
-        <td class="invest">¥29,000</td><td class="collect" style="color:#E05252">¥18,040</td>
+        <td><div class="bet-name"><span class="badge badge-w">ワイ</span>ド1-2+1-3 <span class="pts">2点</span></div></td>
+        <td class="hit-rate">27.9%</td><td class="hit-frac">65/233</td>
+        <td><div class="bar-bg"><div class="bar-fill" style="width:27.9%;background:#50C8A0"></div></div></td>
+        <td><span class="roi-val roi-hi">137.4%<span class="star">★</span></span></td>
+        <td class="invest">¥46,600</td><td class="collect" style="color:#3DB87A">¥64,050</td>
       </tr>
       <tr>
-        <td><div class="bet-name"><span class="badge badge-w">ワイド</span>3点BOX <span class="pts">3点</span></div></td>
-        <td class="hit-rate">37.2%</td><td class="hit-frac">54/145</td>
-        <td><div class="bar-bg"><div class="bar-fill" style="width:37.2%;background:#50C8A0"></div></div></td>
-        <td><span class="roi-val roi-low">65.5%</span></td>
-        <td class="invest">¥43,500</td><td class="collect" style="color:#E05252">¥28,470</td>
+        <td><div class="bet-name"><span class="badge badge-w">ワイ</span>ド3点BOX <span class="pts">3点</span></div></td>
+        <td class="hit-rate">36.1%</td><td class="hit-frac">84/233</td>
+        <td><div class="bar-bg"><div class="bar-fill" style="width:36.1%;background:#50C8A0"></div></div></td>
+        <td><span class="roi-val roi-near">103.2%<span class="star">★</span></span></td>
+        <td class="invest">¥69,900</td><td class="collect" style="color:#3DB87A">¥72,120</td>
       </tr>
       <tr>
-        <td><div class="bet-name"><span class="badge badge-w">ワイド</span>5点 <span class="pts">5点</span></div></td>
-        <td class="hit-rate">44.8%</td><td class="hit-frac">65/145</td>
-        <td><div class="bar-bg"><div class="bar-fill" style="width:44.8%;background:#50C8A0"></div></div></td>
-        <td><span class="roi-val roi-low">60.8%</span></td>
-        <td class="invest">¥72,500</td><td class="collect" style="color:#E05252">¥44,110</td>
+        <td><div class="bet-name"><span class="badge badge-w">ワイ</span>ド5点 <span class="pts">5点</span></div></td>
+        <td class="hit-rate">57.1%</td><td class="hit-frac">133/233</td>
+        <td><div class="bar-bg"><div class="bar-fill" style="width:57.1%;background:#50C8A0"></div></div></td>
+        <td><span class="roi-val roi-low">87.4%</span></td>
+        <td class="invest">¥116,500</td><td class="collect" style="color:#E05252">¥101,870</td>
       </tr>
     </tbody>
   </table>
 </div>
-
-<!-- ワイド 3勝クラス -->
 <div class="card">
-  <h3>3勝クラス <span class="n">n=91R</span></h3>
+  <h3>3勝クラス <span class="n">n=152R</span></h3>
   <table>
     <thead><tr><th>買い方</th><th>的中率</th><th>的中/n</th><th class="bar-cell"></th><th>ROI</th><th>投資</th><th>回収</th></tr></thead>
     <tbody>
       <tr>
-        <td><div class="bet-name"><span class="badge badge-w">ワイド</span>1-2 <span class="pts">1点</span></div></td>
-        <td class="hit-rate">14.3%</td><td class="hit-frac">13/91</td>
-        <td><div class="bar-bg"><div class="bar-fill" style="width:14.3%;background:#50C8A0"></div></div></td>
-        <td><span class="roi-val roi-near">102.5%<span class="star">★</span></span></td>
-        <td class="invest">¥9,100</td><td class="collect" style="color:#3DB87A">¥9,330</td>
+        <td><div class="bet-name"><span class="badge badge-w">ワイ</span>ド1-2 <span class="pts">1点</span></div></td>
+        <td class="hit-rate">13.2%</td><td class="hit-frac">20/152</td>
+        <td><div class="bar-bg"><div class="bar-fill" style="width:13.2%;background:#50C8A0"></div></div></td>
+        <td><span class="roi-val roi-near">104.9%<span class="star">★</span></span></td>
+        <td class="invest">¥15,200</td><td class="collect" style="color:#3DB87A">¥15,950</td>
       </tr>
       <tr>
-        <td><div class="bet-name"><span class="badge badge-w">ワイド</span>1-2+1-3 <span class="pts">2点</span></div></td>
-        <td class="hit-rate">24.2%</td><td class="hit-frac">22/91</td>
-        <td><div class="bar-bg"><div class="bar-fill" style="width:24.2%;background:#50C8A0"></div></div></td>
-        <td><span class="roi-val roi-low">89.0%</span></td>
-        <td class="invest">¥18,200</td><td class="collect" style="color:#E05252">¥16,190</td>
+        <td><div class="bet-name"><span class="badge badge-w">ワイ</span>ド1-2+1-3 <span class="pts">2点</span></div></td>
+        <td class="hit-rate">26.3%</td><td class="hit-frac">40/152</td>
+        <td><div class="bar-bg"><div class="bar-fill" style="width:26.3%;background:#50C8A0"></div></div></td>
+        <td><span class="roi-val roi-near">91.9%</span></td>
+        <td class="invest">¥30,400</td><td class="collect" style="color:#3DB87A">¥27,950</td>
       </tr>
       <tr>
-        <td><div class="bet-name"><span class="badge badge-w">ワイド</span>3点BOX <span class="pts">3点</span></div></td>
-        <td class="hit-rate">28.6%</td><td class="hit-frac">26/91</td>
-        <td><div class="bar-bg"><div class="bar-fill" style="width:28.6%;background:#50C8A0"></div></div></td>
-        <td><span class="roi-val roi-low">70.1%</span></td>
-        <td class="invest">¥27,300</td><td class="collect" style="color:#E05252">¥19,130</td>
+        <td><div class="bet-name"><span class="badge badge-w">ワイ</span>ド3点BOX <span class="pts">3点</span></div></td>
+        <td class="hit-rate">30.3%</td><td class="hit-frac">46/152</td>
+        <td><div class="bar-bg"><div class="bar-fill" style="width:30.3%;background:#50C8A0"></div></div></td>
+        <td><span class="roi-val roi-low">69.1%</span></td>
+        <td class="invest">¥45,600</td><td class="collect" style="color:#E05252">¥31,500</td>
       </tr>
       <tr>
-        <td><div class="bet-name"><span class="badge badge-w">ワイド</span>5点 <span class="pts">5点</span></div></td>
-        <td class="hit-rate">39.6%</td><td class="hit-frac">36/91</td>
-        <td><div class="bar-bg"><div class="bar-fill" style="width:39.6%;background:#50C8A0"></div></div></td>
-        <td><span class="roi-val roi-low">71.5%</span></td>
-        <td class="invest">¥45,500</td><td class="collect" style="color:#E05252">¥32,520</td>
+        <td><div class="bet-name"><span class="badge badge-w">ワイ</span>ド5点 <span class="pts">5点</span></div></td>
+        <td class="hit-rate">50.0%</td><td class="hit-frac">76/152</td>
+        <td><div class="bar-bg"><div class="bar-fill" style="width:50.0%;background:#50C8A0"></div></div></td>
+        <td><span class="roi-val roi-low">87.2%</span></td>
+        <td class="invest">¥76,000</td><td class="collect" style="color:#E05252">¥66,270</td>
       </tr>
     </tbody>
   </table>
 </div>
-
-<!-- ワイド OP -->
 <div class="card">
-  <h3>OP <span class="n">n=66R</span></h3>
+  <h3>OP <span class="n">n=105R</span></h3>
   <table>
     <thead><tr><th>買い方</th><th>的中率</th><th>的中/n</th><th class="bar-cell"></th><th>ROI</th><th>投資</th><th>回収</th></tr></thead>
     <tbody>
       <tr>
-        <td><div class="bet-name"><span class="badge badge-w">ワイド</span>1-2 <span class="pts">1点</span></div></td>
-        <td class="hit-rate">18.2%</td><td class="hit-frac">12/66</td>
-        <td><div class="bar-bg"><div class="bar-fill" style="width:18.2%;background:#50C8A0"></div></div></td>
-        <td><span class="roi-val roi-low">92.1%</span></td>
-        <td class="invest">¥6,600</td><td class="collect" style="color:#E05252">¥6,080</td>
+        <td><div class="bet-name"><span class="badge badge-w">ワイ</span>ド1-2 <span class="pts">1点</span></div></td>
+        <td class="hit-rate">20.0%</td><td class="hit-frac">21/105</td>
+        <td><div class="bar-bg"><div class="bar-fill" style="width:20.0%;background:#50C8A0"></div></div></td>
+        <td><span class="roi-val roi-hi">162.9%<span class="star">★★</span></span></td>
+        <td class="invest">¥10,500</td><td class="collect" style="color:#3DB87A">¥17,100</td>
       </tr>
       <tr>
-        <td><div class="bet-name"><span class="badge badge-w">ワイド</span>1-2+1-3 <span class="pts">2点</span></div></td>
-        <td class="hit-rate">28.8%</td><td class="hit-frac">19/66</td>
-        <td><div class="bar-bg"><div class="bar-fill" style="width:28.8%;background:#50C8A0"></div></div></td>
-        <td><span class="roi-val roi-low">89.4%</span></td>
-        <td class="invest">¥13,200</td><td class="collect" style="color:#E05252">¥11,800</td>
+        <td><div class="bet-name"><span class="badge badge-w">ワイ</span>ド1-2+1-3 <span class="pts">2点</span></div></td>
+        <td class="hit-rate">24.8%</td><td class="hit-frac">26/105</td>
+        <td><div class="bar-bg"><div class="bar-fill" style="width:24.8%;background:#50C8A0"></div></div></td>
+        <td><span class="roi-val roi-low">89.1%</span></td>
+        <td class="invest">¥21,000</td><td class="collect" style="color:#E05252">¥18,720</td>
       </tr>
       <tr>
-        <td><div class="bet-name"><span class="badge badge-w">ワイド</span>3点BOX <span class="pts">3点</span></div></td>
-        <td class="hit-rate">34.8%</td><td class="hit-frac">23/66</td>
-        <td><div class="bar-bg"><div class="bar-fill" style="width:34.8%;background:#50C8A0"></div></div></td>
-        <td><span class="roi-val roi-low">78.7%</span></td>
-        <td class="invest">¥19,800</td><td class="collect" style="color:#E05252">¥15,590</td>
+        <td><div class="bet-name"><span class="badge badge-w">ワイ</span>ド3点BOX <span class="pts">3点</span></div></td>
+        <td class="hit-rate">31.4%</td><td class="hit-frac">33/105</td>
+        <td><div class="bar-bg"><div class="bar-fill" style="width:31.4%;background:#50C8A0"></div></div></td>
+        <td><span class="roi-val roi-near">100.3%<span class="star">★</span></span></td>
+        <td class="invest">¥31,500</td><td class="collect" style="color:#3DB87A">¥31,580</td>
       </tr>
       <tr>
-        <td><div class="bet-name"><span class="badge badge-w">ワイド</span>5点 <span class="pts">5点</span></div></td>
-        <td class="hit-rate">37.9%</td><td class="hit-frac">25/66</td>
-        <td><div class="bar-bg"><div class="bar-fill" style="width:37.9%;background:#50C8A0"></div></div></td>
-        <td><span class="roi-val roi-low">72.0%</span></td>
-        <td class="invest">¥33,000</td><td class="collect" style="color:#E05252">¥23,750</td>
+        <td><div class="bet-name"><span class="badge badge-w">ワイ</span>ド5点 <span class="pts">5点</span></div></td>
+        <td class="hit-rate">50.5%</td><td class="hit-frac">53/105</td>
+        <td><div class="bar-bg"><div class="bar-fill" style="width:50.5%;background:#50C8A0"></div></div></td>
+        <td><span class="roi-val roi-low">88.8%</span></td>
+        <td class="invest">¥52,500</td><td class="collect" style="color:#E05252">¥46,630</td>
       </tr>
     </tbody>
   </table>
 </div>
-
-<!-- ワイド 重賞 -->
 <div class="card">
-  <h3>重賞 <span class="n">n=57R</span></h3>
+  <h3>重賞 <span class="n">n=92R</span></h3>
   <table>
     <thead><tr><th>買い方</th><th>的中率</th><th>的中/n</th><th class="bar-cell"></th><th>ROI</th><th>投資</th><th>回収</th></tr></thead>
     <tbody>
       <tr>
-        <td><div class="bet-name"><span class="badge badge-w">ワイド</span>1-2 <span class="pts">1点</span></div></td>
-        <td class="hit-rate">12.3%</td><td class="hit-frac">7/57</td>
-        <td><div class="bar-bg"><div class="bar-fill" style="width:12.3%;background:#50C8A0"></div></div></td>
-        <td><span class="roi-val roi-low">50.9%</span></td>
-        <td class="invest">¥5,700</td><td class="collect" style="color:#E05252">¥2,900</td>
+        <td><div class="bet-name"><span class="badge badge-w">ワイ</span>ド1-2 <span class="pts">1点</span></div></td>
+        <td class="hit-rate">6.5%</td><td class="hit-frac">6/92</td>
+        <td><div class="bar-bg"><div class="bar-fill" style="width:6.5%;background:#50C8A0"></div></div></td>
+        <td><span class="roi-val roi-low">38.4%</span></td>
+        <td class="invest">¥9,200</td><td class="collect" style="color:#E05252">¥3,530</td>
       </tr>
       <tr>
-        <td><div class="bet-name"><span class="badge badge-w">ワイド</span>1-2+1-3 <span class="pts">2点</span></div></td>
-        <td class="hit-rate">24.6%</td><td class="hit-frac">14/57</td>
-        <td><div class="bar-bg"><div class="bar-fill" style="width:24.6%;background:#50C8A0"></div></div></td>
-        <td><span class="roi-val roi-low">78.2%</span></td>
-        <td class="invest">¥11,400</td><td class="collect" style="color:#E05252">¥8,920</td>
+        <td><div class="bet-name"><span class="badge badge-w">ワイ</span>ド1-2+1-3 <span class="pts">2点</span></div></td>
+        <td class="hit-rate">14.1%</td><td class="hit-frac">13/92</td>
+        <td><div class="bar-bg"><div class="bar-fill" style="width:14.1%;background:#50C8A0"></div></div></td>
+        <td><span class="roi-val roi-low">49.8%</span></td>
+        <td class="invest">¥18,400</td><td class="collect" style="color:#E05252">¥9,170</td>
       </tr>
       <tr>
-        <td><div class="bet-name"><span class="badge badge-w">ワイド</span>3点BOX <span class="pts">3点</span></div></td>
-        <td class="hit-rate">35.1%</td><td class="hit-frac">20/57</td>
-        <td><div class="bar-bg"><div class="bar-fill" style="width:35.1%;background:#50C8A0"></div></div></td>
-        <td><span class="roi-val roi-low">86.1%</span></td>
-        <td class="invest">¥17,100</td><td class="collect" style="color:#E05252">¥14,720</td>
+        <td><div class="bet-name"><span class="badge badge-w">ワイ</span>ド3点BOX <span class="pts">3点</span></div></td>
+        <td class="hit-rate">25.0%</td><td class="hit-frac">23/92</td>
+        <td><div class="bar-bg"><div class="bar-fill" style="width:25.0%;background:#50C8A0"></div></div></td>
+        <td><span class="roi-val roi-low">63.3%</span></td>
+        <td class="invest">¥27,600</td><td class="collect" style="color:#E05252">¥17,470</td>
       </tr>
       <tr>
-        <td><div class="bet-name"><span class="badge badge-w">ワイド</span>5点 <span class="pts">5点</span></div></td>
-        <td class="hit-rate">38.6%</td><td class="hit-frac">22/57</td>
-        <td><div class="bar-bg"><div class="bar-fill" style="width:38.6%;background:#50C8A0"></div></div></td>
-        <td><span class="roi-val roi-low">60.3%</span></td>
-        <td class="invest">¥28,500</td><td class="collect" style="color:#E05252">¥17,190</td>
+        <td><div class="bet-name"><span class="badge badge-w">ワイ</span>ド5点 <span class="pts">5点</span></div></td>
+        <td class="hit-rate">40.2%</td><td class="hit-frac">37/92</td>
+        <td><div class="bar-bg"><div class="bar-fill" style="width:40.2%;background:#50C8A0"></div></div></td>
+        <td><span class="roi-val roi-low">56.1%</span></td>
+        <td class="invest">¥46,000</td><td class="collect" style="color:#E05252">¥25,810</td>
       </tr>
     </tbody>
   </table>
 </div>
-
-</div><!-- /grid2 ワイド -->
+</div>
 
 <p style="color:var(--muted);font-size:0.75rem;margin-top:8px">
-  ★ = ROI 100%超（黒字）／ ワイド5点 = (1-2)(1-3)(1-4)(1-5)(2-3) の5通り ／ 複数的中時は払戻を合算
+  ★★ = ROI 150%超 ／ ★ = ROI 100%超（黒字）／ ワイド5点 = (1-2)(1-3)(1-4)(1-5)(2-3) の5通り ／ 複数的中時は払戻を合算
 </p>
-
 </body>
 </html>
