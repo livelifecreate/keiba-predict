@@ -25,7 +25,8 @@ from netkeiba_race_scraper import get_race_list, get_entry_list_netkeiba, fetch_
 from scorer_turf import score_all as score_turf, parse_race_class, save_csv as save_csv_turf
 from scorer_dart import score_all as score_dart, save_csv as save_csv_dart
 from netkeiba_scraper import TrainingData as TD, fetch_training_data
-from jra_scraper import build_jra_url, get_entry_list as get_entry_list_jra, fetch_track_condition
+from jra_scraper import build_jra_url, get_entry_list as get_entry_list_jra, fetch_track_condition, JraParamError
+from hli_calculator import calculate_hli
 
 
 def _fetch_training(race_id: str) -> dict:
@@ -37,8 +38,12 @@ def _fetch_training(race_id: str) -> dict:
         return {}
 
 
+_jra_param_error_warned = False  # 同一実行中に何度も警告しない
+
+
 def _fetch_jra_odds(race_id: str, race_date: datetime.date, entries) -> tuple[dict, str]:
-    """JRA公式出馬表から単勝オッズ、/keiba/baba/ から馬場状態を取得。({馬名: float}, 馬場状態) を返す。失敗時は ({}, "")。"""
+    """JRA公式出馬表から単勝オッズと馬場状態を取得。({馬名: float}, 馬場状態) を返す。失敗時は ({}, "")。"""
+    global _jra_param_error_warned
     try:
         url = build_jra_url(race_id, race_date)
         jra_race_info, jra_entries = get_entry_list_jra(url)
@@ -50,17 +55,19 @@ def _fetch_jra_odds(race_id: str, race_date: datetime.date, entries) -> tuple[di
             for je in jra_entries
             if je.odds > 0 and je.horse_number in num_to_name
         }
-        # 馬場状態は /keiba/baba/ から取得（出馬表ページには含まれていない）
-        track_condition = ""
-        if jra_race_info and jra_race_info.venue:
-            baba = fetch_track_condition(jra_race_info.venue)
-            if jra_race_info.surface in ("芝", "障"):
-                track_condition = baba.get("turf", "")
-            else:
-                track_condition = baba.get("dirt", "")
-            if track_condition:
-                print(f"  [馬場] {jra_race_info.venue} {'芝' if jra_race_info.surface in ('芝','障') else 'ダート'}: {track_condition}（JRA /keiba/baba/）")
+        # 馬場状態: 出馬表ページに当日の最新値が含まれる（優先）
+        # /keiba/baba/ は「前日正午現在」の古い情報のため使わない
+        track_condition = jra_race_info.track_condition if jra_race_info else ""
+        if track_condition:
+            surf_label = "芝" if (jra_race_info and jra_race_info.surface in ("芝", "障")) else "ダート"
+            print(f"  [馬場] {jra_race_info.venue} {surf_label}: {track_condition}（JRA 出馬表）")
         return odds_map, track_condition
+    except JraParamError:
+        if not _jra_param_error_warned:
+            _jra_param_error_warned = True
+            print(f"  ⚠ [JRA] パラメータエラー検出 — チェックサム式が変更された可能性があります")
+            print(f"         今すぐ修正: python3 tools/jra_checksum_diag.py --fix")
+        return {}, ""
     except Exception as e:
         print(f"  [_fetch_jra_odds エラー] {e}")
         return {}, ""
@@ -101,7 +108,7 @@ def gen_eval_comment(sorted_results, odds_map, n_horses, sign_level, sign_detail
         reasons = [r.strip() for r in sign_detail.split(" / ")]
 
         if any("乖離" in r and "3〜5pt" in r for r in reasons):
-            lines.append(f"乖離{gap:.1f}ptは見送りゾーン（3〜5pt）。1位と2位の差が小さく軸信頼度が不足。")
+            lines.append(f"乖離{gap:.1f}pt：このゾーン（3〜5pt）はサンプル不足のため判断保留。馬連ROI48%・三連複ROI30〜50%のため見送り。")
         if any("18頭" in r for r in reasons):
             lines.append("18頭フルゲートは荒れやすく軸信頼度が低下。")
         if any("ROI47%" in r for r in reasons):
@@ -203,7 +210,7 @@ def race_class_from_conditions(conditions: str, race_name: str) -> int:
 
 # ── メイン ─────────────────────────────────────────────────────────────
 
-def main():
+def main(argv=None):
     parser = argparse.ArgumentParser()
     parser.add_argument("--sat",       action="store_true", help="土曜のみ")
     parser.add_argument("--sun",       action="store_true", help="日曜のみ")
@@ -212,7 +219,7 @@ def main():
     parser.add_argument("--min-class", type=int, default=2, help="最低クラス（0=未勝利 2=2勝 4=OP）")
     parser.add_argument("--track",     default="",
                         help="馬場状態（例: 良 / 稍重 / 重 / 不良 / 東京:良,阪神:稍重）")
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     # 日付設定（今日が土曜→sat=今日、今日が日曜→sun=今日）
     today = datetime.date.today()
@@ -348,7 +355,29 @@ def main():
             errors.append(label)
             continue
 
-        sorted_r = sorted(results, key=lambda x: x[1].total, reverse=True)
+        # HLI B案補正（2年制限・クラス別係数）
+        # 3勝クラス=補正なし / OP=0.10 / G3=0.05 / G2=0.05 / G1=補正なし
+        _HLI_K = {4: 0.10, 5: 0.05, 6: 0.05}
+        _k = _HLI_K.get(race_class, 0.0)
+        if _k > 0 and horse_ids and race_date:
+            _cutoff = race_date.strftime('%Y/%m/%d')
+            _hli = {}
+            for _e in entries:
+                if _e.horse_id:
+                    _age = int(_e.age_sex[1]) if len(_e.age_sex) >= 2 and _e.age_sex[1].isdigit() else 4
+                    _hli[_e.horse_name] = calculate_hli(
+                        _e.horse_id, _e.horse_name, _age,
+                        cutoff_date=_cutoff, lookback_years=2
+                    ).total
+            if _hli:
+                _avg = sum(_hli.values()) / len(_hli)
+                sorted_r = sorted(results,
+                    key=lambda x: x[1].total + (_hli.get(x[0].horse_name, _avg) - _avg) * _k,
+                    reverse=True)
+            else:
+                sorted_r = sorted(results, key=lambda x: x[1].total, reverse=True)
+        else:
+            sorted_r = sorted(results, key=lambda x: x[1].total, reverse=True)
 
         # サイン判定
         sign_level, sign_text, sign_detail = calc_buy_sign(sorted_r, odds_map, n, race_class)
@@ -408,6 +437,7 @@ def main():
                 "date":       race["date"],
                 "venue":      race_info.venue,
                 "dist":       f"{race_info.distance}({race_info.surface})",
+                "surface":    race_info.surface,
                 "n":          n,
                 "sign":       sign_text,
                 "detail":     sign_detail,
@@ -444,20 +474,23 @@ def main():
         print("\n三連複4頭BOX (4点) ── 3勝クラス")
         for s in box4s:
             horses = "・".join(h for h in [s.get(f"top{i}","") for i in range(1, 5)] if h)
+            surface = s.get("surface", "")
             print(f"  {s['date']} {s['venue']} {s['name']}  {s['dist']}  {s['n']}頭")
             print(f"  BOX: {horses}")
             print(f"  馬連: {s['top1']} × {s['top2']}")
+            if surface == "ダ":
+                print(f"  ワイド: {s['top1']} × {s['top2']}")
             print(f"  ({s['detail']})")
             print(f"  race_id: {s['race_id']}")
 
     if box5s:
-        print("\n三連複5頭BOX (10点) ── OP以上")
+        print("\n三連複5頭BOX (10点) + 馬連・ワイド ── OP以上")
         for s in box5s:
             horses = "・".join(h for h in [s.get(f"top{i}","") for i in range(1, 6)] if h)
             print(f"  {s['date']} {s['venue']} {s['name']}  {s['dist']}  {s['n']}頭")
             print(f"  BOX: {horses}")
             print(f"  馬連: {s['top1']} × {s['top2']}")
-            print(f"  ワイド3点: {s['top1']}×{s['top2']} / {s['top1']}×{s['top3']} / {s['top2']}×{s['top3']}")
+            print(f"  ワイド: {s['top1']} × {s['top2']}")
             print(f"  ({s['detail']})")
             print(f"  race_id: {s['race_id']}")
 
