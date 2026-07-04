@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TVh杯 | 函館11R レースレポート</title>
+  <style>
+    :root {
+      --turf:  #1A3A20;
+      --turf2: #1F4326;
+      --turf3: #254D2C;
+      --turf4: #2A5831;
+      --gold:  #C9A227;
+      --gold2: #E6C060;
+      --cream: #F2EDE4;
+      --muted: #9ABE9E;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--turf);
+      color: var(--cream);
+      font-family: 'Hiragino Kaku Gothic ProN', 'Yu Gothic', 'Meiryo', sans-serif;
+      line-height: 1.6;
+    }
+    .hero {
+      background: linear-gradient(160deg, #0E1508 0%, var(--turf4) 60%, var(--turf2) 100%);
+      padding: 56px 32px 48px;
+      text-align: center;
+      border-bottom: 3px solid var(--gold);
+    }
+    .hero-eyebrow { font-size: 11px; letter-spacing: 5px; color: var(--gold2); text-transform: uppercase; margin-bottom: 10px; animation: fadeInUp 0.6s ease-out both; }
+    .hero-title { font-size: 46px; font-weight: 900; color: var(--gold); letter-spacing: 3px; margin-bottom: 10px; text-shadow: 0 4px 20px rgba(201,162,39,0.5); animation: fadeInUp 0.7s ease-out 0.1s both; }
+    .hero-sub { font-size: 15px; color: var(--muted); margin-bottom: 32px; animation: fadeInUp 0.7s ease-out 0.2s both; }
+    .hero-bet-box { display: inline-block; background: rgba(201,162,39,0.12); border: 2px solid var(--gold); border-radius: 10px; padding: 20px 40px; animation: fadeInUp 0.8s ease-out 0.3s both; }
+    .hero-bet-label { font-size: 10px; letter-spacing: 4px; color: var(--gold2); margin-bottom: 8px; }
+    .hero-bet-main { font-size: 26px; font-weight: 900; color: var(--gold); }
+    .hero-bet-sub { font-size: 13px; color: var(--muted); margin-top: 6px; }
+    .info-strip { background: var(--turf2); border-bottom: 1px solid var(--turf4); padding: 18px 24px; display: flex; flex-wrap: wrap; gap: 0; justify-content: center; }
+    .info-item { text-align: center; padding: 8px 24px; border-right: 1px solid var(--turf4); }
+    .info-item:last-child { border-right: none; }
+    .info-lbl { font-size: 10px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; }
+    .info-val { font-size: 18px; font-weight: 700; color: var(--cream); margin-top: 2px; }
+    .info-val.warn { color: #FF9966; }
+    .info-val.ok   { color: #66DD88; }
+    .info-val.hi   { color: var(--gold2); }
+    .section { max-width: 960px; margin: 0 auto; padding: 44px 24px; }
+    .section-divider { max-width: 960px; margin: 0 auto; padding: 0 24px; border-top: 1px solid var(--turf3); }
+    .section-title { font-size: 10px; letter-spacing: 4px; color: var(--gold2); text-transform: uppercase; margin-bottom: 24px; display: flex; align-items: center; gap: 14px; }
+    .section-title::after { content: ''; flex: 1; height: 1px; background: var(--turf4); }
+    .bt-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 14px; }
+    .bt-card { background: var(--turf3); border: 1px solid var(--turf4); border-radius: 8px; padding: 20px 14px; text-align: center; }
+    .bt-card.highlight { border-color: var(--gold); background: rgba(201,162,39,0.07); }
+    .bt-card.negative { border-color: #FF7766; }
+    .bt-card-name { font-size: 11px; color: var(--muted); margin-bottom: 10px; line-height: 1.4; }
+    .bt-roi { font-size: 30px; font-weight: 900; color: var(--cream); line-height: 1; }
+    .bt-card.highlight .bt-roi { color: var(--gold); }
+    .bt-card.negative .bt-roi { color: #FF7766; }
+    .bt-unit { font-size: 12px; font-weight: 400; color: var(--muted); }
+    .bt-detail { font-size: 11px; color: var(--muted); margin-top: 8px; line-height: 1.5; }
+    .bt-n { font-size: 10px; color: var(--muted); margin-top: 6px; opacity: 0.7; }
+    .rank-list { display: flex; flex-direction: column; gap: 12px; }
+    .rank-row { background: var(--turf3); border: 1px solid var(--turf4); border-radius: 8px; padding: 16px 20px; display: grid; grid-template-columns: 32px 40px 1fr 90px 80px; align-items: center; gap: 14px; animation: fadeInUp 0.6s ease-out both; }
+    .rank-row.top1 { border-color: var(--gold); background: rgba(201,162,39,0.06); }
+    .rank-row.top2 { border-color: rgba(201,162,39,0.5); }
+    .rank-row.top3 { border-color: rgba(201,162,39,0.3); }
+    .rank-pos { font-size: 20px; font-weight: 900; color: var(--muted); text-align: center; }
+    .rank-row.top1 .rank-pos { color: var(--gold); }
+    .rank-row.top2 .rank-pos { color: var(--gold2); }
+    .rank-row.top3 .rank-pos { color: var(--cream); }
+    .rank-waku-badge { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 900; flex-shrink: 0; }
+    .waku-1 { background: #FFFFFF; color: #000; border: 2px solid #CCC; }
+    .waku-2 { background: #000000; color: #FFF; }
+    .waku-3 { background: #CC0000; color: #FFF; }
+    .waku-4 { background: #0055CC; color: #FFF; }
+    .waku-5 { background: #CCCC00; color: #333; }
+    .waku-6 { background: #009900; color: #FFF; }
+    .waku-7 { background: #FF8800; color: #FFF; }
+    .waku-8 { background: #FF69B4; color: #333; }
+    .rank-name { font-size: 17px; font-weight: 700; color: var(--cream); }
+    .rank-meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .rank-bar-wrap { height: 5px; background: var(--turf); border-radius: 3px; margin-top: 8px; overflow: hidden; }
+    .rank-bar { height: 100%; background: linear-gradient(90deg, var(--turf4), var(--gold)); border-radius: 3px; width: 0%; animation: fillBar 1.2s ease-out forwards; animation-delay: var(--delay, 0s); }
+    .rank-score-val { font-size: 22px; font-weight: 900; color: var(--gold2); text-align: right; }
+    .rank-score-lbl { font-size: 11px; color: var(--muted); text-align: right; }
+    .rank-odds-val { font-size: 16px; font-weight: 700; color: var(--cream); text-align: right; }
+    .rank-odds-pop { font-size: 11px; color: var(--muted); text-align: right; }
+    .badge { display: inline-block; font-size: 10px; border-radius: 4px; padding: 1px 6px; margin-left: 6px; vertical-align: middle; }
+    .badge-a    { background: rgba(201,162,39,0.2); border: 1px solid var(--gold); color: var(--gold2); }
+    .badge-ana  { background: rgba(102,221,136,0.2); border: 1px solid #66DD88; color: #66DD88; }
+    .training-table { width: 100%; border-collapse: collapse; }
+    .training-table th { background: var(--turf2); padding: 10px 16px; font-size: 10px; letter-spacing: 2px; color: var(--muted); text-align: left; border-bottom: 1px solid var(--turf4); }
+    .training-table td { padding: 14px 16px; border-bottom: 1px solid var(--turf3); vertical-align: middle; }
+    .training-table tr:last-child td { border-bottom: none; }
+    .training-table tr:hover td { background: rgba(42,88,49,0.3); }
+    .rank-badge { display: inline-block; width: 28px; height: 28px; border-radius: 50%; font-size: 13px; font-weight: 900; text-align: center; line-height: 28px; }
+    .rank-A { background: rgba(201,162,39,0.9); color: #1A3A20; }
+    .rank-B { background: rgba(102,163,102,0.9); color: #FFF; }
+    .rank-C { background: rgba(90,90,120,0.9); color: #DDD; }
+    .rank-D { background: rgba(80,60,60,0.9); color: #BBB; }
+    .t-name { font-size: 15px; font-weight: 700; color: var(--cream); }
+    .t-num  { font-size: 12px; color: var(--muted); }
+    .t-comment { font-size: 14px; color: var(--cream); }
+    .pace-section { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+    @media (max-width: 600px) { .pace-section { grid-template-columns: 1fr; } }
+    .pace-card { background: var(--turf3); border: 1px solid var(--turf4); border-radius: 8px; padding: 20px; }
+    .pace-card-title { font-size: 10px; letter-spacing: 3px; color: var(--gold2); text-transform: uppercase; margin-bottom: 16px; }
+    .style-row { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
+    .style-bar-wrap { flex: 1; height: 8px; background: var(--turf); border-radius: 4px; overflow: hidden; }
+    .style-bar { height: 100%; border-radius: 4px; }
+    .style-nige  { background: #FF6644; }
+    .style-senco { background: #FF9944; }
+    .style-koi   { background: #66BB66; }
+    .style-sashi { background: #4499DD; }
+    .style-label { font-size: 12px; color: var(--muted); min-width: 52px; }
+    .style-horses { font-size: 12px; color: var(--cream); white-space: nowrap; }
+    .style-detail { font-size: 11px; color: var(--muted); padding-left: 64px; margin-bottom: 14px; }
+    .pace-verdict { margin-top: 16px; padding: 12px; background: var(--turf2); border-left: 3px solid var(--gold); border-radius: 0 6px 6px 0; font-size: 14px; font-weight: 700; color: var(--gold); }
+    .scenario-list { list-style: none; }
+    .scenario-list li { padding: 11px 0 11px 18px; border-bottom: 1px solid var(--turf3); font-size: 13px; color: var(--cream); position: relative; }
+    .scenario-list li::before { content: '▶'; position: absolute; left: 0; color: var(--gold); font-size: 9px; top: 14px; }
+    .scenario-list li:last-child { border-bottom: none; }
+    .key-horse-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 20px; }
+    @media (max-width: 500px) { .key-horse-grid { grid-template-columns: 1fr; } }
+    .key-horse-card { background: var(--turf3); border: 1px solid var(--turf4); border-radius: 8px; padding: 16px; }
+    .key-horse-role { font-size: 10px; letter-spacing: 2px; color: var(--gold2); text-transform: uppercase; margin-bottom: 6px; }
+    .key-horse-name { font-size: 16px; font-weight: 700; color: var(--cream); }
+    .key-horse-reason { font-size: 12px; color: var(--muted); margin-top: 6px; line-height: 1.5; }
+    .breakdown-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; }
+    .bd-card { background: var(--turf3); border: 1px solid var(--turf4); border-radius: 8px; padding: 16px 18px; }
+    .bd-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+    .bd-name { font-size: 14px; font-weight: 700; color: var(--cream); }
+    .bd-score { font-size: 18px; font-weight: 900; color: var(--gold2); margin-left: auto; }
+    .bd-row { display: flex; justify-content: space-between; font-size: 12px; padding: 4px 0; border-bottom: 1px solid var(--turf2); }
+    .bd-row:last-child { border-bottom: none; }
+    .bd-plus  { color: #66DD88; }
+    .bd-minus { color: #FF7766; }
+    .bet-section { background: var(--turf3); border: 1px solid var(--turf4); border-radius: 8px; padding: 24px; margin-bottom: 16px; }
+    .bet-section-title { font-size: 14px; font-weight: 700; color: var(--gold2); margin-bottom: 16px; padding-bottom: 10px; border-bottom: 1px solid var(--turf4); }
+    .bet-combo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
+    .bet-combo { background: var(--turf2); border: 1px solid var(--turf4); border-radius: 6px; padding: 8px 12px; font-size: 14px; font-weight: 700; color: var(--cream); text-align: center; }
+    .bet-combo span { font-size: 10px; color: var(--muted); display: block; font-weight: 400; margin-top: 2px; }
+    .bet-total { margin-top: 16px; text-align: right; font-size: 13px; color: var(--gold2); font-weight: 700; }
+    .horse-tag { display: inline-block; background: rgba(201,162,39,0.15); border: 1px solid rgba(201,162,39,0.3); color: var(--gold2); font-size: 12px; font-weight: 700; border-radius: 4px; padding: 2px 8px; margin: 2px; }
+    .footer { text-align: center; padding: 32px; font-size: 11px; color: var(--muted); opacity: 0.5; border-top: 1px solid var(--turf3); }
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes fillBar { from { width: 0%; } to { width: var(--pct); } }
+    @media (max-width: 640px) {
+      .hero { padding: 36px 16px 32px; }
+      .hero-title { font-size: 28px; letter-spacing: 1px; }
+      .hero-sub { font-size: 13px; }
+      .hero-bet-box { padding: 14px 18px; }
+      .hero-bet-main { font-size: 17px; }
+      .hero-bet-sub { font-size: 11px; }
+      .info-strip { padding: 10px 8px; gap: 0; }
+      .info-item { padding: 6px 12px; }
+      .info-val { font-size: 15px; }
+      .section { padding: 28px 14px; }
+      .rank-row { grid-template-columns: 24px 30px 1fr 64px; gap: 8px; padding: 12px 10px; }
+      .rank-odds { display: none; }
+      .rank-name { font-size: 14px; }
+      .rank-meta { font-size: 10px; }
+      .rank-pos { font-size: 16px; }
+      .rank-waku-badge { width: 28px; height: 28px; font-size: 11px; }
+      .rank-score-val { font-size: 17px; }
+      .rank-score-lbl { font-size: 10px; }
+      .bt-grid { grid-template-columns: repeat(2, 1fr); }
+      .bt-roi { font-size: 24px; }
+      .pace-section { grid-template-columns: 1fr; }
+      .key-horse-grid { grid-template-columns: 1fr; }
+      .breakdown-grid { grid-template-columns: 1fr; }
+      .bet-combo-grid { grid-template-columns: repeat(2, 1fr); }
+      .training-table th, .training-table td { padding: 10px 10px; }
+      .t-name { font-size: 13px; }
+      .t-comment { font-size: 12px; }
+    }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-eyebrow">HAKODATE 11R &nbsp;·&nbsp; 2026-07-04 &nbsp;·&nbsp; RACE REPORT</div>
+  <div class="hero-title">TVh杯</div>
+  <div class="hero-sub">3勝クラス &nbsp;|&nbsp; 芝 1200m &nbsp;|&nbsp; 良 &nbsp;|&nbsp; 16頭 &nbsp;|&nbsp; 1着賞金 1,870万円</div>
+  <div class="hero-bet-box">
+    <div class="hero-bet-label">推奨買い目</div>
+    <div class="hero-bet-main">三連複 4頭BOX &nbsp;4点</div>
+    <div class="hero-bet-sub">ROI 466%（3勝クラス共通実績） &nbsp;|&nbsp; 上位横並び 乖離0.1pt</div>
+  </div>
+</div>
+
+<div class="info-strip">
+  <div class="info-item"><div class="info-lbl">馬場状態</div><div class="info-val ok">良</div></div>
+  <div class="info-item"><div class="info-lbl">コース</div><div class="info-val">函館 芝1200m</div></div>
+  <div class="info-item"><div class="info-lbl">頭数</div><div class="info-val">16頭</div></div>
+  <div class="info-item"><div class="info-lbl">ペース予測</div><div class="info-val warn">ハイ</div></div>
+  <div class="info-item"><div class="info-lbl">スコア乖離（1-2位）</div><div class="info-val ok">0.1pt</div></div>
+  <div class="info-item"><div class="info-lbl">クラス</div><div class="info-val hi">3勝クラス</div></div>
+</div>
+
+<div class="section">
+  <div class="section-title">バックテスト収支 — 3勝クラス × 芝</div>
+  <div class="bt-grid">
+    <div class="bt-card highlight">
+      <div class="bt-card-name">三連複<br>4頭BOX</div>
+      <div class="bt-roi">466<span class="bt-unit">%</span></div>
+      <div class="bt-detail">3勝クラス共通実績</div>
+      <div class="bt-n">4点 × 100円</div>
+    </div>
+    <div class="bt-card highlight">
+      <div class="bt-card-name">馬連 1-2<br>予想1×2位</div>
+      <div class="bt-roi">222<span class="bt-unit">%</span></div>
+      <div class="bt-detail">3勝クラス×芝</div>
+      <div class="bt-n">1点 × 100円</div>
+    </div>
+    <div class="bt-card negative">
+      <div class="bt-card-name">ワイド 1-2<br>予想1×2位</div>
+      <div class="bt-roi">89<span class="bt-unit">%</span></div>
+      <div class="bt-detail">赤字のため見送り</div>
+      <div class="bt-n">未使用</div>
+    </div>
+    <div class="bt-card">
+      <div class="bt-card-name">単勝<br>予想1位</div>
+      <div class="bt-roi">88<span class="bt-unit">%</span></div>
+      <div class="bt-detail">3勝クラス 全体</div>
+      <div class="bt-n">1点 × 100円</div>
+    </div>
+    <div class="bt-card">
+      <div class="bt-card-name">三連複<br>1軸4頭</div>
+      <div class="bt-roi">—</div>
+      <div class="bt-detail">参考値</div>
+      <div class="bt-n">6点 × 100円</div>
+    </div>
+    <div class="bt-card">
+      <div class="bt-card-name">三連単<br>A+B</div>
+      <div class="bt-roi">—</div>
+      <div class="bt-detail">単勝5.7倍のため対象外</div>
+      <div class="bt-n">未使用</div>
+    </div>
+  </div>
+</div>
+
+<div class="section-divider"></div>
+<div class="section">
+  <div class="section-title">採点ランキング — 全16頭</div>
+  <div class="rank-list">
+
+    <div class="rank-row top1" style="animation-delay:0.00s">
+      <div class="rank-pos">1</div>
+      <div class="rank-waku-badge waku-4" style="width:36px;height:36px;font-size:13px;">⑦</div>
+      <div>
+        <div class="rank-name">アンジュプロミス</div>
+        <div class="rank-meta">牝3 / 古川奈穂 / 調教師 芳人 / 斤量53.0</div>
+        <div class="rank-bar-wrap"><div class="rank-bar" style="--pct:100.0%; --delay:0.10s"></div></div>
+      </div>
+      <div><div class="rank-score-val">+12.1</div><div class="rank-score-lbl">pt</div></div>
+      <div><div class="rank-odds-val">5.7倍</div><div class="rank-odds-pop">2人気</div></div>
+    </div>
+    <div class="rank-row top2" style="animation-delay:0.04s">
+      <div class="rank-pos">2</div>
+      <div class="rank-waku-badge waku-4" style="width:36px;height:36px;font-size:13px;">⑧</div>
+      <div>
+        <div class="rank-name">マーブルパレス</div>
+        <div class="rank-meta">牝3 / 斎藤新 / 調教師 太樹 / 斤量53.0</div>
+        <div class="rank-bar-wrap"><div class="rank-bar" style="--pct:99.2%; --delay:0.14s"></div></div>
+      </div>
+      <div><div class="rank-score-val">+12.0</div><div class="rank-score-lbl">pt</div></div>
+      <div><div class="rank-odds-val">7.6倍</div><div class="rank-odds-pop">4人気</div></div>
+    </div>
+    <div class="rank-row top3" style="animation-delay:0.08s">
+      <div class="rank-pos">3</div>
+      <div class="rank-waku-badge waku-2" style="width:36px;height:36px;font-size:13px;">③</div>
+      <div>
+        <div class="rank-name">サムハンター <span class="badge badge-ana">★穴</span></div>
+        <div class="rank-meta">牡8 / 松本大輝 / 調教師 康之 / 斤量58.0</div>
+        <div class="rank-bar-wrap"><div class="rank-bar" style="--pct:66.1%; --delay:0.18s"></div></div>
+      </div>
+      <div><div class="rank-score-val">+8.0</div><div class="rank-score-lbl">pt</div></div>
+      <div><div class="rank-odds-val">31.7倍</div><div class="rank-odds-pop">13人気</div></div>
+    </div>
+    <div class="rank-row" style="animation-delay:0.12s">
+      <div class="rank-pos">4</div>
+      <div class="rank-waku-badge waku-7" style="width:36px;height:36px;font-size:13px;">⑬</div>
+      <div>
+        <div class="rank-name">ポエットリー</div>
+        <div class="rank-meta">牝5 / 鮫島克駿 / 調教師 修 / 斤量56.0</div>
+        <div class="rank-bar-wrap"><div class="rank-bar" style="--pct:66.1%; --delay:0.22s"></div></div>
+      </div>
+      <div><div class="rank-score-val">+8.0</div><div class="rank-score-lbl">pt</div></div>
+      <div><div class="rank-odds-val">14.6倍</div><div class="rank-odds-pop">8人気</div></div>
+    </div>
+    <div class="rank-row" style="animation-delay:0.16s">
+      <div class="rank-pos">5</div>
+      <div class="rank-waku-badge waku-6" style="width:36px;height:36px;font-size:13px;">⑪</div>
+      <div>
+        <div class="rank-name">エヴァンスウィート</div>
+        <div class="rank-meta">牝5 / 吉田隼人 / 調教師 康夫 / 斤量56.0</div>
+        <div class="rank-bar-wrap"><div class="rank-bar" style="--pct:62.0%; --delay:0.26s"></div></div>
+      </div>
+      <div><div class="rank-score-val">+7.5</div><div class="rank-score-lbl">pt</div></div>
+      <div><div class="rank-odds-val">13.3倍</div><div class="rank-odds-pop">6人気</div></div>
+    </div>
+    <div class="rank-row" style="animation-delay:0.20s">
+      <div class="rank-pos">6</div>
+      <div class="rank-waku-badge waku-5" style="width:36px;height:36px;font-size:13px;color:#333;">⑨</div>
+      <div>
+        <div class="rank-name">パクスロマーナ</div>
+        <div class="rank-meta">牝6 / 舟山瑠泉 / 調教師 公太 / 斤量56.0</div>
+        <div class="rank-bar-wrap"><div class="rank-bar" style="--pct:57.9%; --delay:0.30s"></div></div>
+      </div>
+      <div><div class="rank-score-val">+7.0</div><div class="rank-score-lbl">pt</div></div>
+      <div><div class="rank-odds-val">14.4倍</div><div class="rank-odds-pop">7人気</div></div>
+    </div>
+    <div class="rank-row" style="animation-delay:0.24s">
+      <div class="rank-pos">7</div>
+      <div class="rank-waku-badge waku-7" style="width:36px;height:36px;font-size:13px;">⑭</div>
+      <div>
+        <div class="rank-name">ルーフ <span class="badge badge-ana">★穴</span></div>
+        <div class="rank-meta">牝6 / 佐々木大輔 / 調教師 久詞 / 斤量56.0</div>
+        <div class="rank-bar-wrap"><div class="rank-bar" style="--pct:56.2%; --delay:0.34s"></div></div>
+      </div>
+      <div><div class="rank-score-val">+6.8</div><div class="rank-score-lbl">pt</div></div>
+      <div><div class="rank-odds-val">16.6倍</div><div class="rank-odds-pop">10人気</div></div>
+    </div>
+    <div class="rank-row" style="animation-delay:0.28s">
+      <div class="rank-pos">8</div>
+      <div class="rank-waku-badge waku-3" style="width:36px;height:36px;font-size:13px;">⑥</div>
+      <div>
+        <div class="rank-name">シカゴスティング</div>
+        <div class="rank-meta">牝5 / 武豊 / 調教師 靖志 / 斤量56.0</div>
+        <div class="rank-bar-wrap"><div class="rank-bar" style="--pct:51.2%; --delay:0.38s"></div></div>
+      </div>
+      <div><div class="rank-score-val">+6.2</div><div class="rank-score-lbl">pt</div></div>
+      <div><div class="rank-odds-val">7.4倍</div><div class="rank-odds-pop">3人気</div></div>
+    </div>
+    <div class="rank-row" style="animation-delay:0.32s">
+      <div class="rank-pos">9</div>
+      <div class="rank-waku-badge waku-1" style="width:36px;height:36px;font-size:13px;border:2px solid #CCC;">①</div>
+      <div>
+        <div class="rank-name">ドゥアムール</div>
+        <div class="rank-meta">牝4 / 池添謙一 / 調教師 和也 / 斤量56.0</div>
+        <div class="rank-bar-wrap"><div class="rank-bar" style="--pct:34.7%; --delay:0.42s"></div></div>
+      </div>
+      <div><div class="rank-score-val">+4.2</div><div class="rank-score-lbl">pt</div></div>
+      <div><div class="rank-odds-val">16.0倍</div><div class="rank-odds-pop">9人気</div></div>
+    </div>
+    <div class="rank-row" style="animation-delay:0.36s">
+      <div class="rank-pos">10</div>
+      <div class="rank-waku-badge waku-8" style="width:36px;height:36px;font-size:13px;color:#333;">⑮</div>
+      <div>
+        <div class="rank-name">ロードマイライフ <span class="badge badge-ana">★穴</span></div>
+        <div class="rank-meta">牡5 / 横山琉人 / 調教師 悠太 / 斤量58.0</div>
+        <div class="rank-bar-wrap"><div class="rank-bar" style="--pct:33.1%; --delay:0.46s"></div></div>
+      </div>
+      <div><div class="rank-score-val">+4.0</div><div class="rank-score-lbl">pt</div></div>
+      <div><div class="rank-odds-val">24.6倍</div><div class="rank-odds-pop">11人気</div></div>
+    </div>
+    <div class="rank-row" style="animation-delay:0.40s">
+      <div class="rank-pos">11</div>
+      <div class="rank-waku-badge waku-3" style="width:36px;height:36px;font-size:13px;">⑤</div>
+      <div>
+        <div class="rank-name">サウスバンク <span class="badge badge-a">1人気</span></div>
+        <div class="rank-meta">牝4 / 丹内祐次 / 調教師 辰弥 / 斤量56.0</div>
+        <div class="rank-bar-wrap"><div class="rank-bar" style="--pct:28.9%; --delay:0.50s"></div></div>
+      </div>
+      <div><div class="rank-score-val">+3.5</div><div class="rank-score-lbl">pt</div></div>
+      <div><div class="rank-odds-val">5.0倍</div><div class="rank-odds-pop">1人気</div></div>
+    </div>
+    <div class="rank-row" style="animation-delay:0.44s">
+      <div class="rank-pos">12</div>
+      <div class="rank-waku-badge waku-6" style="width:36px;height:36px;font-size:13px;">⑫</div>
+      <div>
+        <div class="rank-name">メルトユアハート</div>
+        <div class="rank-meta">牝5 / 横山和生 / 調教師 浩大 / 斤量56.0</div>
+        <div class="rank-bar-wrap"><div class="rank-bar" style="--pct:20.7%; --delay:0.54s"></div></div>
+      </div>
+      <div><div class="rank-score-val">+2.5</div><div class="rank-score-lbl">pt</div></div>
+      <div><div class="rank-odds-val">9.7倍</div><div class="rank-odds-pop">5人気</div></div>
+    </div>
+    <div class="rank-row" style="animation-delay:0.48s">
+      <div class="rank-pos">13</div>
+      <div class="rank-waku-badge waku-8" style="width:36px;height:36px;font-size:13px;color:#333;">⑯</div>
+      <div>
+        <div class="rank-name">ゴールドサーベル <span class="badge badge-ana">★穴</span></div>
+        <div class="rank-meta">牡5 / 小沢大仁 / 調教師 龍志 / 斤量58.0</div>
+        <div class="rank-bar-wrap"><div class="rank-bar" style="--pct:20.7%; --delay:0.58s"></div></div>
+      </div>
+      <div><div class="rank-score-val">+2.5</div><div class="rank-score-lbl">pt</div></div>
+      <div><div class="rank-odds-val">45.6倍</div><div class="rank-odds-pop">15人気</div></div>
+    </div>
+    <div class="rank-row" style="animation-delay:0.52s">
+      <div class="rank-pos">14</div>
+      <div class="rank-waku-badge waku-2" style="width:36px;height:36px;font-size:13px;">④</div>
+      <div>
+        <div class="rank-name">エコロジーク <span class="badge badge-ana">★穴</span></div>
+        <div class="rank-meta">牡4 / 岩田康誠 / 調教師 秀行 / 斤量58.0</div>
+        <div class="rank-bar-wrap"><div class="rank-bar" style="--pct:8.3%; --delay:0.62s"></div></div>
+      </div>
+      <div><div class="rank-score-val">+1.0</div><div class="rank-score-lbl">pt</div></div>
+      <div><div class="rank-odds-val">25.6倍</div><div class="rank-odds-pop">12人気</div></div>
+    </div>
+    <div class="rank-row" style="animation-delay:0.56s">
+      <div class="rank-pos">15</div>
+      <div class="rank-waku-badge waku-1" style="width:36px;height:36px;font-size:13px;border:2px solid #CCC;">②</div>
+      <div>
+        <div class="rank-name">ウィルオレオール <span class="badge badge-ana">★穴</span></div>
+        <div class="rank-meta">牡4 / 石川倭 / 調教師 不明 / 斤量58.0</div>
+        <div class="rank-bar-wrap"><div class="rank-bar" style="--pct:6.6%; --delay:0.66s"></div></div>
+      </div>
+      <div><div class="rank-score-val">+0.8</div><div class="rank-score-lbl">pt</div></div>
+      <div><div class="rank-odds-val">53.8倍</div><div class="rank-odds-pop">16人気</div></div>
+    </div>
+    <div class="rank-row" style="animation-delay:0.60s">
+      <div class="rank-pos">16</div>
+      <div class="rank-waku-badge waku-5" style="width:36px;height:36px;font-size:13px;color:#333;">⑩</div>
+      <div>
+        <div class="rank-name">ハッピーロンドン <span class="badge badge-ana">★穴</span></div>
+        <div class="rank-meta">牡6 / 長浜鴻緒 / 調教師 隆徳 / 斤量58.0</div>
+        <div class="rank-bar-wrap"><div class="rank-bar" style="--pct:0.0%; --delay:0.70s"></div></div>
+      </div>
+      <div><div class="rank-score-val">−1.0</div><div class="rank-score-lbl">pt</div></div>
+      <div><div class="rank-odds-val">44.3倍</div><div class="rank-odds-pop">14人気</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="section-divider"></div>
+<div class="section">
+  <div class="section-title">調教データ — netkeiba 取得（無加工）</div>
+  <table class="training-table">
+    <thead><tr><th>ランク</th><th>馬名</th><th>調教コメント</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><span class="rank-badge rank-B">B</span></td>
+        <td><div class="t-name">アンジュプロミス</div><div class="t-num">⑦ 2人気 5.7倍</div></td>
+        <td class="t-comment">好気合</td>
+      </tr>
+      <tr>
+        <td><span class="rank-badge rank-B">B</span></td>
+        <td><div class="t-name">マーブルパレス</div><div class="t-num">⑧ 4人気 7.6倍</div></td>
+        <td class="t-comment">元気一杯</td>
+      </tr>
+      <tr>
+        <td><span class="rank-badge rank-B">B</span></td>
+        <td><div class="t-name">サムハンター</div><div class="t-num">③ 13人気 31.7倍</div></td>
+        <td class="t-comment">動き軽快</td>
+      </tr>
+      <tr>
+        <td><span class="rank-badge rank-B">B</span></td>
+        <td><div class="t-name">ポエットリー</div><div class="t-num">⑬ 8人気 14.6倍</div></td>
+        <td class="t-comment">動き上々</td>
+      </tr>
+      <tr>
+        <td><span class="rank-badge rank-B">B</span></td>
+        <td><div class="t-name">エヴァンスウィート</div><div class="t-num">⑪ 6人気 13.3倍</div></td>
+        <td class="t-comment">キビキビ</td>
+      </tr>
+      <tr>
+        <td><span class="rank-badge rank-B">B</span></td>
+        <td><div class="t-name">パクスロマーナ</div><div class="t-num">⑨ 7人気 14.4倍</div></td>
+        <td class="t-comment">好気配</td>
+      </tr>
+      <tr>
+        <td><span class="rank-badge rank-B">B</span></td>
+        <td><div class="t-name">ルーフ</div><div class="t-num">⑭ 10人気 16.6倍</div></td>
+        <td class="t-comment">キビキビ</td>
+      </tr>
+      <tr>
+        <td><span class="rank-badge rank-B">B</span></td>
+        <td><div class="t-name">シカゴスティング</div><div class="t-num">⑥ 3人気 7.4倍</div></td>
+        <td class="t-comment">気配上昇</td>
+      </tr>
+      <tr>
+        <td><span class="rank-badge rank-C">C</span></td>
+        <td><div class="t-name">ドゥアムール</div><div class="t-num">① 9人気 16.0倍</div></td>
+        <td class="t-comment">平行線</td>
+      </tr>
+      <tr>
+        <td><span class="rank-badge rank-B">B</span></td>
+        <td><div class="t-name">ロードマイライフ</div><div class="t-num">⑮ 11人気 24.6倍</div></td>
+        <td class="t-comment">動き軽快</td>
+      </tr>
+      <tr>
+        <td><span class="rank-badge rank-B">B</span></td>
+        <td><div class="t-name">サウスバンク</div><div class="t-num">⑤ 1人気 5.0倍</div></td>
+        <td class="t-comment">動き軽快</td>
+      </tr>
+      <tr>
+        <td><span class="rank-badge rank-B">B</span></td>
+        <td><div class="t-name">メルトユアハート</div><div class="t-num">⑫ 5人気 9.7倍</div></td>
+        <td class="t-comment">動き軽快</td>
+      </tr>
+      <tr>
+        <td><span class="rank-badge rank-C">C</span></td>
+        <td><div class="t-name">ゴールドサーベル</div><div class="t-num">⑯ 15人気 45.6倍</div></td>
+        <td class="t-comment">平行線</td>
+      </tr>
+      <tr>
+        <td><span class="rank-badge rank-B">B</span></td>
+        <td><div class="t-name">エコロジーク</div><div class="t-num">④ 12人気 25.6倍</div></td>
+        <td class="t-comment">素軽さ出</td>
+      </tr>
+      <tr>
+        <td><span class="rank-badge rank-B">B</span></td>
+        <td><div class="t-name">ウィルオレオール</div><div class="t-num">② 16人気 53.8倍</div></td>
+        <td class="t-comment">出来は良</td>
+      </tr>
+      <tr>
+        <td><span class="rank-badge rank-C">C</span></td>
+        <td><div class="t-name">ハッピーロンドン</div><div class="t-num">⑩ 14人気 44.3倍</div></td>
+        <td class="t-comment">多少良化</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="section-divider"></div>
+<div class="section">
+  <div class="section-title">レース展開予測</div>
+  <div class="pace-section">
+    <div class="pace-card">
+      <div class="pace-card-title">脚質分布</div>
+      <div class="style-row">
+        <div class="style-label">逃げ</div>
+        <div class="style-bar-wrap"><div class="style-bar style-nige" style="width:12.5%"></div></div>
+        <div class="style-horses">2頭</div>
+      </div>
+      <div class="style-detail">⑦アンジュプロミス ⑤サウスバンク</div>
+      <div class="style-row">
+        <div class="style-label">先行</div>
+        <div class="style-bar-wrap"><div class="style-bar style-senco" style="width:25%"></div></div>
+        <div class="style-horses">4頭</div>
+      </div>
+      <div class="style-detail">⑧マーブルパレス ⑨パクスロマーナ ⑫メルトユアハート ④エコロジーク</div>
+      <div class="style-row">
+        <div class="style-label">好位差</div>
+        <div class="style-bar-wrap"><div class="style-bar style-koi" style="width:31.3%"></div></div>
+        <div class="style-horses">5頭</div>
+      </div>
+      <div class="style-detail">⑬ポエットリー ⑪エヴァンスウィート ⑭ルーフ ①ドゥアムール ②ウィルオレオール</div>
+      <div class="style-row">
+        <div class="style-label">差し</div>
+        <div class="style-bar-wrap"><div class="style-bar style-sashi" style="width:31.3%"></div></div>
+        <div class="style-horses">5頭</div>
+      </div>
+      <div class="style-detail">③サムハンター ⑥シカゴスティング ⑮ロードマイライフ ⑯ゴールドサーベル ⑩ハッピーロンドン</div>
+      <div class="pace-verdict">
+        ⚡ ハイペース確定的<br>
+        <span style="font-size:12px; font-weight:400; color:var(--muted);">逃げ+先行 6/16頭 = 37.5%（閾値35%超）</span>
+      </div>
+    </div>
+    <div class="pace-card">
+      <div class="pace-card-title">展開シナリオ</div>
+      <ul class="scenario-list">
+        <li>⑦アンジュプロミス・⑤サウスバンクの2頭が逃げ候補、ハナ争いになれば序盤からペースが上がる</li>
+        <li>先行勢4頭も含め前半は密集隊列、直線までにある程度絞られる展開</li>
+        <li>ハイペースを見越し、好位差し勢5頭・差し勢5頭が中団〜後方待機で脚を溜めやすい</li>
+        <li>1位⑦アンジュプロミスは逃げ脚質のためペース適性で−2.0の減点、自ら消耗するリスクを抱える</li>
+        <li>2位⑧マーブルパレスは先行タイプで−1.0に留まり、ハイペースでも⑦より持続力で優位に立てる可能性</li>
+      </ul>
+    </div>
+  </div>
+  <div class="section-title" style="margin-top:28px;">鍵を握る馬</div>
+  <div class="key-horse-grid">
+    <div class="key-horse-card">
+      <div class="key-horse-role">軸馬 · 2番人気</div>
+      <div class="key-horse-name">⑦ アンジュプロミス</div>
+      <div class="key-horse-reason">同コース実績+3.0・勝利数ボーナス+5.0で地力は最上位。ただし逃げ脚質でハイペース自滅のリスクを抱える。</div>
+    </div>
+    <div class="key-horse-card">
+      <div class="key-horse-role">対抗 · 4番人気</div>
+      <div class="key-horse-name">⑧ マーブルパレス</div>
+      <div class="key-horse-reason">加点構造は⑦とほぼ同一（同コース実績+3.0・勝利数+5.0）で僅差の2位。先行タイプで消耗が少ない分、瞬発力勝負なら逆転の目。</div>
+    </div>
+    <div class="key-horse-card">
+      <div class="key-horse-role">穴馬 · 13番人気</div>
+      <div class="key-horse-name">③ サムハンター</div>
+      <div class="key-horse-reason">近走上昇傾向+2.5・差し脚質でハイペース向き。市場評価31.7倍は機械採点との乖離が大きく妙味十分。</div>
+    </div>
+    <div class="key-horse-card">
+      <div class="key-horse-role">ペースの鍵</div>
+      <div class="key-horse-name">⑤ サウスバンク（1番人気）</div>
+      <div class="key-horse-reason">市場1番人気5.0倍だがスコアは11位相当（+3.5）。逃げ脚質でペース適性−2.0、機械採点では過剰人気と判定。</div>
+    </div>
+  </div>
+</div>
+
+<div class="section-divider"></div>
+<div class="section">
+  <div class="section-title">加減点ブレークダウン — 全馬</div>
+  <div class="breakdown-grid">
+    <div class="bd-card">
+      <div class="bd-header">
+        <div class="waku-4" style="width:28px;height:28px;font-size:11px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;flex-shrink:0;">⑦</div>
+        <div class="bd-name">アンジュプロミス</div>
+        <div class="bd-score">+12.1</div>
+      </div>
+      <div class="bd-row"><span class="bd-plus">同コース実績</span><span class="bd-plus">+3.0</span></div>
+      <div class="bd-row"><span class="bd-plus">調教B評価</span><span class="bd-plus">+2.0</span></div>
+      <div class="bd-row"><span class="bd-plus">前走好走</span><span class="bd-plus">+0.4</span></div>
+      <div class="bd-row"><span class="bd-plus">グレード実績（3-4走前）</span><span class="bd-plus">+1.0</span></div>
+      <div class="bd-row"><span class="bd-plus">血統距離適性</span><span class="bd-plus">+1.0</span></div>
+      <div class="bd-row"><span class="bd-plus">複勝安定ボーナス</span><span class="bd-plus">+2.2</span></div>
+      <div class="bd-row"><span class="bd-plus">勝利数ボーナス</span><span class="bd-plus">+5.0</span></div>
+      <div class="bd-row"><span class="bd-minus">枠番補正</span><span class="bd-minus">-0.5</span></div>
+      <div class="bd-row"><span class="bd-minus">ペース適性（逃げ）</span><span class="bd-minus">-2.0</span></div>
+    </div>
+    <div class="bd-card">
+      <div class="bd-header">
+        <div class="waku-4" style="width:28px;height:28px;font-size:11px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;flex-shrink:0;">⑧</div>
+        <div class="bd-name">マーブルパレス</div>
+        <div class="bd-score">+12.0</div>
+      </div>
+      <div class="bd-row"><span class="bd-plus">同コース実績</span><span class="bd-plus">+3.0</span></div>
+      <div class="bd-row"><span class="bd-plus">調教B評価</span><span class="bd-plus">+2.0</span></div>
+      <div class="bd-row"><span class="bd-plus">叩き2戦目</span><span class="bd-plus">+1.0</span></div>
+      <div class="bd-row"><span class="bd-plus">近走上昇傾向</span><span class="bd-plus">+0.6</span></div>
+      <div class="bd-row"><span class="bd-plus">前走好走</span><span class="bd-plus">+0.4</span></div>
+      <div class="bd-row"><span class="bd-plus">グレード実績（3-4走前）</span><span class="bd-plus">+1.0</span></div>
+      <div class="bd-row"><span class="bd-plus">血統距離適性</span><span class="bd-plus">+0.5</span></div>
+      <div class="bd-row"><span class="bd-plus">勝利数ボーナス</span><span class="bd-plus">+5.0</span></div>
+      <div class="bd-row"><span class="bd-minus">枠番補正</span><span class="bd-minus">-0.5</span></div>
+      <div class="bd-row"><span class="bd-minus">ペース適性（先行）</span><span class="bd-minus">-1.0</span></div>
+    </div>
+    <div class="bd-card">
+      <div class="bd-header">
+        <div class="waku-2" style="width:28px;height:28px;font-size:11px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;flex-shrink:0;">③</div>
+        <div class="bd-name">サムハンター</div>
+        <div class="bd-score">+8.0</div>
+      </div>
+      <div class="bd-row"><span class="bd-plus">同コース実績</span><span class="bd-plus">+1.0</span></div>
+      <div class="bd-row"><span class="bd-plus">調教B評価</span><span class="bd-plus">+2.0</span></div>
+      <div class="bd-row"><span class="bd-plus">叩き2戦目</span><span class="bd-plus">+1.0</span></div>
+      <div class="bd-row"><span class="bd-plus">近走上昇傾向</span><span class="bd-plus">+2.5</span></div>
+      <div class="bd-row"><span class="bd-plus">枠番補正</span><span class="bd-plus">+0.5</span></div>
+      <div class="bd-row"><span class="bd-plus">ペース適性（差し）</span><span class="bd-plus">+2.0</span></div>
+      <div class="bd-row"><span class="bd-minus">季節×性別</span><span class="bd-minus">-1.0</span></div>
+    </div>
+    <div class="bd-card">
+      <div class="bd-header">
+        <div class="waku-7" style="width:28px;height:28px;font-size:11px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;flex-shrink:0;">⑬</div>
+        <div class="bd-name">ポエットリー</div>
+        <div class="bd-score">+8.0</div>
+      </div>
+      <div class="bd-row"><span class="bd-plus">前走3F最速</span><span class="bd-plus">+2.0</span></div>
+      <div class="bd-row"><span class="bd-plus">調教B評価</span><span class="bd-plus">+2.0</span></div>
+      <div class="bd-row"><span class="bd-plus">叩き2戦目</span><span class="bd-plus">+1.0</span></div>
+      <div class="bd-row"><span class="bd-plus">距離短縮</span><span class="bd-plus">+1.0</span></div>
+      <div class="bd-row"><span class="bd-plus">血統距離適性</span><span class="bd-plus">+0.5</span></div>
+      <div class="bd-row"><span class="bd-plus">ペース適性（好位差）</span><span class="bd-plus">+1.5</span></div>
+    </div>
+    <div class="bd-card">
+      <div class="bd-header">
+        <div class="waku-6" style="width:28px;height:28px;font-size:11px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;flex-shrink:0;">⑪</div>
+        <div class="bd-name">エヴァンスウィート</div>
+        <div class="bd-score">+7.5</div>
+      </div>
+      <div class="bd-row"><span class="bd-plus">同コース実績</span><span class="bd-plus">+1.0</span></div>
+      <div class="bd-row"><span class="bd-plus">調教B評価</span><span class="bd-plus">+2.0</span></div>
+      <div class="bd-row"><span class="bd-plus">血統距離適性</span><span class="bd-plus">+0.5</span></div>
+      <div class="bd-row"><span class="bd-plus">勝利数ボーナス</span><span class="bd-plus">+2.5</span></div>
+      <div class="bd-row"><span class="bd-plus">ペース適性（好位差）</span><span class="bd-plus">+1.5</span></div>
+    </div>
+    <div class="bd-card">
+      <div class="bd-header">
+        <div class="waku-5" style="width:28px;height:28px;font-size:11px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;flex-shrink:0;color:#333;">⑨</div>
+        <div class="bd-name">パクスロマーナ</div>
+        <div class="bd-score">+7.0</div>
+      </div>
+      <div class="bd-row"><span class="bd-plus">同コース近距離実績</span><span class="bd-plus">+2.0</span></div>
+      <div class="bd-row"><span class="bd-plus">調教B評価</span><span class="bd-plus">+2.0</span></div>
+      <div class="bd-row"><span class="bd-plus">近走上昇傾向</span><span class="bd-plus">+3.8</span></div>
+      <div class="bd-row"><span class="bd-plus">前走好走</span><span class="bd-plus">+0.2</span></div>
+      <div class="bd-row"><span class="bd-minus">ペース適性（先行）</span><span class="bd-minus">-1.0</span></div>
+    </div>
+    <div class="bd-card">
+      <div class="bd-header">
+        <div class="waku-7" style="width:28px;height:28px;font-size:11px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;flex-shrink:0;">⑭</div>
+        <div class="bd-name">ルーフ</div>
+        <div class="bd-score">+6.8</div>
+      </div>
+      <div class="bd-row"><span class="bd-plus">同コース実績</span><span class="bd-plus">+1.0</span></div>
+      <div class="bd-row"><span class="bd-plus">調教B評価</span><span class="bd-plus">+2.0</span></div>
+      <div class="bd-row"><span class="bd-plus">叩き2戦目</span><span class="bd-plus">+1.0</span></div>
+      <div class="bd-row"><span class="bd-plus">近走上昇傾向</span><span class="bd-plus">+1.2</span></div>
+      <div class="bd-row"><span class="bd-plus">血統距離適性</span><span class="bd-plus">+0.5</span></div>
+      <div class="bd-row"><span class="bd-plus">ペース適性（好位差）</span><span class="bd-plus">+1.5</span></div>
+      <div class="bd-row"><span class="bd-minus">前走ローカル</span><span class="bd-minus">-0.5</span></div>
+    </div>
+    <div class="bd-card">
+      <div class="bd-header">
+        <div class="waku-3" style="width:28px;height:28px;font-size:11px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;flex-shrink:0;">⑥</div>
+        <div class="bd-name">シカゴスティング</div>
+        <div class="bd-score">+6.2</div>
+      </div>
+      <div class="bd-row"><span class="bd-plus">調教B評価</span><span class="bd-plus">+2.0</span></div>
+      <div class="bd-row"><span class="bd-plus">叩き2戦目</span><span class="bd-plus">+1.0</span></div>
+      <div class="bd-row"><span class="bd-plus">近走上昇傾向</span><span class="bd-plus">+1.2</span></div>
+      <div class="bd-row"><span class="bd-plus">枠番補正</span><span class="bd-plus">+0.5</span></div>
+      <div class="bd-row"><span class="bd-plus">ペース適性（差し）</span><span class="bd-plus">+2.0</span></div>
+      <div class="bd-row"><span class="bd-minus">前走ローカル</span><span class="bd-minus">-0.5</span></div>
+    </div>
+    <div class="bd-card">
+      <div class="bd-header">
+        <div class="waku-1" style="width:28px;height:28px;font-size:11px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;flex-shrink:0;border:2px solid #CCC;">①</div>
+        <div class="bd-name">ドゥアムール</div>
+        <div class="bd-score">+4.2</div>
+      </div>
+      <div class="bd-row"><span class="bd-plus">調教C評価</span><span class="bd-plus">+1.0</span></div>
+      <div class="bd-row"><span class="bd-plus">近走上昇傾向</span><span class="bd-plus">+1.2</span></div>
+      <div class="bd-row"><span class="bd-plus">血統距離適性</span><span class="bd-plus">+1.0</span></div>
+      <div class="bd-row"><span class="bd-plus">ペース適性（好位差）</span><span class="bd-plus">+1.5</span></div>
+      <div class="bd-row"><span class="bd-minus">前走ローカル</span><span class="bd-minus">-0.5</span></div>
+    </div>
+    <div class="bd-card">
+      <div class="bd-header">
+        <div class="waku-8" style="width:28px;height:28px;font-size:11px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;flex-shrink:0;color:#333;">⑮</div>
+        <div class="bd-name">ロードマイライフ</div>
+        <div class="bd-score">+4.0</div>
+      </div>
+      <div class="bd-row"><span class="bd-plus">調教B評価</span><span class="bd-plus">+2.0</span></div>
+      <div class="bd-row"><span class="bd-plus">血統距離適性</span><span class="bd-plus">+1.0</span></div>
+      <div class="bd-row"><span class="bd-plus">ペース適性（差し）</span><span class="bd-plus">+2.0</span></div>
+      <div class="bd-row"><span class="bd-minus">季節×性別</span><span class="bd-minus">-1.0</span></div>
+    </div>
+    <div class="bd-card">
+      <div class="bd-header">
+        <div class="waku-3" style="width:28px;height:28px;font-size:11px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;flex-shrink:0;">⑤</div>
+        <div class="bd-name">サウスバンク</div>
+        <div class="bd-score">+3.5</div>
+      </div>
+      <div class="bd-row"><span class="bd-plus">調教B評価</span><span class="bd-plus">+2.0</span></div>
+      <div class="bd-row"><span class="bd-plus">近走上昇傾向</span><span class="bd-plus">+1.2</span></div>
+      <div class="bd-row"><span class="bd-plus">前走好走</span><span class="bd-plus">+0.2</span></div>
+      <div class="bd-row"><span class="bd-plus">枠番補正</span><span class="bd-plus">+0.5</span></div>
+      <div class="bd-row"><span class="bd-plus">複勝安定ボーナス</span><span class="bd-plus">+1.5</span></div>
+      <div class="bd-row"><span class="bd-minus">ペース適性（逃げ）</span><span class="bd-minus">-2.0</span></div>
+    </div>
+    <div class="bd-card">
+      <div class="bd-header">
+        <div class="waku-6" style="width:28px;height:28px;font-size:11px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;flex-shrink:0;">⑫</div>
+        <div class="bd-name">メルトユアハート</div>
+        <div class="bd-score">+2.5</div>
+      </div>
+      <div class="bd-row"><span class="bd-plus">調教B評価</span><span class="bd-plus">+2.0</span></div>
+      <div class="bd-row"><span class="bd-plus">叩き2戦目</span><span class="bd-plus">+1.0</span></div>
+      <div class="bd-row"><span class="bd-plus">血統距離適性</span><span class="bd-plus">+1.0</span></div>
+      <div class="bd-row"><span class="bd-minus">前走ローカル</span><span class="bd-minus">-0.5</span></div>
+      <div class="bd-row"><span class="bd-minus">ペース適性（先行）</span><span class="bd-minus">-1.0</span></div>
+    </div>
+    <div class="bd-card">
+      <div class="bd-header">
+        <div class="waku-8" style="width:28px;height:28px;font-size:11px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;flex-shrink:0;color:#333;">⑯</div>
+        <div class="bd-name">ゴールドサーベル</div>
+        <div class="bd-score">+2.5</div>
+      </div>
+      <div class="bd-row"><span class="bd-plus">調教C評価</span><span class="bd-plus">+1.0</span></div>
+      <div class="bd-row"><span class="bd-plus">叩き2戦目</span><span class="bd-plus">+1.0</span></div>
+      <div class="bd-row"><span class="bd-plus">ペース適性（差し）</span><span class="bd-plus">+2.0</span></div>
+      <div class="bd-row"><span class="bd-minus">前走ローカル</span><span class="bd-minus">-0.5</span></div>
+      <div class="bd-row"><span class="bd-minus">季節×性別</span><span class="bd-minus">-1.0</span></div>
+    </div>
+    <div class="bd-card">
+      <div class="bd-header">
+        <div class="waku-2" style="width:28px;height:28px;font-size:11px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;flex-shrink:0;">④</div>
+        <div class="bd-name">エコロジーク</div>
+        <div class="bd-score">+1.0</div>
+      </div>
+      <div class="bd-row"><span class="bd-plus">調教B評価</span><span class="bd-plus">+2.0</span></div>
+      <div class="bd-row"><span class="bd-plus">枠番補正</span><span class="bd-plus">+0.5</span></div>
+      <div class="bd-row"><span class="bd-plus">内枠先行</span><span class="bd-plus">+1.0</span></div>
+      <div class="bd-row"><span class="bd-minus">前走ローカル</span><span class="bd-minus">-0.5</span></div>
+      <div class="bd-row"><span class="bd-minus">季節×性別</span><span class="bd-minus">-1.0</span></div>
+      <div class="bd-row"><span class="bd-minus">ペース適性（先行）</span><span class="bd-minus">-1.0</span></div>
+    </div>
+    <div class="bd-card">
+      <div class="bd-header">
+        <div class="waku-1" style="width:28px;height:28px;font-size:11px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;flex-shrink:0;border:2px solid #CCC;">②</div>
+        <div class="bd-name">ウィルオレオール</div>
+        <div class="bd-score">+0.8</div>
+      </div>
+      <div class="bd-row"><span class="bd-plus">調教B評価</span><span class="bd-plus">+2.0</span></div>
+      <div class="bd-row"><span class="bd-plus">近走上昇傾向</span><span class="bd-plus">+1.2</span></div>
+      <div class="bd-row"><span class="bd-plus">距離短縮</span><span class="bd-plus">+1.0</span></div>
+      <div class="bd-row"><span class="bd-plus">ペース適性（好位差）</span><span class="bd-plus">+1.5</span></div>
+      <div class="bd-row"><span class="bd-minus">初馬場種別</span><span class="bd-minus">-5.0</span></div>
+      <div class="bd-row"><span class="bd-minus">季節×性別</span><span class="bd-minus">-1.0</span></div>
+    </div>
+    <div class="bd-card">
+      <div class="bd-header">
+        <div class="waku-5" style="width:28px;height:28px;font-size:11px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:900;flex-shrink:0;color:#333;">⑩</div>
+        <div class="bd-name">ハッピーロンドン</div>
+        <div class="bd-score">−1.0</div>
+      </div>
+      <div class="bd-row"><span class="bd-plus">調教C評価</span><span class="bd-plus">+1.0</span></div>
+      <div class="bd-row"><span class="bd-plus">叩き2戦目</span><span class="bd-plus">+1.0</span></div>
+      <div class="bd-row"><span class="bd-plus">ペース適性（差し）</span><span class="bd-plus">+2.0</span></div>
+      <div class="bd-row"><span class="bd-minus">初馬場種別</span><span class="bd-minus">-5.0</span></div>
+      <div class="bd-row"><span class="bd-minus">季節×性別</span><span class="bd-minus">-1.0</span></div>
+    </div>
+  </div>
+</div>
+
+<div class="section-divider"></div>
+<div class="section">
+  <div class="section-title">買い目フォーメーション</div>
+
+  <div style="background:var(--turf3);border:1px solid var(--turf4);border-radius:8px;padding:20px 24px;margin-bottom:20px;">
+    <div style="font-size:10px;letter-spacing:3px;color:var(--gold2);text-transform:uppercase;margin-bottom:14px;">対象馬（上位横並び）</div>
+    <div style="display:flex;gap:32px;flex-wrap:wrap;">
+      <span class="horse-tag">⑦ アンジュプロミス</span>
+      <span class="horse-tag">⑧ マーブルパレス</span>
+      <span class="horse-tag">③ サムハンター</span>
+      <span class="horse-tag">⑬ ポエットリー</span>
+    </div>
+  </div>
+
+  <div class="bet-section">
+    <div class="bet-section-title">三連複 4頭BOX — 4点 &nbsp;|&nbsp; ROI 466%（3勝クラス共通実績）</div>
+    <div class="bet-combo-grid">
+      <div class="bet-combo">③－⑦－⑧<span>馬 3-7-8</span></div><div class="bet-combo">③－⑦－⑬<span>馬 3-7-13</span></div><div class="bet-combo">③－⑧－⑬<span>馬 3-8-13</span></div><div class="bet-combo">⑦－⑧－⑬<span>馬 7-8-13</span></div>
+    </div>
+    <div class="bet-total">4点 × 100円 = 400円</div>
+  </div>
+
+  <div class="bet-section">
+    <div class="bet-section-title">三連複 1軸10点 &nbsp;|&nbsp; 軸: ⑦アンジュプロミス × 相手: ⑧③⑬⑪⑨</div>
+    <div class="bet-combo-grid">
+      <div class="bet-combo">③－⑦－⑧<span></span></div><div class="bet-combo">③－⑦－⑨<span></span></div><div class="bet-combo">③－⑦－⑪<span></span></div><div class="bet-combo">③－⑦－⑬<span></span></div><div class="bet-combo">⑦－⑧－⑨<span></span></div><div class="bet-combo">⑦－⑧－⑪<span></span></div><div class="bet-combo">⑦－⑧－⑬<span></span></div><div class="bet-combo">⑦－⑨－⑪<span></span></div><div class="bet-combo">⑦－⑨－⑬<span></span></div><div class="bet-combo">⑦－⑪－⑬<span></span></div>
+    </div>
+    <div class="bet-total">10点 × 100円 = 1,000円</div>
+  </div>
+
+  <div class="bet-section">
+    <div class="bet-section-title">三連複 2軸7点 &nbsp;|&nbsp; 軸: ⑦×⑧ × 相手: ③⑬⑪⑨⑭⑥①</div>
+    <div class="bet-combo-grid">
+      <div class="bet-combo">③－⑦－⑧<span></span></div><div class="bet-combo">⑦－⑧－⑬<span></span></div><div class="bet-combo">⑦－⑧－⑪<span></span></div><div class="bet-combo">⑦－⑧－⑨<span></span></div><div class="bet-combo">⑦－⑧－⑭<span></span></div><div class="bet-combo">⑥－⑦－⑧<span></span></div><div class="bet-combo">①－⑦－⑧<span></span></div>
+    </div>
+    <div class="bet-total">7点 × 100円 = 700円</div>
+  </div>
+
+  <div class="bet-section">
+    <div class="bet-section-title">馬連 1点 &nbsp;|&nbsp; 3勝クラス×芝 ROI 222%</div>
+    <div style="display:flex;gap:16px;align-items:center;margin-top:4px;">
+      <div class="bet-combo" style="font-size:20px;min-width:120px;">⑦ - ⑧</div>
+      <div style="font-size:13px;color:var(--muted);">アンジュプロミス × マーブルパレス</div>
+    </div>
+    <div class="bet-total">1点 × 100円 = 100円</div>
+  </div>
+
+  <div style="background:rgba(255,119,102,0.08);border:1px solid #FF7766;border-radius:8px;padding:16px 24px;margin-bottom:16px;font-size:13px;color:var(--muted);">
+    ⚠ ワイドは3勝クラス×芝でROI89.4%（赤字）のため今回は見送り。
+  </div>
+
+  <div style="background:rgba(201,162,39,0.08);border:2px solid var(--gold);border-radius:8px;padding:22px 24px;">
+    <div style="font-size:10px;letter-spacing:3px;color:var(--gold2);text-transform:uppercase;margin-bottom:16px;">投資合計（全買い目）</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:16px;">
+      <div style="text-align:center;"><div style="font-size:11px;color:var(--muted);">三連複 4頭BOX</div><div style="font-size:20px;font-weight:700;color:var(--cream);">400円</div></div>
+      <div style="text-align:center;"><div style="font-size:11px;color:var(--muted);">三連複 10点</div><div style="font-size:20px;font-weight:700;color:var(--cream);">1,000円</div></div>
+      <div style="text-align:center;"><div style="font-size:11px;color:var(--muted);">三連複 7点</div><div style="font-size:20px;font-weight:700;color:var(--cream);">700円</div></div>
+      <div style="text-align:center;"><div style="font-size:11px;color:var(--muted);">馬連</div><div style="font-size:20px;font-weight:700;color:var(--cream);">100円</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  競馬予想システム &nbsp;|&nbsp; 2026-07-04 &nbsp;|&nbsp; 函館11R TVh杯 &nbsp;|&nbsp; 自動生成レポート
+</div>
+</body>
+</html>
