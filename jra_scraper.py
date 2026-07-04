@@ -11,11 +11,9 @@ from typing import Optional
 def build_jra_url(race_id: str, race_date: datetime.date) -> str:
     """
     netkeiba の race_id と開催日から JRA 公式出馬表 URL を生成する。
-
     CNAME 形式: pw01dde01{venue}{year}{kai}{nichi}{race}{date}/{checksum:02X}
-    checksum = (base + race_contrib) % 256
-    base = (169 + venue*10 + kai*84 + nichi*48) % 256
-    race_contrib = (94 + (race-1)*181 + (64 if race>=10 else 0)) % 256
+    係数: I0=20, venue=157, kai=210, nichi=48, race差=181, race>=10で+64
+    （係数が変わったら tools/jra_checksum_diag.py --fix で自動更新）
     """
     # race_id: YYYY + venue(2) + kai(2) + nichi(2) + race(2) = 12 chars
     venue = int(race_id[4:6])
@@ -25,8 +23,8 @@ def build_jra_url(race_id: str, race_date: datetime.date) -> str:
     year  = int(race_id[0:4])
     date_str = race_date.strftime("%Y%m%d")
 
-    race_contrib = (94 + (race - 1) * 181 + (64 if race >= 10 else 0)) % 256
-    base = (169 + venue * 10 + kai * 84 + nichi * 48) % 256
+    race_contrib = ((race - 1) * 181 + (64 if race >= 10 else 0)) % 256
+    base = (42 + venue * 157 + kai * 210 + nichi * 48) % 256
     checksum = (base + race_contrib) % 256
 
     cname = f"pw01dde01{venue:02d}{year}{kai:02d}{nichi:02d}{race:02d}{date_str}/{checksum:02X}"
@@ -74,11 +72,18 @@ class HorseEntry:
     horse_id: str = ""      # netkeiba 馬ID（道悪実績取得用）
 
 
+class JraParamError(Exception):
+    """JRAがパラメータエラーを返した（チェックサム式変更の可能性）"""
+
+
 def fetch_html(url: str) -> BeautifulSoup:
     resp = requests.get(url, headers=HEADERS, timeout=15)
     resp.raise_for_status()
-    resp.encoding = resp.apparent_encoding
-    return BeautifulSoup(resp.text, "html.parser")
+    soup = BeautifulSoup(resp.content, "html.parser", from_encoding="shift_jis")
+    title = soup.find("title")
+    if title and "パラメータエラー" in title.get_text():
+        raise JraParamError(f"JRAパラメータエラー: {url}")
+    return soup
 
 
 def parse_race_info(soup: BeautifulSoup, url: str) -> RaceInfo:
