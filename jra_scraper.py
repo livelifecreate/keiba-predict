@@ -267,6 +267,8 @@ def build_jra_result_url(race_id: str, race_date: datetime.date) -> str:
     """
     JRA 公式結果ページ URL を生成する。
     結果チェックサム = (出馬表チェックサム + 0xBC) % 256
+    出馬表チェックサムの係数は build_jra_url() と同一（係数が変わったら
+    tools/jra_checksum_diag.py --fix で jra_scraper.py 全体を更新すること）
     """
     venue = int(race_id[4:6])
     kai   = int(race_id[6:8])
@@ -275,8 +277,8 @@ def build_jra_result_url(race_id: str, race_date: datetime.date) -> str:
     year  = int(race_id[0:4])
     date_str = race_date.strftime("%Y%m%d")
 
-    race_contrib   = (94 + (race - 1) * 181 + (64 if race >= 10 else 0)) % 256
-    base           = (169 + venue * 10 + kai * 84 + nichi * 48) % 256
+    race_contrib   = ((race - 1) * 181 + (64 if race >= 10 else 0)) % 256
+    base           = (42 + venue * 157 + kai * 210 + nichi * 48) % 256
     entry_cs       = (base + race_contrib) % 256
     result_cs      = (entry_cs + 0xBC) % 256
 
