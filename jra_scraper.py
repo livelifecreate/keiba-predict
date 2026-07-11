@@ -8,12 +8,82 @@ from dataclasses import dataclass, field
 from typing import Optional
 
 
+BASE_URL = "https://www.jra.go.jp"
+HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+}
+
+CNAME_RE = re.compile(r'pw01dde01(\d{2})(\d{4})(\d{2})(\d{2})(\d{2})(\d{8})/([0-9A-Fa-f]{2})')
+
+# (venue, kai, nichi) -> {"race": int, "checksum": int} の実測シード値キャッシュ
+_checksum_seed_cache: dict[tuple[int, int, int], dict] = {}
+
+
+def _race_contrib(race: int) -> int:
+    """レース番号によるチェックサム寄与分（実測で全レース一致確認済み・不変）"""
+    return ((race - 1) * 181 + (64 if race >= 10 else 0)) % 256
+
+
+def _extract_cnames(soup: BeautifulSoup) -> list[dict]:
+    results = []
+    for a in soup.find_all("a", href=True):
+        m = CNAME_RE.search(a["href"])
+        if not m:
+            continue
+        venue, year, kai, nichi, race, date, cs_hex = m.groups()
+        results.append({
+            "venue": int(venue), "year": int(year), "kai": int(kai),
+            "nichi": int(nichi), "race": int(race), "date": date,
+            "checksum": int(cs_hex, 16),
+        })
+    return results
+
+
+def _get_checksum_seed(venue: int, kai: int, nichi: int) -> Optional[dict]:
+    """
+    JRA公式トップ/今週ページから (venue, kai, nichi) に該当する実測チェックサムを
+    1件取得してキャッシュする。venue/kai/nichi の係数を推測しないことで、
+    nichiの桁上がり等による非線形性の影響を受けない。
+    """
+    key = (venue, kai, nichi)
+    if key in _checksum_seed_cache:
+        return _checksum_seed_cache[key]
+
+    for path in ["/", "/keiba/thisweek/"]:
+        try:
+            r = requests.get(BASE_URL + path, headers=HEADERS, timeout=10)
+            soup = BeautifulSoup(r.content, "html.parser", from_encoding="shift_jis")
+        except Exception:
+            continue
+        for d in _extract_cnames(soup):
+            k2 = (d["venue"], d["kai"], d["nichi"])
+            _checksum_seed_cache.setdefault(k2, d)
+        if key in _checksum_seed_cache:
+            break
+
+    return _checksum_seed_cache.get(key)
+
+
+def _entry_checksum(venue: int, kai: int, nichi: int, race: int) -> int:
+    """
+    出馬表チェックサムを算出する。
+    実測シード（JRA公式ページから取得した実際に有効な1件）があれば
+    race_contrib の差分で他レースのチェックサムを導出する（最も確実）。
+    シードが取得できない場合のみ、旧来の係数式にフォールバックする
+    （係数が変わったら tools/jra_checksum_diag.py --fix で更新）。
+    """
+    seed = _get_checksum_seed(venue, kai, nichi)
+    if seed:
+        return (seed["checksum"] - _race_contrib(seed["race"]) + _race_contrib(race)) % 256
+
+    base = (42 + venue * 157 + kai * 210 + nichi * 48) % 256
+    return (base + _race_contrib(race)) % 256
+
+
 def build_jra_url(race_id: str, race_date: datetime.date) -> str:
     """
     netkeiba の race_id と開催日から JRA 公式出馬表 URL を生成する。
     CNAME 形式: pw01dde01{venue}{year}{kai}{nichi}{race}{date}/{checksum:02X}
-    係数: I0=20, venue=157, kai=210, nichi=48, race差=181, race>=10で+64
-    （係数が変わったら tools/jra_checksum_diag.py --fix で自動更新）
     """
     # race_id: YYYY + venue(2) + kai(2) + nichi(2) + race(2) = 12 chars
     venue = int(race_id[4:6])
@@ -23,17 +93,10 @@ def build_jra_url(race_id: str, race_date: datetime.date) -> str:
     year  = int(race_id[0:4])
     date_str = race_date.strftime("%Y%m%d")
 
-    race_contrib = ((race - 1) * 181 + (64 if race >= 10 else 0)) % 256
-    base = (42 + venue * 157 + kai * 210 + nichi * 48) % 256
-    checksum = (base + race_contrib) % 256
+    checksum = _entry_checksum(venue, kai, nichi, race)
 
     cname = f"pw01dde01{venue:02d}{year}{kai:02d}{nichi:02d}{race:02d}{date_str}/{checksum:02X}"
     return f"{BASE_URL}/JRADB/accessD.html?CNAME={cname}"
-
-BASE_URL = "https://www.jra.go.jp"
-HEADERS = {
-    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
-}
 
 
 @dataclass
@@ -267,8 +330,7 @@ def build_jra_result_url(race_id: str, race_date: datetime.date) -> str:
     """
     JRA 公式結果ページ URL を生成する。
     結果チェックサム = (出馬表チェックサム + 0xBC) % 256
-    出馬表チェックサムの係数は build_jra_url() と同一（係数が変わったら
-    tools/jra_checksum_diag.py --fix で jra_scraper.py 全体を更新すること）
+    出馬表チェックサムは build_jra_url() と同じシード方式（_entry_checksum）で算出する。
     """
     venue = int(race_id[4:6])
     kai   = int(race_id[6:8])
@@ -277,10 +339,8 @@ def build_jra_result_url(race_id: str, race_date: datetime.date) -> str:
     year  = int(race_id[0:4])
     date_str = race_date.strftime("%Y%m%d")
 
-    race_contrib   = ((race - 1) * 181 + (64 if race >= 10 else 0)) % 256
-    base           = (42 + venue * 157 + kai * 210 + nichi * 48) % 256
-    entry_cs       = (base + race_contrib) % 256
-    result_cs      = (entry_cs + 0xBC) % 256
+    entry_cs  = _entry_checksum(venue, kai, nichi, race)
+    result_cs = (entry_cs + 0xBC) % 256
 
     cname = f"pw01sde01{venue:02d}{year}{kai:02d}{nichi:02d}{race:02d}{date_str}/{result_cs:02X}"
     return f"{BASE_URL}/JRADB/accessS.html?CNAME={cname}"
