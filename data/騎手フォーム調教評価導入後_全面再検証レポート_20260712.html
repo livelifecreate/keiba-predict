@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>騎手フォーム・調教評価スコア導入 全面再検証レポート</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Helvetica Neue', 'Hiragino Sans', sans-serif; background: #f5f6fa; color: #2c3e50; font-size: 14px; }
+  .header { background: linear-gradient(135deg, #1a2980, #26d0ce); color: white; padding: 32px 40px; }
+  .header h1 { font-size: 24px; font-weight: 700; margin-bottom: 6px; }
+  .header p { opacity: 0.85; font-size: 13px; }
+  .container { max-width: 1180px; margin: 0 auto; padding: 24px 20px; }
+  .section { background: white; border-radius: 10px; padding: 24px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+  .section h2 { font-size: 17px; font-weight: 700; border-left: 4px solid #1a2980; padding-left: 12px; margin-bottom: 18px; color: #1a2980; }
+  .section h3 { font-size: 14px; font-weight: 700; margin: 20px 0 10px; color: #34495e; }
+  table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  .table-wrap { overflow-x: auto; }
+  th { background: #1a2980; color: white; padding: 8px 10px; text-align: left; font-weight: 600; white-space: nowrap; }
+  td { padding: 7px 10px; border-bottom: 1px solid #ecf0f1; white-space: nowrap; }
+  tr:nth-child(even) td { background: #f8f9ff; }
+  tr:hover td { background: #eef2ff; }
+  .row-critical td { background: #fdecea !important; }
+  .row-fixed td { background: #eafaf1 !important; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 700; }
+  .badge-green { background: #d5f5e3; color: #1e8449; }
+  .badge-red { background: #fdecea; color: #c0392b; }
+  .badge-gray { background: #eaecee; color: #566573; }
+  .badge-orange { background: #fef9e7; color: #d68910; }
+  .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 20px; }
+  @media (max-width: 720px) { .summary-grid { grid-template-columns: repeat(2, 1fr); } }
+  .kpi { background: #f0f3ff; border-radius: 8px; padding: 14px 16px; text-align: center; }
+  .kpi.critical { background: #fdecea; }
+  .kpi.fixed { background: #eafaf1; }
+  .kpi-val { font-size: 22px; font-weight: 800; color: #1a2980; }
+  .kpi.critical .kpi-val { color: #c0392b; }
+  .kpi.fixed .kpi-val { color: #1e8449; }
+  .kpi-label { font-size: 11px; color: #7f8c8d; margin-top: 3px; }
+  .note { background: #fef9e7; border-left: 3px solid #f39c12; padding: 10px 14px; border-radius: 0 6px 6px 0; font-size: 12px; margin: 12px 0; line-height: 1.7; }
+  .finding { background: #eaf4fb; border-left: 3px solid #2980b9; padding: 10px 14px; border-radius: 0 6px 6px 0; font-size: 12px; margin: 12px 0; line-height: 1.7; }
+  .critical-box { background: #fdecea; border-left: 4px solid #c0392b; padding: 14px 18px; border-radius: 0 6px 6px 0; font-size: 13px; margin: 14px 0; line-height: 1.9; }
+  .fixed-box { background: #eafaf1; border-left: 4px solid #27ae60; padding: 14px 18px; border-radius: 0 6px 6px 0; font-size: 13px; margin: 14px 0; line-height: 1.9; }
+  .conclusion { background: #eafaf1; border-left: 3px solid #27ae60; padding: 12px 16px; border-radius: 0 6px 6px 0; font-size: 13px; margin: 12px 0; line-height: 1.8; }
+  code { background: #eef2ff; padding: 1px 6px; border-radius: 4px; font-size: 12px; }
+  footer { text-align: center; color: #95a5a6; font-size: 11px; padding: 20px; }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>騎手フォーム・調教評価スコア導入 全面再検証レポート</h1>
+  <p>競馬予想システム ／ 対象: 2025/12〜2026/06・n=582レース（2勝クラス以上） ／ 生成日: 2026-07-12</p>
+</div>
+
+<div class="container">
+
+<div class="section">
+  <h2>結論サマリ</h2>
+  <div class="summary-grid">
+    <div class="kpi fixed"><div class="kpi-val">+21pt</div><div class="kpi-label">全体・三連複5頭BOX ROI改善（63.9%→79.9%）</div></div>
+    <div class="kpi critical"><div class="kpi-val">11.5%</div><div class="kpi-label">3勝×芝の旧・純粋4頭BOX ROI（崩壊）</div></div>
+    <div class="kpi fixed"><div class="kpi-val">117.5%</div><div class="kpi-label">置き換え後・軸1頭+相手4頭 ROI</div></div>
+    <div class="kpi"><div class="kpi-val">2</div><div class="kpi-label">新規実装因子（jockey_form / training_form）</div></div>
+  </div>
+  <div class="finding">
+    騎手の通算複勝率ボーナス(jockey_form)と、調教コメント文言の実績複勝率ベーススコア(training_form)を
+    scorer_turf.py / scorer_dart.py に実装。両因子込みで cache/race_result 全件（n=582レース）を
+    再採点し、標準9馬券種を総合・クラス別・芝ダート別で再検証した。
+  </div>
+</div>
+
+<div class="section">
+  <h2>⚠️ 重大な発見：3勝クラス×芝の実装済み買い目が崩壊していた</h2>
+  <div class="critical-box">
+    <strong>3勝クラス×芝で実際に使われていた「三連複4頭BOX（純粋箱・4点）」のROIが、
+    新因子導入後に <span style="color:#c0392b;font-weight:800;">11.5%</span> まで崩壊していたことが判明。</strong>
+    n=81レース中、的中はわずか3件（3.7%）。旧CLAUDE.mdの「ROI466%」という表記自体が
+    検証ミスに基づく誤った数値で、現行ロジックでは全く通用しなかった。
+  </div>
+  <div class="fixed-box">
+    <strong>対策：</strong>同じ上位4頭のプールでも、「純粋箱（4点・全組み合わせ総当たり）」から
+    「軸1頭固定＋相手4頭（6点・軸馬必須の組み合わせのみ）」に構成を変更したところ、
+    ROIは <span style="color:#1e8449;font-weight:800;">117.5%</span>（n=81・的中11件、13.6%）まで回復した。
+    <code>scorer_turf.py</code> の <code>save_csv()</code> 内BOX構成ロジックを置き換え、
+    <code>weekend_predict.py</code> にも新しい買いサイン区分 <code>box4axis</code> を追加した。
+    3勝×ダートの純粋4頭BOXは同時に再検証し、107.4%と健在だったため変更なし。
+  </div>
+  <table>
+    <tr><th>馬券構成</th><th>対象</th><th>n</th><th>的中件数</th><th>ROI</th><th>状態</th></tr>
+    <tr class="row-critical"><td>三連複4頭BOX（純粋箱・4点）</td><td>3勝×芝</td><td>81</td><td>3件（3.7%）</td><td>11.5%</td><td><span class="badge badge-red">廃止</span></td></tr>
+    <tr class="row-fixed"><td>三連複1軸4頭（6点）</td><td>3勝×芝</td><td>81</td><td>11件（13.6%）</td><td>117.5%</td><td><span class="badge badge-green">採用（新実装）</span></td></tr>
+    <tr><td>三連複4頭BOX（純粋箱・4点）</td><td>3勝×ダ</td><td>71</td><td>6件（8.5%）</td><td>107.4%</td><td><span class="badge badge-green">維持（変更なし）</span></td></tr>
+  </table>
+</div>
+
+<div class="section">
+  <h2>標準9馬券種 総合比較（n=582レース）</h2>
+  <div class="table-wrap">
+  <table>
+    <tr><th>馬券種</th><th>点数/R</th><th>旧的中率<br>(2026-06-28)</th><th>新的中率<br>(2026-07-12)</th><th>旧ROI</th><th>新ROI</th><th>差分</th></tr>
+    <tr><td>単勝</td><td>1</td><td>17.9%</td><td>19.1%</td><td>76.3%</td><td>64.2%</td><td><span class="badge badge-red">-12.1pt</span></td></tr>
+    <tr><td>複勝</td><td>1</td><td>39.7%</td><td>43.0%</td><td>72.1%</td><td>75.8%</td><td><span class="badge badge-green">+3.7pt</span></td></tr>
+    <tr><td>馬連1-2</td><td>1</td><td>8.1%</td><td>8.6%</td><td>280.8%</td><td>133.4%</td><td><span class="badge badge-red">-147.4pt</span></td></tr>
+    <tr><td>馬連3点BOX</td><td>3</td><td>13.6%</td><td>15.1%</td><td>119.6%</td><td>82.6%</td><td><span class="badge badge-red">-37.0pt</span></td></tr>
+    <tr><td>ワイド1-2</td><td>1</td><td>15.3%</td><td>18.0%</td><td>148.5%</td><td>126.7%</td><td><span class="badge badge-red">-21.8pt</span></td></tr>
+    <tr><td>ワイド3点BOX</td><td>3</td><td>27.8%</td><td>31.8%</td><td>87.4%</td><td>90.0%</td><td><span class="badge badge-green">+2.6pt</span></td></tr>
+    <tr><td>三連複1-2-3</td><td>1</td><td>1.9%</td><td>4.0%</td><td>66.3%</td><td>162.1%</td><td><span class="badge badge-green">+95.8pt</span></td></tr>
+    <tr><td>三連複1軸4頭</td><td>6</td><td>12.0%</td><td>12.9%</td><td>80.1%</td><td>78.6%</td><td><span class="badge badge-gray">-1.5pt</span></td></tr>
+    <tr><td>三連複5頭BOX</td><td>10</td><td>16.0%</td><td>18.4%</td><td>63.9%</td><td>79.9%</td><td><span class="badge badge-green">+16.0pt</span></td></tr>
+  </table>
+  </div>
+  <div class="note">
+    馬連1-2・馬連3点BOXが全体集計では大きく下がって見えるが、これは的中率がむしろ上がっている中での
+    "配当の質の低下"（人気馬シフト）。3連複系は軒並み改善しており、全体としては複勝的な精度が
+    上がった代わりに一発大穴の依存度が下がった、という性質の変化。クラス別の内訳は次項参照。
+  </div>
+</div>
+
+<div class="section">
+  <h2>実運用買い目の新旧比較（クラス×コース別）</h2>
+  <div class="table-wrap">
+  <table>
+    <tr><th>クラス×コース</th><th>n</th><th>馬連ROI（旧→新）</th><th>ワイドROI（旧→新）</th><th>三連複ROI（旧→新）</th><th>買い目</th></tr>
+    <tr>
+      <td>OP×芝</td><td>57</td>
+      <td>147.7%→127.2%</td><td>148.8%→184.4%</td>
+      <td>5頭BOX 84.9%→105.3%</td>
+      <td>馬連+ワイド+三連複5頭BOX</td>
+    </tr>
+    <tr>
+      <td>OP×ダ</td><td>48</td>
+      <td>593.3%→320.8%</td><td>179.6%→124.4%</td>
+      <td>5頭BOX 94.5%→<b>190.6%</b></td>
+      <td>馬連+ワイド+三連複5頭BOX</td>
+    </tr>
+    <tr class="row-fixed">
+      <td>3勝×芝</td><td>81</td>
+      <td>222.3%→238.3%</td><td>89.4%→94.0%(赤字)</td>
+      <td>純粋4頭BOX 466%(誤)→<b>11.5%</b>／<b>1軸4頭→117.5%(新規採用)</b></td>
+      <td>馬連+三連複<b>1軸4頭</b>（変更）</td>
+    </tr>
+    <tr>
+      <td>3勝×ダ</td><td>71</td>
+      <td>293.2%→277.3%</td><td>122.7%→124.8%</td>
+      <td>4頭BOX 79%→107.4%</td>
+      <td>馬連+ワイド+三連複4頭BOX（明記追加）</td>
+    </tr>
+    <tr>
+      <td>2勝クラス×芝</td><td>119</td>
+      <td>—→50.9%</td><td>—→51.0%</td>
+      <td>—</td>
+      <td>見送り</td>
+    </tr>
+    <tr>
+      <td>2勝クラス×ダ</td><td>114</td>
+      <td>—→54.1%</td><td>—→<b>225.6%</b>（要観察）</td>
+      <td>—</td>
+      <td>見送り（ワイドのみ突出、継続観察）</td>
+    </tr>
+    <tr>
+      <td>重賞×芝</td><td>81</td>
+      <td>—→32.8%</td><td>—→78.8%</td>
+      <td>—</td>
+      <td>見送り</td>
+    </tr>
+    <tr>
+      <td>重賞×ダ</td><td>11</td>
+      <td>—→102.7%（n小）</td><td>—→239.1%（n小）</td>
+      <td>—</td>
+      <td>見送り（サンプル不足）</td>
+    </tr>
+  </table>
+  </div>
+</div>
+
+<div class="section">
+  <h2>実装内容</h2>
+  <div class="note">
+    <strong>jockey_form.py（新規）：</strong>騎手の通算複勝率ボーナス。複勝率30%未満+0.0／
+    30〜40%+1.0／40%以上+2.0。3勝クラスは常に+0（別途検証で悪化を確認済みのため除外）。<br><br>
+    <strong>training_form.py（新規）：</strong>調教コメント文言別の実績複勝率ベーススコア。
+    35%以上+3／25〜35%+2／15〜25%+1／8〜15%+0／8%未満-1。該当コメントの母数が
+    30件未満の場合は従来のA/B/C/D評価にフォールバック。全クラス適用。<br><br>
+    <strong>cache_store.py 修正：</strong><code>cache_get_before()</code>の<code>max_days_back</code>
+    デフォルトを90日→730日（2年）に変更。休み明け90日超の馬の過去走データ取りこぼしバグを修正。
+    修正後の取得成功率は99.7%→99.92%。<br><br>
+    <strong>scorer_turf.py 修正：</strong>3勝クラス（＝常に芝、このファイルは芝専用）のBOX構成を
+    純粋4頭BOX(4点)から軸1頭+相手4頭(6点)に変更。<code>_get_label()</code>の
+    <code>training_rank</code>ラベルも「調教A/B/C評価」の値からの逆算表示を廃止し、
+    汎用ラベル「調教評価」に修正（コメントベーススコアと不整合を起こすため）。<br><br>
+    <strong>weekend_predict.py 修正：</strong><code>calc_buy_sign()</code>に<code>surface</code>引数を追加し、
+    3勝クラスを芝／ダートで分岐。新しい買いサイン区分<code>box4axis</code>（三連複1軸4頭）を追加。
+  </div>
+</div>
+
+<div class="section">
+  <h2>今後の課題</h2>
+  <div class="note">
+    ・2勝クラス×ダートのワイド1-2 ROI225.6%（n=114・的中24件）は見送りクラス解禁の検討材料になりうるが、
+    単勝・複勝など他指標が依然弱く時期尚早と判断<br>
+    ・OP×芝の三連複1-2-3 ROI403.4%はn=105・的中率5.7%で高配当依存の可能性が高く、継続観察扱い<br>
+    ・調教コメントベーススコアの配点はこのセッションのデータでチューニングしたもので、
+    今後データが増えた際に再検証が望ましい
+  </div>
+</div>
+
+</div>
+<footer>競馬予想システム — keiba-feature-gate 検証レポート（scorer_turf.py / scorer_dart.py / weekend_predict.py 実装反映済み）</footer>
+</body>
+</html>

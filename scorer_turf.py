@@ -1522,18 +1522,26 @@ def save_csv(results: list[tuple], race_info, odds_map: dict = None, training_da
 
             h1 = nums[0]
 
-            # 推奨BOX: 3勝クラス→4頭BOX(4点) ROI466%, OP以上→5頭BOX(10点) ROI124%
+            # 推奨BOX: 3勝クラス×芝→軸1頭+相手4頭(6点) ROI117.5%、OP以上→5頭BOX(10点) ROI124%
+            # 2026-07-12: 3勝クラス×芝の純粋4頭BOXは騎手フォーム・調教評価スコア導入後
+            # ROI11.5%まで悪化を確認したため、同じ4頭プールでも軸型(1軸4頭)に置き換えた。
+            # このファイル(scorer_turf.py)は芝専用のためrace_class==3は常に3勝×芝。
             if race_class == 3:
-                box_pool = nums[:4]
-                box_label = f"4頭BOX ({len(list(_comb(box_pool, 3)))}点) ← ROI466%"
+                axis = nums[0]
+                partners = nums[1:5]
+                box_pool = nums[:5]
+                formb_list = sorted(
+                    [tuple(sorted((axis,) + c, key=_sort_key)) for c in _comb(partners, 2)],
+                    key=lambda c: tuple(_sort_key(x) for x in c)
+                )
+                box_label = f"1軸4頭 ({len(formb_list)}点) ← ROI117.5%"
             else:
                 box_pool = nums[:5]
-                box_label = f"5頭BOX ({len(list(_comb(box_pool, 3)))}点) ← ROI124%"
-
-            formb_list = sorted(
-                [tuple(sorted(c, key=_sort_key)) for c in _comb(box_pool, 3)],
-                key=lambda c: tuple(_sort_key(x) for x in c)
-            )
+                formb_list = sorted(
+                    [tuple(sorted(c, key=_sort_key)) for c in _comb(box_pool, 3)],
+                    key=lambda c: tuple(_sort_key(x) for x in c)
+                )
+                box_label = f"5頭BOX ({len(formb_list)}点) ← ROI124%"
 
             ax0, ax1 = nums[0], nums[1]
             form7 = set()

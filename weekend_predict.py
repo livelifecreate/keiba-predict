@@ -126,6 +126,15 @@ def gen_eval_comment(sorted_results, odds_map, n_horses, sign_level, sign_detail
         lines.append(f"[A] {top_entry.horse_name}（1着固定）× 紐4頭（2-3着）12点")
         lines.append(f"[B] 紐4頭（1着）× {top_entry.horse_name}（2着固定）× 紐4頭（3着）12点")
 
+    elif sign_level == "box4axis":
+        # 3勝クラス×芝: 軸1頭+相手4頭(6点) ROI117.5%（2026-07-12、純粋4頭BOXのROI11.5%悪化を受けて置き換え）
+        if gap < 1:
+            lines.append(f"上位横並び（乖離{gap:.1f}pt）。三連複1軸4頭(6点)で軸を固定しつつ相手をカバー。")
+        elif 14 <= n_horses <= 17:
+            lines.append(f"{n_horses}頭立て。三連複1軸4頭(6点)でカバレッジを確保。")
+        if not lines:
+            lines.append(f"乖離{gap:.1f}pt・{n_horses}頭。三連複1軸4頭(6点)推奨（ROI117.5%）。")
+
     elif sign_level in ("box4", "box5"):
         buy_n = 4 if sign_level == "box4" else 5
         buy_pts = 4 if buy_n == 4 else 10
@@ -143,11 +152,12 @@ def gen_eval_comment(sorted_results, odds_map, n_horses, sign_level, sign_detail
     return lines
 
 
-def calc_buy_sign(sorted_results, odds_map, n_horses, race_class=0):
+def calc_buy_sign(sorted_results, odds_map, n_horses, race_class=0, surface=""):
     """
     Returns: (sign_level, sign_text, detail_text)
-      sign_level: "tierce" / "box4" / "box5" / "skip" / "neutral"
+      sign_level: "tierce" / "box4" / "box4axis" / "box5" / "skip" / "neutral"
       race_class: 0=未勝利 1=1勝 2=2勝 3=3勝 4=OP 5=GIII 6=GII 7=GI
+      surface: "芝" / "ダ"（3勝クラスの買い目分岐に使用。2026-07-12〜）
     """
     if len(sorted_results) < 2:
         return "neutral", "", ""
@@ -179,9 +189,13 @@ def calc_buy_sign(sorted_results, odds_map, n_horses, race_class=0):
         detail = f"3勝クラス×{odds1:.1f}倍 / 乖離{gap:.1f}pt {n}頭 / A+B 24点"
         return "tierce", "🏇 三連単A+B推奨", detail
 
-    # 買い目: 3勝クラス→4頭BOX(4点)、OP以上→5頭BOX(10点)
+    # 買い目: 3勝クラス×ダ→4頭BOX(4点、ROI107.4%)、3勝クラス×芝→軸1頭+相手4頭(6点、ROI117.5%)、
+    #         OP以上→5頭BOX(10点)
+    # 2026-07-12: 3勝クラス×芝の純粋4頭BOXは騎手フォーム・調教評価スコア導入後にROI11.5%まで
+    # 悪化したため、同じ4頭プールでも軸型(1軸4頭)に置き換えた。3勝クラス×ダは変更なし。
     # ※ 乖離≥5ptの高信頼7点推奨は廃止（バックテスト: 単勝ROI50%・5BOX ROI40%）
-    is_box4 = (race_class == 3)
+    is_box4      = (race_class == 3 and surface == "ダ")
+    is_box4axis  = (race_class == 3 and surface != "ダ")
 
     ctx = []
     if odds1 and odds1 < 2:
@@ -199,6 +213,8 @@ def calc_buy_sign(sorted_results, odds_map, n_horses, race_class=0):
 
     if is_box4:
         return "box4", "三連複4頭BOX (4点)", detail
+    if is_box4axis:
+        return "box4axis", "三連複1軸4頭 (6点)", detail
     return "box5", "三連複5頭BOX (10点)", detail
 
 
@@ -380,7 +396,7 @@ def main(argv=None):
             sorted_r = sorted(results, key=lambda x: x[1].total, reverse=True)
 
         # サイン判定
-        sign_level, sign_text, sign_detail = calc_buy_sign(sorted_r, odds_map, n, race_class)
+        sign_level, sign_text, sign_detail = calc_buy_sign(sorted_r, odds_map, n, race_class, race_info.surface)
 
         # 事前確認チェック
         check_warns = pre_output_check(sorted_r, odds_map, race_class, n, race_info.name)
@@ -395,6 +411,8 @@ def main(argv=None):
             sign_tag = "★三連単A+B"
         elif sign_level == "box4":
             sign_tag = "★三連複4頭BOX"
+        elif sign_level == "box4axis":
+            sign_tag = "★三連複1軸4頭"
         elif sign_level == "box5":
             sign_tag = "★三連複5頭BOX"
         else:
@@ -424,7 +442,7 @@ def main(argv=None):
 
         print(f"  → {sign_text}  {sign_detail}")
 
-        if sign_level in ("tierce", "box4", "box5"):
+        if sign_level in ("tierce", "box4", "box4axis", "box5"):
             def horse_label(i):
                 if len(sorted_r) > i:
                     e = sorted_r[i][0]
@@ -455,9 +473,10 @@ def main(argv=None):
     print(f"  買いサインまとめ  ({len(sign_summary)}件)")
     print(f"{'='*65}")
 
-    tierces = [s for s in sign_summary if s["level"] == "tierce"]
-    box4s   = [s for s in sign_summary if s["level"] == "box4"]
-    box5s   = [s for s in sign_summary if s["level"] == "box5"]
+    tierces    = [s for s in sign_summary if s["level"] == "tierce"]
+    box4s      = [s for s in sign_summary if s["level"] == "box4"]
+    box4axiss  = [s for s in sign_summary if s["level"] == "box4axis"]
+    box5s      = [s for s in sign_summary if s["level"] == "box5"]
 
     if tierces:
         print("\n🏇 三連単A+Bフォーメーション（24点）")
@@ -480,6 +499,17 @@ def main(argv=None):
             print(f"  馬連: {s['top1']} × {s['top2']}")
             if surface == "ダ":
                 print(f"  ワイド: {s['top1']} × {s['top2']}")
+            print(f"  ({s['detail']})")
+            print(f"  race_id: {s['race_id']}")
+
+    if box4axiss:
+        print("\n三連複1軸4頭 (6点) ── 3勝クラス×芝")
+        for s in box4axiss:
+            axis = s["top1"]
+            himo = "・".join(h for h in [s.get("top2",""), s.get("top3",""), s.get("top4",""), s.get("top5","")] if h)
+            print(f"  {s['date']} {s['venue']} {s['name']}  {s['dist']}  {s['n']}頭")
+            print(f"  軸: {axis} → 相手: {himo}  6点")
+            print(f"  馬連: {s['top1']} × {s['top2']}")
             print(f"  ({s['detail']})")
             print(f"  race_id: {s['race_id']}")
 

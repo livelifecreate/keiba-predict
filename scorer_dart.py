@@ -1485,10 +1485,12 @@ def save_csv(results: list[tuple], race_info, odds_map: dict = None, training_da
 
             h1 = nums[0]
 
-            # 推奨BOX: 3勝クラス→4頭BOX(4点) ROI466%, OP以上→5頭BOX(10点) ROI124%
+            # 推奨BOX: 3勝クラス×ダ→4頭BOX(4点) ROI107.4%(2026-07-12更新), OP以上→5頭BOX(10点) ROI124%
+            # このファイル(scorer_dart.py)はダート専用のためrace_class==3は常に3勝×ダ。
+            # 3勝×芝(scorer_turf.py側)は同時期に軸1頭+相手4頭(6点)へ置き換え済み。
             if race_class == 3:
                 box_pool = nums[:4]
-                box_label = f"4頭BOX ({len(list(_comb(box_pool, 3)))}点) ← ROI466%"
+                box_label = f"4頭BOX ({len(list(_comb(box_pool, 3)))}点) ← ROI107.4%"
             else:
                 box_pool = nums[:5]
                 box_label = f"5頭BOX ({len(list(_comb(box_pool, 3)))}点) ← ROI124%"
