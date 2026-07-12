@@ -43,10 +43,15 @@ def cache_exists(namespace: str, key: str) -> bool:
     return _path(namespace, key).exists()
 
 
-def cache_get_before(namespace: str, horse_id: str, cutoff_date: str, max_days_back: int = 7):
+def cache_get_before(namespace: str, horse_id: str, cutoff_date: str, max_days_back: int = 730):
     """horse_id に対応するキャッシュの中で cutoff_date 以前の最新のものを返す。
     cutoff_date 形式: 'YYYY/MM/DD'
     exact matchがあればそれを、なければ max_days_back 日以内のものをフォールバック。
+
+    max_days_back のデフォルトは730日（2年）。scorer_turf.py / scorer_dart.py の
+    「2年縛り」（レース日から2年より古い実績は使わない）と合わせてある。
+    旧デフォルトは90日で、休み明けが90日を超える馬の過去走スナップショットを
+    誤って「データなし」扱いにする既知バグがあった（2026-07-12発見・修正）。
     """
     import re as _re
     from datetime import datetime, timedelta

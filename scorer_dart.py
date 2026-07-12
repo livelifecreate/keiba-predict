@@ -35,6 +35,9 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from typing import Optional
 
+from jockey_form import get_jockey_form_bonus
+from training_form import get_training_score
+
 # -------------------------------------------------------------------
 # 定数
 # -------------------------------------------------------------------
@@ -183,6 +186,7 @@ class ScoreBreakdown:
     place_consistency:     float = 0.0  # +2/+3（直近5走で3着以内3回以上）
     win_count:             float = 0.0  # +1/+2（直近5走で1着1回→+1、2回以上→+2）
     content_score:         float = 0.0  # 0〜+6（過去走の内容評価：着差・上がり・脚質・人気乖離）
+    jockey_form:           float = 0.0  # 0/+1/+2（騎手フォーム：通算複勝率30/40%閾値、3勝クラス除外・検証2026-07-11）
     steep_power:           float = 0.0  # +1/+2（急坂好走ボーナス：パワー評価）
     weight_change:         float = 0.0  # -2
     wrong_direction:       float = 0.0  # -1
@@ -208,6 +212,7 @@ class ScoreBreakdown:
             + self.grade_history
             + self.inner_post_senko
             + self.win_count
+            + self.jockey_form
             + max(self.bloodline_distance, 0.0)
             + max(self.track_condition, 0.0)
             + max(self.pace_fit, 0.0)
@@ -1241,9 +1246,9 @@ def score_all(entries: list, race_info, training_data: dict = None,
         recent = all_recent[i]
         my_3f  = all_last3f[i]
 
-        # 調教スコア（手動入力 CSV 優先、なければ netkeiba A/B/C/D）
+        # 調教スコア（コメント文言の実績複勝率ベース、データ不足時はA/B/C/D評価にフォールバック）
         td = training_data.get(entry.horse_name)
-        t_score = td.score if td else 0
+        t_score = get_training_score(td.rank, td.comment) if td else 0
 
         # 昇級+距離延長の重複ペナルティ軽減：両方発動時に各1点緩和
         promo   = check_promotion(recent, race_class)
@@ -1281,6 +1286,7 @@ def score_all(entries: list, race_info, training_data: dict = None,
             place_consistency      = check_place_consistency(recent) * _COEFF_PLACE,
             win_count              = check_win_count(recent) * _COEFF_WIN,
             content_score          = 0.0,  # 廃止（2026-06-14）
+            jockey_form            = get_jockey_form_bonus(entry.jockey, race_class),
             steep_power            = check_steep_power(recent, race_venue),
             weight_change          = check_weight_change(recent, getattr(entry, "horse_weight", 0),
                                        manual_diff=(weight_diffs or {}).get(entry.horse_name, 0)),
@@ -1329,6 +1335,7 @@ SCORE_LABELS = {
     "place_consistency":      "複勝安定ボーナス",
     "win_count":              "勝利数ボーナス",
     "content_score":          "内容評価スコア",
+    "jockey_form":            "騎手フォーム",
     "steep_power":            "急坂パワー",
     "weight_change":          "馬体重変動",
     "wrong_direction":        "回り不適",
@@ -1343,7 +1350,11 @@ def _get_label(key: str, value: float) -> str:
     if key == "same_course":
         return "同コース近距離実績" if abs(value) == 2 else "同コース実績"
     if key == "training_rank":
-        return {3: "調教A評価", 2: "調教B評価", 1: "調教C評価"}.get(int(value), "調教評価")
+        # training_form.py導入(2026-07-12)以降、スコア値は必ずしもnetkeibaのA/B/D評価と
+        # 一致しない（コメント文言の実績複勝率ベースのため）。値からA/B/C評価を逆算する
+        # 表示は誤解を招くため廃止し、常に汎用ラベルにする（実際の評価・コメントは
+        # CSVの調教コメント列を参照）。
+        return "調教評価"
     return SCORE_LABELS.get(key, key)
 
 

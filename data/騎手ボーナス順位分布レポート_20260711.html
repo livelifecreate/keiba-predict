@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>騎手複勝率ボーナス 順位分布レポート</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Helvetica Neue', 'Hiragino Sans', sans-serif; background: #f5f6fa; color: #2c3e50; font-size: 14px; }
+  .header { background: linear-gradient(135deg, #1a2980, #26d0ce); color: white; padding: 32px 40px; }
+  .header h1 { font-size: 24px; font-weight: 700; margin-bottom: 6px; }
+  .header p { opacity: 0.85; font-size: 13px; }
+  .container { max-width: 1180px; margin: 0 auto; padding: 24px 20px; }
+  .section { background: white; border-radius: 10px; padding: 24px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+  .section h2 { font-size: 17px; font-weight: 700; border-left: 4px solid #1a2980; padding-left: 12px; margin-bottom: 18px; color: #1a2980; }
+  .section h3 { font-size: 14px; font-weight: 700; margin: 20px 0 10px; color: #34495e; }
+  table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  .table-wrap { overflow-x: auto; }
+  th { background: #1a2980; color: white; padding: 8px 10px; text-align: left; font-weight: 600; white-space: nowrap; }
+  td { padding: 7px 10px; border-bottom: 1px solid #ecf0f1; white-space: nowrap; }
+  tr:hover td { filter: brightness(0.97); }
+  .row-highlight td { box-shadow: inset 0 0 0 2px #f39c12; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 700; }
+  .badge-green { background: #d5f5e3; color: #1e8449; }
+  .badge-red { background: #fdecea; color: #c0392b; }
+  .badge-gray { background: #eaecee; color: #566573; }
+  .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 20px; }
+  @media (max-width: 720px) { .summary-grid { grid-template-columns: repeat(2, 1fr); } }
+  .kpi { background: #f0f3ff; border-radius: 8px; padding: 14px 16px; text-align: center; }
+  .kpi-val { font-size: 22px; font-weight: 800; color: #1a2980; }
+  .kpi-label { font-size: 11px; color: #7f8c8d; margin-top: 3px; }
+  .note { background: #fef9e7; border-left: 3px solid #f39c12; padding: 10px 14px; border-radius: 0 6px 6px 0; font-size: 12px; margin: 12px 0; line-height: 1.7; }
+  .finding { background: #eaf4fb; border-left: 3px solid #2980b9; padding: 10px 14px; border-radius: 0 6px 6px 0; font-size: 12px; margin: 12px 0; line-height: 1.7; }
+  .conclusion { background: #eafaf1; border-left: 3px solid #27ae60; padding: 12px 16px; border-radius: 0 6px 6px 0; font-size: 13px; margin: 12px 0; line-height: 1.8; }
+  footer { text-align: center; color: #95a5a6; font-size: 11px; padding: 20px; }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>騎手複勝率ボーナス — 予想順位別 実着順分布レポート</h1>
+  <p>競馬予想システム ／ 対象: 2勝クラス以上 n=660レース（cache/race_result 全件） ／ 騎手の時点複勝率（20騎乗以上・先読みなし）を全頭に加点 ／ 生成日: 2026-07-11</p>
+</div>
+
+<div class="container">
+
+<div class="section">
+  <h2>結論サマリ</h2>
+  <div class="summary-grid">
+    <div class="kpi"><div class="kpi-val">+3.1pt</div><div class="kpi-label">予想3位の5着内率 改善幅（最大改善）</div></div>
+    <div class="kpi"><div class="kpi-val">-3.3pt</div><div class="kpi-label">予想5位の5着内率 悪化幅（最大悪化）</div></div>
+    <div class="kpi"><div class="kpi-val">1〜3位</div><div class="kpi-label">改善する予想順位帯</div></div>
+    <div class="kpi"><div class="kpi-val">4〜5位</div><div class="kpi-label">悪化する予想順位帯</div></div>
+  </div>
+  <div class="finding">
+    騎手複勝率ボーナスを全頭に適用すると、予想1〜3位の的中精度ははっきり上がる一方、
+    4位・5位に割り当てられる馬の質が明確に下がる。上位を鋭くする代償として、
+    本来4〜5番手に来るはずの実力馬が押し出され、4頭・5頭BOXのカバー率が落ちていると考えられる。
+  </div>
+</div>
+
+<div class="section">
+  <h2>予想順位別 複勝率(3着以内)・5着内率 比較</h2>
+  <div class="table-wrap">
+  <table>
+    <tr>
+      <th rowspan="2">予想順位</th>
+      <th colspan="3">複勝率（3着以内）</th>
+      <th colspan="3">5着内率</th>
+    </tr>
+    <tr>
+      <th>ベース</th><th>騎手ボーナス</th><th>差分</th>
+      <th>ベース</th><th>騎手ボーナス</th><th>差分</th>
+    </tr>
+    
+        <tr>
+          <td style="font-weight:700">予想1位</td>
+          <td style="text-align:center">47.3%</td>
+          <td style="text-align:center">49.2%</td>
+          <td style="text-align:center"><span class="badge badge-green">+2.0pt</span></td>
+          <td style="text-align:center">64.1%</td>
+          <td style="text-align:center">66.7%</td>
+          <td style="text-align:center"><span class="badge badge-green">+2.6pt</span></td>
+        </tr>
+        <tr>
+          <td style="font-weight:700">予想2位</td>
+          <td style="text-align:center">41.5%</td>
+          <td style="text-align:center">45.0%</td>
+          <td style="text-align:center"><span class="badge badge-green">+3.5pt</span></td>
+          <td style="text-align:center">58.3%</td>
+          <td style="text-align:center">59.1%</td>
+          <td style="text-align:center"><span class="badge badge-green">+0.8pt</span></td>
+        </tr>
+        <tr>
+          <td style="font-weight:700">予想3位</td>
+          <td style="text-align:center">31.1%</td>
+          <td style="text-align:center">31.2%</td>
+          <td style="text-align:center"><span class="badge badge-gray">+0.2pt</span></td>
+          <td style="text-align:center">47.7%</td>
+          <td style="text-align:center">50.8%</td>
+          <td style="text-align:center"><span class="badge badge-green">+3.0pt</span></td>
+        </tr>
+        <tr class="row-highlight">
+          <td style="font-weight:700">予想4位</td>
+          <td style="text-align:center">29.5%</td>
+          <td style="text-align:center">26.4%</td>
+          <td style="text-align:center"><span class="badge badge-red">-3.2pt</span></td>
+          <td style="text-align:center">49.2%</td>
+          <td style="text-align:center">46.7%</td>
+          <td style="text-align:center"><span class="badge badge-red">-2.6pt</span></td>
+        </tr>
+        <tr class="row-highlight">
+          <td style="font-weight:700">予想5位</td>
+          <td style="text-align:center">26.8%</td>
+          <td style="text-align:center">25.0%</td>
+          <td style="text-align:center"><span class="badge badge-red">-1.8pt</span></td>
+          <td style="text-align:center">44.8%</td>
+          <td style="text-align:center">41.5%</td>
+          <td style="text-align:center"><span class="badge badge-red">-3.3pt</span></td>
+        </tr>
+        <tr>
+          <td style="font-weight:700">予想6位</td>
+          <td style="text-align:center">21.1%</td>
+          <td style="text-align:center">23.0%</td>
+          <td style="text-align:center"><span class="badge badge-green">+2.0pt</span></td>
+          <td style="text-align:center">37.9%</td>
+          <td style="text-align:center">39.7%</td>
+          <td style="text-align:center"><span class="badge badge-green">+1.8pt</span></td>
+        </tr>
+        <tr>
+          <td style="font-weight:700">予想7位</td>
+          <td style="text-align:center">19.4%</td>
+          <td style="text-align:center">19.1%</td>
+          <td style="text-align:center"><span class="badge badge-gray">-0.3pt</span></td>
+          <td style="text-align:center">35.9%</td>
+          <td style="text-align:center">36.8%</td>
+          <td style="text-align:center"><span class="badge badge-green">+0.9pt</span></td>
+        </tr>
+        <tr>
+          <td style="font-weight:700">予想8位</td>
+          <td style="text-align:center">15.7%</td>
+          <td style="text-align:center">17.4%</td>
+          <td style="text-align:center"><span class="badge badge-green">+1.7pt</span></td>
+          <td style="text-align:center">31.9%</td>
+          <td style="text-align:center">33.7%</td>
+          <td style="text-align:center"><span class="badge badge-green">+1.8pt</span></td>
+        </tr>
+  </table>
+  </div>
+  <div class="note">オレンジ枠＝悪化が明確な予想4位・5位。この2行が今回の重要な発見です。</div>
+</div>
+
+<div class="section">
+  <h2>生データ：予想順位 → 実際の着順分布（％・件数）</h2>
+  
+    <h3>① ベースライン（騎手因子なし・現行ロジック）</h3>
+    <div class="table-wrap">
+    <table>
+      <tr><th>予想順位</th><th>1着</th><th>2着</th><th>3着</th><th>4着</th><th>5着</th><th>6〜8着</th><th>9着以降</th><th>件数</th></tr>
+      <tr><td style='font-weight:700'>予想1位</td><td style="background:rgb(106,116,172);color:#fff;text-align:center">19.4%<br><span style="font-size:10px;opacity:.85">(128件)</span></td><td style="background:rgb(146,153,194);color:#2c3e50;text-align:center">14.2%<br><span style="font-size:10px;opacity:.85">(94件)</span></td><td style="background:rgb(150,157,197);color:#2c3e50;text-align:center">13.6%<br><span style="font-size:10px;opacity:.85">(90件)</span></td><td style="background:rgb(180,185,213);color:#2c3e50;text-align:center">9.7%<br><span style="font-size:10px;opacity:.85">(64件)</span></td><td style="background:rgb(200,204,224);color:#2c3e50;text-align:center">7.1%<br><span style="font-size:10px;opacity:.85">(47件)</span></td><td style="background:rgb(139,146,190);color:#2c3e50;text-align:center">15.2%<br><span style="font-size:10px;opacity:.85">(100件)</span></td><td style="background:rgb(96,106,167);color:#fff;text-align:center">20.8%<br><span style="font-size:10px;opacity:.85">(137件)</span></td><td style='text-align:center;color:#7f8c8d'>n=660</td></tr><tr><td style='font-weight:700'>予想2位</td><td style="background:rgb(138,145,190);color:#2c3e50;text-align:center">15.3%<br><span style="font-size:10px;opacity:.85">(101件)</span></td><td style="background:rgb(128,137,185);color:#2c3e50;text-align:center">16.5%<br><span style="font-size:10px;opacity:.85">(109件)</span></td><td style="background:rgb(180,185,213);color:#2c3e50;text-align:center">9.7%<br><span style="font-size:10px;opacity:.85">(64件)</span></td><td style="background:rgb(186,191,217);color:#2c3e50;text-align:center">8.9%<br><span style="font-size:10px;opacity:.85">(59件)</span></td><td style="background:rgb(194,198,221);color:#2c3e50;text-align:center">7.9%<br><span style="font-size:10px;opacity:.85">(52件)</span></td><td style="background:rgb(127,136,184);color:#2c3e50;text-align:center">16.7%<br><span style="font-size:10px;opacity:.85">(110件)</span></td><td style="background:rgb(64,76,149);color:#fff;text-align:center">25.0%<br><span style="font-size:10px;opacity:.85">(165件)</span></td><td style='text-align:center;color:#7f8c8d'>n=660</td></tr><tr><td style='font-weight:700'>予想3位</td><td style="background:rgb(180,185,213);color:#2c3e50;text-align:center">9.7%<br><span style="font-size:10px;opacity:.85">(64件)</span></td><td style="background:rgb(170,176,208);color:#2c3e50;text-align:center">11.1%<br><span style="font-size:10px;opacity:.85">(73件)</span></td><td style="background:rgb(176,181,211);color:#2c3e50;text-align:center">10.3%<br><span style="font-size:10px;opacity:.85">(68件)</span></td><td style="background:rgb(182,186,214);color:#2c3e50;text-align:center">9.5%<br><span style="font-size:10px;opacity:.85">(63件)</span></td><td style="background:rgb(200,204,224);color:#2c3e50;text-align:center">7.1%<br><span style="font-size:10px;opacity:.85">(47件)</span></td><td style="background:rgb(88,99,162);color:#fff;text-align:center">21.8%<br><span style="font-size:10px;opacity:.85">(144件)</span></td><td style="background:rgb(26,41,128);color:#fff;text-align:center">30.5%<br><span style="font-size:10px;opacity:.85">(201件)</span></td><td style='text-align:center;color:#7f8c8d'>n=660</td></tr><tr><td style='font-weight:700'>予想4位</td><td style="background:rgb(171,177,208);color:#2c3e50;text-align:center">10.9%<br><span style="font-size:10px;opacity:.85">(72件)</span></td><td style="background:rgb(178,183,212);color:#2c3e50;text-align:center">10.0%<br><span style="font-size:10px;opacity:.85">(66件)</span></td><td style="background:rgb(189,193,218);color:#2c3e50;text-align:center">8.6%<br><span style="font-size:10px;opacity:.85">(57件)</span></td><td style="background:rgb(185,190,216);color:#2c3e50;text-align:center">9.1%<br><span style="font-size:10px;opacity:.85">(60件)</span></td><td style="background:rgb(174,179,210);color:#2c3e50;text-align:center">10.6%<br><span style="font-size:10px;opacity:.85">(70件)</span></td><td style="background:rgb(90,101,163);color:#fff;text-align:center">21.5%<br><span style="font-size:10px;opacity:.85">(142件)</span></td><td style="background:rgb(31,46,131);color:#fff;text-align:center">29.2%<br><span style="font-size:10px;opacity:.85">(193件)</span></td><td style='text-align:center;color:#7f8c8d'>n=660</td></tr><tr><td style='font-weight:700'>予想5位</td><td style="background:rgb(189,193,218);color:#2c3e50;text-align:center">8.6%<br><span style="font-size:10px;opacity:.85">(57件)</span></td><td style="background:rgb(192,196,220);color:#2c3e50;text-align:center">8.2%<br><span style="font-size:10px;opacity:.85">(54件)</span></td><td style="background:rgb(178,183,212);color:#2c3e50;text-align:center">10.0%<br><span style="font-size:10px;opacity:.85">(66件)</span></td><td style="background:rgb(193,197,221);color:#2c3e50;text-align:center">8.0%<br><span style="font-size:10px;opacity:.85">(53件)</span></td><td style="background:rgb(178,183,212);color:#2c3e50;text-align:center">10.0%<br><span style="font-size:10px;opacity:.85">(66件)</span></td><td style="background:rgb(94,104,165);color:#fff;text-align:center">21.1%<br><span style="font-size:10px;opacity:.85">(139件)</span></td><td style="background:rgb(26,41,128);color:#fff;text-align:center">34.1%<br><span style="font-size:10px;opacity:.85">(225件)</span></td><td style='text-align:center;color:#7f8c8d'>n=660</td></tr><tr><td style='font-weight:700'>予想6位</td><td style="background:rgb(205,208,227);color:#2c3e50;text-align:center">6.5%<br><span style="font-size:10px;opacity:.85">(43件)</span></td><td style="background:rgb(201,205,225);color:#2c3e50;text-align:center">7.0%<br><span style="font-size:10px;opacity:.85">(46件)</span></td><td style="background:rgb(197,200,222);color:#2c3e50;text-align:center">7.6%<br><span style="font-size:10px;opacity:.85">(50件)</span></td><td style="background:rgb(190,194,219);color:#2c3e50;text-align:center">8.5%<br><span style="font-size:10px;opacity:.85">(56件)</span></td><td style="background:rgb(191,195,219);color:#2c3e50;text-align:center">8.3%<br><span style="font-size:10px;opacity:.85">(55件)</span></td><td style="background:rgb(57,70,145);color:#fff;text-align:center">25.9%<br><span style="font-size:10px;opacity:.85">(171件)</span></td><td style="background:rgb(26,41,128);color:#fff;text-align:center">36.2%<br><span style="font-size:10px;opacity:.85">(239件)</span></td><td style='text-align:center;color:#7f8c8d'>n=660</td></tr><tr><td style='font-weight:700'>予想7位</td><td style="background:rgb(211,213,230);color:#2c3e50;text-align:center">5.8%<br><span style="font-size:10px;opacity:.85">(38件)</span></td><td style="background:rgb(211,213,230);color:#2c3e50;text-align:center">5.8%<br><span style="font-size:10px;opacity:.85">(38件)</span></td><td style="background:rgb(194,198,221);color:#2c3e50;text-align:center">7.9%<br><span style="font-size:10px;opacity:.85">(52件)</span></td><td style="background:rgb(189,193,218);color:#2c3e50;text-align:center">8.6%<br><span style="font-size:10px;opacity:.85">(57件)</span></td><td style="background:rgb(194,198,221);color:#2c3e50;text-align:center">7.9%<br><span style="font-size:10px;opacity:.85">(52件)</span></td><td style="background:rgb(36,50,133);color:#fff;text-align:center">28.6%<br><span style="font-size:10px;opacity:.85">(189件)</span></td><td style="background:rgb(26,41,128);color:#fff;text-align:center">35.5%<br><span style="font-size:10px;opacity:.85">(234件)</span></td><td style='text-align:center;color:#7f8c8d'>n=660</td></tr><tr><td style='font-weight:700'>予想8位</td><td style="background:rgb(218,220,234);color:#2c3e50;text-align:center">4.8%<br><span style="font-size:10px;opacity:.85">(31件)</span></td><td style="background:rgb(213,216,232);color:#2c3e50;text-align:center">5.4%<br><span style="font-size:10px;opacity:.85">(35件)</span></td><td style="background:rgb(212,215,231);color:#2c3e50;text-align:center">5.5%<br><span style="font-size:10px;opacity:.85">(36件)</span></td><td style="background:rgb(193,197,221);color:#2c3e50;text-align:center">8.0%<br><span style="font-size:10px;opacity:.85">(52件)</span></td><td style="background:rgb(192,196,220);color:#2c3e50;text-align:center">8.2%<br><span style="font-size:10px;opacity:.85">(53件)</span></td><td style="background:rgb(55,68,144);color:#fff;text-align:center">26.2%<br><span style="font-size:10px;opacity:.85">(170件)</span></td><td style="background:rgb(26,41,128);color:#fff;text-align:center">41.9%<br><span style="font-size:10px;opacity:.85">(272件)</span></td><td style='text-align:center;color:#7f8c8d'>n=649</td></tr>
+    </table>
+    </div>
+    
+  
+    <h3>② 騎手複勝率ボーナス（全頭適用後）</h3>
+    <div class="table-wrap">
+    <table>
+      <tr><th>予想順位</th><th>1着</th><th>2着</th><th>3着</th><th>4着</th><th>5着</th><th>6〜8着</th><th>9着以降</th><th>件数</th></tr>
+      <tr><td style='font-weight:700'>予想1位</td><td style="background:rgb(104,114,171);color:#fff;text-align:center">19.7%<br><span style="font-size:10px;opacity:.85">(130件)</span></td><td style="background:rgb(133,141,187);color:#2c3e50;text-align:center">15.9%<br><span style="font-size:10px;opacity:.85">(105件)</span></td><td style="background:rgb(150,157,197);color:#2c3e50;text-align:center">13.6%<br><span style="font-size:10px;opacity:.85">(90件)</span></td><td style="background:rgb(180,185,213);color:#2c3e50;text-align:center">9.7%<br><span style="font-size:10px;opacity:.85">(64件)</span></td><td style="background:rgb(196,199,222);color:#2c3e50;text-align:center">7.7%<br><span style="font-size:10px;opacity:.85">(51件)</span></td><td style="background:rgb(142,150,192);color:#2c3e50;text-align:center">14.7%<br><span style="font-size:10px;opacity:.85">(97件)</span></td><td style="background:rgb(112,122,176);color:#fff;text-align:center">18.6%<br><span style="font-size:10px;opacity:.85">(123件)</span></td><td style='text-align:center;color:#7f8c8d'>n=660</td></tr><tr><td style='font-weight:700'>予想2位</td><td style="background:rgb(128,137,185);color:#2c3e50;text-align:center">16.5%<br><span style="font-size:10px;opacity:.85">(109件)</span></td><td style="background:rgb(119,128,179);color:#2c3e50;text-align:center">17.7%<br><span style="font-size:10px;opacity:.85">(117件)</span></td><td style="background:rgb(172,178,209);color:#2c3e50;text-align:center">10.8%<br><span style="font-size:10px;opacity:.85">(71件)</span></td><td style="background:rgb(189,193,218);color:#2c3e50;text-align:center">8.6%<br><span style="font-size:10px;opacity:.85">(57件)</span></td><td style="background:rgb(213,216,231);color:#2c3e50;text-align:center">5.5%<br><span style="font-size:10px;opacity:.85">(36件)</span></td><td style="background:rgb(128,137,185);color:#2c3e50;text-align:center">16.5%<br><span style="font-size:10px;opacity:.85">(109件)</span></td><td style="background:rgb(68,80,151);color:#fff;text-align:center">24.4%<br><span style="font-size:10px;opacity:.85">(161件)</span></td><td style='text-align:center;color:#7f8c8d'>n=660</td></tr><tr><td style='font-weight:700'>予想3位</td><td style="background:rgb(176,181,211);color:#2c3e50;text-align:center">10.3%<br><span style="font-size:10px;opacity:.85">(68件)</span></td><td style="background:rgb(170,176,208);color:#2c3e50;text-align:center">11.1%<br><span style="font-size:10px;opacity:.85">(73件)</span></td><td style="background:rgb(179,184,213);color:#2c3e50;text-align:center">9.8%<br><span style="font-size:10px;opacity:.85">(65件)</span></td><td style="background:rgb(179,184,213);color:#2c3e50;text-align:center">9.8%<br><span style="font-size:10px;opacity:.85">(65件)</span></td><td style="background:rgb(180,185,213);color:#2c3e50;text-align:center">9.7%<br><span style="font-size:10px;opacity:.85">(64件)</span></td><td style="background:rgb(100,110,169);color:#fff;text-align:center">20.3%<br><span style="font-size:10px;opacity:.85">(134件)</span></td><td style="background:rgb(34,48,132);color:#fff;text-align:center">28.9%<br><span style="font-size:10px;opacity:.85">(191件)</span></td><td style='text-align:center;color:#7f8c8d'>n=660</td></tr><tr><td style='font-weight:700'>予想4位</td><td style="background:rgb(177,182,212);color:#2c3e50;text-align:center">10.2%<br><span style="font-size:10px;opacity:.85">(67件)</span></td><td style="background:rgb(199,203,224);color:#2c3e50;text-align:center">7.3%<br><span style="font-size:10px;opacity:.85">(48件)</span></td><td style="background:rgb(186,191,217);color:#2c3e50;text-align:center">8.9%<br><span style="font-size:10px;opacity:.85">(59件)</span></td><td style="background:rgb(185,190,216);color:#2c3e50;text-align:center">9.1%<br><span style="font-size:10px;opacity:.85">(60件)</span></td><td style="background:rgb(169,175,207);color:#2c3e50;text-align:center">11.2%<br><span style="font-size:10px;opacity:.85">(74件)</span></td><td style="background:rgb(81,92,158);color:#fff;text-align:center">22.7%<br><span style="font-size:10px;opacity:.85">(150件)</span></td><td style="background:rgb(26,41,128);color:#fff;text-align:center">30.6%<br><span style="font-size:10px;opacity:.85">(202件)</span></td><td style='text-align:center;color:#7f8c8d'>n=660</td></tr><tr><td style='font-weight:700'>予想5位</td><td style="background:rgb(200,204,224);color:#2c3e50;text-align:center">7.1%<br><span style="font-size:10px;opacity:.85">(47件)</span></td><td style="background:rgb(193,197,221);color:#2c3e50;text-align:center">8.0%<br><span style="font-size:10px;opacity:.85">(53件)</span></td><td style="background:rgb(179,184,213);color:#2c3e50;text-align:center">9.8%<br><span style="font-size:10px;opacity:.85">(65件)</span></td><td style="background:rgb(187,192,217);color:#2c3e50;text-align:center">8.8%<br><span style="font-size:10px;opacity:.85">(58件)</span></td><td style="background:rgb(196,199,222);color:#2c3e50;text-align:center">7.7%<br><span style="font-size:10px;opacity:.85">(51件)</span></td><td style="background:rgb(79,90,157);color:#fff;text-align:center">23.0%<br><span style="font-size:10px;opacity:.85">(152件)</span></td><td style="background:rgb(26,41,128);color:#fff;text-align:center">35.5%<br><span style="font-size:10px;opacity:.85">(234件)</span></td><td style='text-align:center;color:#7f8c8d'>n=660</td></tr><tr><td style='font-weight:700'>予想6位</td><td style="background:rgb(197,200,222);color:#2c3e50;text-align:center">7.6%<br><span style="font-size:10px;opacity:.85">(50件)</span></td><td style="background:rgb(201,205,225);color:#2c3e50;text-align:center">7.0%<br><span style="font-size:10px;opacity:.85">(46件)</span></td><td style="background:rgb(190,194,219);color:#2c3e50;text-align:center">8.5%<br><span style="font-size:10px;opacity:.85">(56件)</span></td><td style="background:rgb(189,193,218);color:#2c3e50;text-align:center">8.6%<br><span style="font-size:10px;opacity:.85">(57件)</span></td><td style="background:rgb(193,197,221);color:#2c3e50;text-align:center">8.0%<br><span style="font-size:10px;opacity:.85">(53件)</span></td><td style="background:rgb(78,89,156);color:#fff;text-align:center">23.2%<br><span style="font-size:10px;opacity:.85">(153件)</span></td><td style="background:rgb(26,41,128);color:#fff;text-align:center">37.1%<br><span style="font-size:10px;opacity:.85">(245件)</span></td><td style='text-align:center;color:#7f8c8d'>n=660</td></tr><tr><td style='font-weight:700'>予想7位</td><td style="background:rgb(213,216,231);color:#2c3e50;text-align:center">5.5%<br><span style="font-size:10px;opacity:.85">(36件)</span></td><td style="background:rgb(207,210,228);color:#2c3e50;text-align:center">6.2%<br><span style="font-size:10px;opacity:.85">(41件)</span></td><td style="background:rgb(198,202,223);color:#2c3e50;text-align:center">7.4%<br><span style="font-size:10px;opacity:.85">(49件)</span></td><td style="background:rgb(190,194,219);color:#2c3e50;text-align:center">8.5%<br><span style="font-size:10px;opacity:.85">(56件)</span></td><td style="background:rgb(184,189,215);color:#2c3e50;text-align:center">9.2%<br><span style="font-size:10px;opacity:.85">(61件)</span></td><td style="background:rgb(47,61,140);color:#fff;text-align:center">27.1%<br><span style="font-size:10px;opacity:.85">(179件)</span></td><td style="background:rgb(26,41,128);color:#fff;text-align:center">36.1%<br><span style="font-size:10px;opacity:.85">(238件)</span></td><td style='text-align:center;color:#7f8c8d'>n=660</td></tr><tr><td style='font-weight:700'>予想8位</td><td style="background:rgb(212,215,231);color:#2c3e50;text-align:center">5.5%<br><span style="font-size:10px;opacity:.85">(36件)</span></td><td style="background:rgb(209,212,229);color:#2c3e50;text-align:center">6.0%<br><span style="font-size:10px;opacity:.85">(39件)</span></td><td style="background:rgb(210,213,230);color:#2c3e50;text-align:center">5.9%<br><span style="font-size:10px;opacity:.85">(38件)</span></td><td style="background:rgb(195,198,221);color:#2c3e50;text-align:center">7.9%<br><span style="font-size:10px;opacity:.85">(51件)</span></td><td style="background:rgb(190,194,219);color:#2c3e50;text-align:center">8.5%<br><span style="font-size:10px;opacity:.85">(55件)</span></td><td style="background:rgb(37,51,134);color:#fff;text-align:center">28.5%<br><span style="font-size:10px;opacity:.85">(185件)</span></td><td style="background:rgb(26,41,128);color:#fff;text-align:center">37.8%<br><span style="font-size:10px;opacity:.85">(245件)</span></td><td style='text-align:center;color:#7f8c8d'>n=649</td></tr>
+    </table>
+    </div>
+    
+  <div class="note">
+    セルの濃淡は割合の高さを表すヒートマップ（濃いほど高い％）。各セルは「％（件数）」表記。
+    予想順位は騎手ボーナス加点後の合計スコアで再ソートしたもの。
+  </div>
+</div>
+
+<div class="section">
+  <h2>検証条件</h2>
+  <div class="note">
+    ・対象: cache/race_result 全件のうち 2勝クラス／3勝クラス／OP／重賞、n=660レース<br>
+    ・騎手の時点複勝率: レース日より前の騎乗履歴のみ使用（先読みなし・日付単位スナップショット）、20騎乗未満はボーナス+0<br>
+    ・加点テーブル: 複勝率25%未満 +0.0 / 25〜37% +1.5 / 37%以上 +2.5<br>
+    ・実装方法: scorer_turf.py / scorer_dart.py は無変更。検証専用に未使用フィールド(promotion)へ一時注入して再ソート<br>
+    ・外部アクセスなし（JRA/netkeiba取得禁止・キャッシュのみ使用）
+  </div>
+</div>
+
+</div>
+<footer>競馬予想システム — keiba-feature-gate 検証用レポート（本番未反映・検証中）</footer>
+</body>
+</html>

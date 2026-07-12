@@ -1,0 +1,317 @@
+﻿race_id,race_name,class,surface,horse_name,age_sex,n_past_races,odds,popularity,field_size,act_rank,score,frame,weight_carried,sire,plus_factors,minus_factors,n_minus,odds_bucket
+202503030110,飯坂温泉特別,2勝クラス,芝,イツモニコニコ,牝4,5,35.4,9,16,1,3.75,8,56.0,ビッグアーサー,"training_rank,prev2_run_bonus,win_count,bloodline_distance",long_rest,1,30倍以上
+202503030111,キビタキS,3勝クラス,芝,ロードトレイル,牡4,5,37.1,12,16,3,2.5,1,55.0,,"training_rank,pace_fit",,0,30倍以上
+202503030210,河北新報杯,2勝クラス,ダ,アレナパラシオ,牡4,5,65.6,12,15,1,2.5,4,58.0,,"second_start,win_count",,0,30倍以上
+202503030211,みちのくS,OP,芝,バースクライ,牝5,5,6.0,2,16,2,3.5,5,55.0,,"training_rank,grade_history,pace_fit",,0,3〜7倍
+202503030310,西郷特別,2勝クラス,ダ,テーオールビー,牝4,5,6.1,5,15,1,2.0,8,53.0,,"fastest_3f,training_rank",,0,3〜7倍
+202503030310,西郷特別,2勝クラス,ダ,タイセイミッション,セ4,5,4.6,2,15,2,2.0,5,57.0,キタサンブラック,training_rank,,0,3〜7倍
+202503030311,フルーツラインC,3勝クラス,ダ,メイショウカゼマチ,牡5,5,83.6,12,16,1,3.0,5,58.0,ミッキーアイル,"training_rank,win_count,bloodline_distance",,0,30倍以上
+202504040210,飛翼特別,2勝クラス,芝,ベイビーキッス,牝3,5,7.1,5,18,1,4.5,4,55.0,サンダースノーThunder Snow,"same_course,training_rank,rising_trend",,0,7〜15倍
+202504040310,菅名岳特別,2勝クラス,ダ,アスクシュタイン,牡3,5,4.5,3,15,1,1.5,2,56.0,,"fastest_3f,training_rank,win_count",first_surface,1,3〜7倍
+202504040310,菅名岳特別,2勝クラス,ダ,アラレタバシル,牡4,5,11.2,6,15,2,1.5,6,58.0,,training_rank,local_prev,1,7〜15倍
+202504040311,魚沼S,3勝クラス,芝,タガノデュード,牡4,5,5.1,1,18,3,2.0,7,58.0,ヤマカツエース,training_rank,,0,3〜7倍
+202504040410,村上特別,2勝クラス,芝,マイネルオーシャン,牡4,5,10.0,6,16,1,1.5,5,58.0,ゴールドシップ,"training_rank,bloodline_distance",,0,7〜15倍
+202505040109,八ケ岳特別,2勝クラス,芝,サトノヴィレ,セ5,5,78.7,10,12,1,3.0,5,58.0,,"training_rank,second_start",local_prev,1,30倍以上
+202505040109,八ケ岳特別,2勝クラス,芝,アルゲンテウス,セ6,5,10.6,4,12,2,2.5,2,58.0,シルバーステート,training_rank,post_surface,1,7〜15倍
+202505040110,白秋S,3勝クラス,芝,ユハンヌス,牡5,5,18.8,8,15,2,0.5,7,56.0,,training_rank,post_surface,1,15〜30倍
+202505040111,グリーンチャンネルC,OP,ダ,オメガギネス,牡5,5,8.4,4,16,1,2.0,4,60.0,ロゴタイプ,"training_rank,second_start",,0,7〜15倍
+202505040111,グリーンチャンネルC,OP,ダ,ユティタム,牡5,5,44.5,10,16,3,1.0,6,58.0,,training_rank,,0,30倍以上
+202505040112,3歳以上2勝クラス,2勝クラス,ダ,ピックアップライン,牡5,5,11.3,7,16,1,5.0,1,57.0,,"same_course,training_rank,second_start,inner_post_senko",post_surface,1,7〜15倍
+202505040209,tvk賞,2勝クラス,芝,タイセイカレント,牡3,5,17.2,9,17,3,4.375,5,56.0,,"training_rank,rising_trend,prev2_run_bonus,pace_fit",local_prev,1,15〜30倍
+202505040209,tvk賞,2勝クラス,芝,メイケイバートン,牡6,5,28.9,11,17,2,3.75,3,58.0,ミッキーアイル,"same_course,training_rank,prev2_run_bonus,inner_post_senko,bloodline_distance",,0,15〜30倍
+202505040211,毎日王冠,重賞,芝,ホウオウビスケッツ,牡5,5,4.3,2,11,2,3.0,7,57.0,マインドユアビスケッツMind Your Biscuits,"training_rank,second_start,distance_drop,grade_history","local_prev,post_surface",2,3〜7倍
+202505040310,東村山特別,2勝クラス,ダ,トクシースタローン,牡6,5,33.2,8,16,3,2.25,4,58.0,ホッコータルマエ,"training_rank,distance_drop,prev2_run_bonus",,0,30倍以上
+202505040410,テレビ静岡賞,3勝クラス,ダ,ペプチドタイガー,牡5,5,3.7,1,15,2,4.625,4,58.0,,"same_course,training_rank,prev_run_bonus,prev2_run_bonus",,0,3〜7倍
+202505040511,オクトーバーS,OP,芝,ニシノレヴナント,セ5,5,47.0,13,18,1,4.5,4,55.0,ネロ,"training_rank,distance_drop,grade_history,pace_fit",local_prev,1,30倍以上
+202505040612,3歳以上2勝クラス,2勝クラス,ダ,エチャケナ,牝4,5,21.2,7,14,3,4.0,6,56.0,ドレフォンDrefong,"training_rank,second_start,pace_fit",local_prev,1,15〜30倍
+202505040811,アルテミスS,重賞,芝,ミツカネベネラ,牝2,1,60.9,9,10,2,4.875,8,55.0,モーリス,"training_rank,prev_run_bonus,win_count,bloodline_distance",,0,30倍以上
+202505040812,3歳以上2勝クラス,2勝クラス,ダ,オセアエクスプレス,牡4,5,16.6,5,13,3,1.0,3,58.0,,training_rank,,0,15〜30倍
+202505040910,山中湖特別,2勝クラス,芝,イトカワサクラ,牝5,5,8.8,6,11,2,2.5,1,56.0,ゴールドシップ,"training_rank,second_start,distance_drop",,0,7〜15倍
+202505040910,山中湖特別,2勝クラス,芝,ミーントゥビー,牝3,5,7.9,5,11,3,2.0,3,54.0,リアルインパクト,"training_rank,second_start",,0,7〜15倍
+202505040911,神無月S,OP,ダ,タイセイブレイズ,牡7,5,134.5,13,16,3,0.0,1,57.0,ワールドエース,training_rank,post_surface,1,30倍以上
+202505041010,紅葉S,3勝クラス,芝,キュクヌス,牝4,5,18.1,6,12,2,4.25,7,56.0,,"training_rank,second_start,distance_drop,prev2_run_bonus",,0,15〜30倍
+202505041011,ペルセウスS,OP,ダ,サルヴァトーレ,牡5,5,18.2,10,16,2,2.5,2,55.0,,"training_rank,second_start,pace_fit",post_surface,1,15〜30倍
+202505041111,天皇賞(秋),重賞,芝,ジャスティンパレス,牡6,5,20.4,8,14,3,6.5,3,58.0,,"training_rank,rising_trend,distance_drop,pace_fit",post_surface,1,15〜30倍
+202505050110,錦秋S,3勝クラス,ダ,ナイトアクアリウム,牡5,5,16.6,5,11,1,3.0,2,58.0,ロードカナロア,"training_rank,second_start,bloodline_distance",post_surface,1,15〜30倍
+202505050111,京王杯2歳S,重賞,芝,トワニ,牝2,3,67.4,12,16,3,6.875,7,55.0,リオンディーズ,"training_rank,distance_drop,prev2_run_bonus,win_count,pace_fit",post_surface,1,30倍以上
+202505050312,3歳以上2勝クラス,2勝クラス,芝,ホウオウシェリー,牝4,5,32.2,8,13,3,0.0,7,56.0,ブリックスアンドモルタルBricks and Mortar,training_rank,,0,30倍以上
+202505050411,オーロC,OP,芝,レッドモンレーヴ,牡6,5,6.3,3,18,2,3.5,7,58.5,ロードカナロア,"training_rank,second_start,bloodline_distance",post_surface,1,3〜7倍
+202505050708,3歳以上2勝クラス,2勝クラス,ダ,タイセイアディクト,牡4,5,14.2,5,16,2,3.5,2,58.0,リオンディーズ,"training_rank,bloodline_distance,pace_fit",,0,7〜15倍
+202505050710,シャングリラS,3勝クラス,ダ,ガンウルフ,牡5,5,42.6,8,16,2,1.5,2,58.0,,"same_course,training_rank,inner_post_senko",post_surface,1,30倍以上
+202505050710,シャングリラS,3勝クラス,ダ,エストレヤデベレン,牡4,5,4.5,3,16,3,1.0,2,58.0,エピファネイア,"training_rank,inner_post_senko",post_surface,1,3〜7倍
+202505050810,アプローズ賞,2勝クラス,ダ,ジューンポンポン,牝6,5,27.9,9,16,3,1.0,6,56.0,マクフィMakfi,training_rank,,0,15〜30倍
+202506050207,3歳以上2勝クラス,2勝クラス,芝,オールマイデイズ,牡5,5,34.3,7,11,3,-1.0,8,58.0,リアルスティール,"training_rank,second_start",first_surface,1,30倍以上
+202506050208,3歳以上2勝クラス,2勝クラス,ダ,テセラリアン,牝4,5,9.8,5,16,3,-0.5,1,56.0,リアルスティール,"same_course,training_rank,bloodline_distance","post_surface,seasonal_sex",2,7〜15倍
+202506050312,3歳以上2勝クラス,2勝クラス,ダ,モリノセピア,牡4,5,7.3,3,13,2,-1.0,5,55.0,エスポワールシチー,training_rank,,0,7〜15倍
+202506050409,霞ケ浦特別,2勝クラス,芝,ダンツファイター,牡3,5,12.5,6,12,2,7.0,3,57.0,,"training_rank,second_start,rising_trend,prev_run_bonus,inner_post_senko,win_count",,0,7〜15倍
+202506050709,ベストウィッシュC,2勝クラス,芝,スムースベルベット,牝5,5,295.3,14,16,2,1.0,8,56.0,ディスクリートキャットDiscreet Cat,"training_rank,second_start",seasonal_sex,1,30倍以上
+202506050711,ホープフルS,重賞,芝,ロブチェン,牡2,1,19.8,7,16,1,5.875,2,56.0,ワールドプレミア,"training_rank,prev_run_bonus,win_count,bloodline_distance",post_surface,1,15〜30倍
+202506050811,有馬記念,重賞,芝,コスモキュランダ,牡4,5,111.5,11,16,2,0.5,5,58.0,アルアイン,training_rank,,0,30倍以上
+202507050111,飛騨S,3勝クラス,芝,サトミノキラリ,牡4,5,12.5,6,12,2,0.5,7,58.0,,training_rank,post_surface,1,7〜15倍
+202507050209,犬山特別,2勝クラス,ダ,エイシンナデシコ,牝3,5,25.5,10,16,1,2.5,8,55.0,,"training_rank,pace_fit",seasonal_sex,1,15〜30倍
+202507050211,チャンピオンズC,重賞,ダ,ウィルソンテソーロ,牡6,5,7.3,3,16,2,6.375,4,58.0,キタサンブラック,"training_rank,prev2_run_bonus,grade_history,win_count",,0,7〜15倍
+202507050211,チャンピオンズC,重賞,ダ,ラムジェット,牡4,5,12.8,7,16,3,6.375,4,58.0,マジェスティックウォリアーMajestic Warrior,"training_rank,second_start,prev2_run_bonus,grade_history,pace_fit",,0,7〜15倍
+202507050311,中日新聞杯,重賞,芝,ジューンテイク,牡4,5,9.5,5,17,3,3.5,2,57.0,キズナ,"training_rank,distance_drop,bloodline_distance",post_surface,1,7〜15倍
+202507050411,知立S,3勝クラス,芝,キャプテンシー,牡4,5,14.5,6,10,3,2.0,5,58.0,,"training_rank,distance_drop",,0,7〜15倍
+202507050509,クリスマスローズS,OP,芝,ミスターバッドガイ,牡2,5,25.5,6,9,3,6.5,5,56.0,,"training_rank,grade_history,win_count",local_prev,1,15〜30倍
+202507050511,尾頭橋S,3勝クラス,ダ,ピクシレーション,牝5,5,26.4,6,11,2,3.875,8,56.0,,"training_rank,second_start,prev2_run_bonus,win_count",seasonal_sex,1,15〜30倍
+202507050612,尾張特別,2勝クラス,芝,リチャードバローズ,牡4,5,8.3,4,18,1,3.0,8,56.0,,"training_rank,second_start",,0,7〜15倍
+202507050612,尾張特別,2勝クラス,芝,タイキヴァンクール,牡4,4,34.7,13,18,3,1.5,4,56.0,エイシンヒカリ,"training_rank,second_start",local_prev,1,30倍以上
+202508030108,3歳以上2勝クラス,2勝クラス,芝,マトラコーニッシュ,牝3,4,11.0,4,12,2,5.5,8,54.0,サートゥルナーリア,"training_rank,rising_trend,prev2_run_bonus,win_count",,0,7〜15倍
+202508030112,3歳以上2勝クラス,2勝クラス,ダ,モックモック,牡5,5,7.1,2,13,2,2.0,4,56.0,ダノンレジェンド,training_rank,,0,7〜15倍
+202508030209,大原S,3勝クラス,芝,アイスグリーン,牡5,5,9.7,4,9,2,2.0,3,58.0,,"training_rank,prev_run_bonus,prev2_run_bonus,inner_post_senko",post_surface,1,7〜15倍
+202508030210,藤森S,OP,ダ,スターターン,牡4,5,7.0,2,16,3,4.5,2,57.0,グレーターロンドン,"training_rank,grade_history,pace_fit",post_surface,1,7〜15倍
+202508030408,3歳以上2勝クラス,2勝クラス,ダ,ウィンターダフネ,牝5,5,37.8,10,14,2,2.5,7,53.0,ブラックタイド,"training_rank,bloodline_distance",,0,30倍以上
+202508030409,円山特別,2勝クラス,ダ,アメリカンビキニ,牝3,5,2.2,1,14,1,2.375,7,55.0,,"training_rank,second_start,prev_run_bonus,grade_history",,0,〜3倍
+202508030410,三年坂S,3勝クラス,芝,マイネルチケット,牡3,5,2.6,1,13,2,2.625,2,56.0,ダノンバラード,"training_rank,prev_run_bonus,prev2_run_bonus",,0,〜3倍
+202508030410,三年坂S,3勝クラス,芝,ウォーターガーベラ,牝3,5,5.4,2,13,3,2.25,7,54.0,,"training_rank,rising_trend,prev2_run_bonus",long_rest,1,3〜7倍
+202508030709,もみじS,OP,芝,リリージョワ,牝2,1,2.7,2,7,1,5.375,7,55.0,シルバーステート,"training_rank,prev_run_bonus,win_count",post_surface,1,〜3倍
+202508030710,京都競馬場開設100周年記念,3勝クラス,ダ,エストレヤデベレン,牡4,5,12.1,4,16,2,1.875,5,57.0,エピファネイア,"training_rank,prev2_run_bonus",,0,7〜15倍
+202508030711,秋華賞,重賞,芝,エリカエクスプレス,牝3,5,15.1,5,18,2,6.5,5,55.0,エピファネイア,"training_rank,second_start,grade_history,win_count,bloodline_distance",distance_up,1,15〜30倍
+202508030811,カシオペアS,OP,芝,ショウナンマグマ,セ6,5,74.2,9,10,3,2.5,8,58.0,ザファクター,"training_rank,second_start,distance_drop",post_surface,1,30倍以上
+202508031008,3歳以上2勝クラス,2勝クラス,ダ,ブレイゼスト,牡5,5,24.1,10,15,2,2.0,5,58.0,,"training_rank,second_start",,0,15〜30倍
+202508031010,ハロウィンS,3勝クラス,ダ,テーオーグランビル,牡5,5,5.3,4,13,1,1.5,4,58.0,Lea,"fastest_3f,training_rank,second_start,pace_fit","first_surface,local_prev",2,3〜7倍
+202508031108,3歳以上2勝クラス,2勝クラス,ダ,ズバットマサムネ,セ4,5,67.9,9,15,2,0.0,1,58.0,キンシャサノキセキ,"training_rank,bloodline_distance",post_surface,1,30倍以上
+202508031110,古都S,3勝クラス,芝,ヴォランテ,牡5,5,9.4,6,13,1,-3.0,2,57.0,サトノクラウン,training_rank,distance_up,1,7〜15倍
+202508031112,3歳以上2勝クラス,2勝クラス,芝,メイショウカイト,牝7,5,14.9,8,12,3,4.0,5,56.0,ラブリーデイ,"training_rank,second_start,distance_drop,pace_fit",,0,7〜15倍
+202508031112,3歳以上2勝クラス,2勝クラス,芝,ハワイアンタイム,セ5,5,27.8,10,12,1,2.0,7,58.0,ロードカナロア,"training_rank,bloodline_distance,pace_fit","long_rest,post_surface",2,15〜30倍
+202508040109,亀岡特別,2勝クラス,ダ,ジャスパーバローズ,牡5,5,88.5,10,16,1,1.5,2,58.0,,"training_rank,pace_fit",post_surface,1,30倍以上
+202508040110,清水S,3勝クラス,芝,エポックヴィーナス,牝4,5,30.4,9,12,3,6.5,1,56.0,ヴィクトワールピサ,"same_course,training_rank,second_start,win_count,bloodline_distance",post_surface,1,30倍以上
+202508040110,清水S,3勝クラス,芝,フロムダスク,牡5,5,70.2,11,12,1,3.625,8,58.0,Bolt d'Oro,"training_rank,second_start,rising_trend",,0,30倍以上
+202508040209,木津川特別,2勝クラス,芝,アンジョルラス,セ4,5,12.4,6,8,3,6.875,7,58.0,キズナ,"same_course,training_rank,prev2_run_bonus,win_count,bloodline_distance",,0,7〜15倍
+202508040210,貴船S,3勝クラス,ダ,ショウナンアビアス,牡5,5,16.1,6,12,2,0.25,2,58.0,ドレフォンDrefong,"training_rank,prev_run_bonus",post_surface,1,15〜30倍
+202508040308,3歳以上2勝クラス,2勝クラス,芝,サクソンジェンヌ,牝4,5,7.9,4,7,3,3.0,1,56.0,,"training_rank,pace_fit",local_prev,1,7〜15倍
+202508040309,深草特別,2勝クラス,ダ,スペシャルナンバー,牡6,5,49.7,11,15,3,-0.5,3,58.0,リオンディーズ,training_rank,,0,30倍以上
+202508040310,アンドロメダS,OP,芝,マイネルケレリウス,牡5,5,23.8,9,16,3,4.5,8,57.0,ルーラーシップ,"training_rank,rising_trend,prev2_run_bonus,bloodline_distance",,0,15〜30倍
+202508040311,デイリー杯2歳S,重賞,芝,アイガーリー,牡2,1,34.0,7,8,3,4.375,4,56.0,,"training_rank,prev_run_bonus,win_count",,0,30倍以上
+202508040408,3歳以上2勝クラス,2勝クラス,芝,オンザブルースカイ,牡3,5,116.1,14,15,2,1.5,2,57.0,,training_rank,post_surface,1,30倍以上
+202508040411,エリザベス女王杯,重賞,芝,ライラック,牝6,5,32.7,9,16,3,7.25,6,56.0,オルフェーヴル,"fastest_3f,training_rank,second_start,rising_trend,prev_run_bonus,bloodline_distance",distance_up,1,30倍以上
+202508040412,ドンカスターC,3勝クラス,芝,セブンマジシャン,牡5,5,4.0,2,12,3,3.0,4,57.0,,"training_rank,pace_fit",,0,3〜7倍
+202508040412,ドンカスターC,3勝クラス,芝,アウフヘーベン,牝5,5,11.1,6,12,2,2.5,8,53.0,,"training_rank,grade_history",post_surface,1,7〜15倍
+202508040611,マイルCS,重賞,芝,ウォーターリヒト,牡4,5,130.2,15,18,3,6.5,2,58.0,ドレフォンDrefong,"training_rank,second_start,grade_history,win_count",,0,30倍以上
+202508040612,醍醐S,3勝クラス,芝,パクスロマーナ,牝5,5,85.2,13,16,3,4.75,8,56.0,,"training_rank,second_start,prev2_run_bonus,win_count",,0,30倍以上
+202508040708,3歳以上2勝クラス,2勝クラス,ダ,クリノオリーブ,牝4,5,25.7,7,16,3,2.0,4,54.0,ニューイヤーズデイ,"training_rank,second_start",,0,15〜30倍
+202508040710,東山S,3勝クラス,芝,シュヴェルトライテ,牝6,5,50.4,11,12,3,1.0,4,53.0,,"training_rank,second_start",,0,30倍以上
+202508040711,京都2歳S,重賞,芝,ジャスティンビスタ,牡2,1,25.0,9,11,1,6.375,7,56.0,サートゥルナーリア,"same_course,training_rank,prev_run_bonus,win_count",,0,15〜30倍
+202508040711,京都2歳S,重賞,芝,ゴーイントゥスカイ,牡2,1,6.2,3,11,3,5.875,8,56.0,コントレイル,"training_rank,prev_run_bonus,win_count,bloodline_distance",,0,3〜7倍
+202508040711,京都2歳S,重賞,芝,アスクエジンバラ,牡2,4,49.9,10,11,2,4.875,3,56.0,リオンディーズ,"training_rank,prev2_run_bonus,win_count,bloodline_distance,pace_fit","distance_up,post_surface",2,30倍以上
+202508040712,3歳以上2勝クラス,2勝クラス,芝,アンビバレント,牡5,5,25.9,7,16,3,3.0,6,58.0,,"same_course,training_rank",,0,15〜30倍
+202508040810,花園S,3勝クラス,ダ,レーウィン,セ4,5,62.2,12,16,3,-2.0,7,58.0,,training_rank,distance_up,1,30倍以上
+202508040811,オータムリーフS,OP,ダ,ノーブルロジャー,牡4,5,12.5,4,16,3,2.25,4,58.0,パレスマリス,"training_rank,prev_run_bonus",,0,7〜15倍
+202508040812,京阪杯,重賞,芝,エーティーマクフィ,牡6,5,11.7,7,17,1,6.875,5,57.0,マクフィMakfi,"training_rank,prev2_run_bonus,win_count,pace_fit",,0,7〜15倍
+202508040812,京阪杯,重賞,芝,ヨシノイースター,牡7,5,8.2,4,17,3,6.0,2,57.0,ルーラーシップ,"training_rank,grade_history,inner_post_senko,win_count",,0,7〜15倍
+202509050111,鳴尾記念,重賞,芝,マテンロウレオ,牡6,5,7.5,3,14,3,5.6,2,57.0,ハーツクライ,"training_rank,second_start,distance_drop,grade_history,pace_fit","long_rest,post_surface",2,7〜15倍
+202509050208,3歳以上2勝クラス,2勝クラス,芝,ダンツエスプリ,牡6,5,23.3,6,8,3,4.75,5,58.0,,"training_rank,second_start,rising_trend,distance_drop",,0,15〜30倍
+202509050209,豊中特別,2勝クラス,ダ,ダディーズトリップ,牡9,5,53.2,11,13,3,2.0,5,58.0,ドリームジャーニー,"training_rank,second_start",,0,30倍以上
+202509050209,豊中特別,2勝クラス,ダ,タマモキャリコ,セ4,5,4.6,2,13,1,1.0,4,58.0,,training_rank,,0,3〜7倍
+202509050212,3歳以上2勝クラス,2勝クラス,芝,メイショウカイト,牝7,5,12.0,6,17,3,0.125,1,56.0,ラブリーデイ,"training_rank,rising_trend,prev_run_bonus,prev2_run_bonus",seasonal_sex,1,7〜15倍
+202509050311,リゲルS,OP,芝,ダノンエアズロック,牡4,5,24.3,6,13,3,3.25,2,57.0,モーリス,"training_rank,rising_trend,distance_drop,bloodline_distance",long_rest,1,15〜30倍
+202509050408,3歳以上2勝クラス,2勝クラス,ダ,クーデール,牝3,4,16.9,6,11,1,3.25,6,54.0,,"training_rank,prev2_run_bonus,win_count","local_prev,seasonal_sex",2,15〜30倍
+202509050408,3歳以上2勝クラス,2勝クラス,ダ,ゼンノツキヨミ,牝4,5,46.5,8,11,3,2.0,8,56.0,ロードカナロア,"training_rank,second_start,bloodline_distance",seasonal_sex,1,30倍以上
+202509050410,竹田城S,3勝クラス,ダ,リューデスハイム,牡4,5,16.6,6,16,2,2.0,8,55.0,,training_rank,,0,15〜30倍
+202509050509,ポインセチアS,OP,ダ,ロックターミガン,牡2,3,15.0,6,10,1,5.55,7,56.0,,"training_rank,second_start,distance_drop,prev2_run_bonus,grade_history,win_count,pace_fit",first_surface,1,15〜30倍
+202509050512,3歳以上2勝クラス,2勝クラス,芝,タイキエクセロン,牡6,5,181.1,15,16,2,3.625,4,58.0,アメリカンペイトリオット,"training_rank,rising_trend,pace_fit","local_prev,post_surface",2,30倍以上
+202509050608,3歳以上2勝クラス,2勝クラス,ダ,ビービーバザーク,牡3,5,179.1,13,15,2,2.0,3,57.0,,"second_start,inner_post_senko",,0,30倍以上
+202509050608,3歳以上2勝クラス,2勝クラス,ダ,オセアバトルプラン,牡5,5,297.2,15,15,3,2.0,5,58.0,バトルプランBattle Plan,"training_rank,second_start",,0,30倍以上
+202509050710,摩耶S,3勝クラス,ダ,ベルウェザー,牡4,5,34.6,10,16,2,3.0,3,58.0,ニューイヤーズデイ,"training_rank,pace_fit",,0,30倍以上
+202509050712,3歳以上2勝クラス,2勝クラス,芝,コスモエクスプレス,牡6,5,104.1,7,9,3,-1.0,2,58.0,エイシンヒカリ,training_rank,"local_prev,post_surface",2,30倍以上
+202509050809,フォーチュンC,2勝クラス,芝,レモンバーム,牝3,5,54.1,11,12,3,3.5,3,50.0,,"training_rank,second_start,pace_fit",seasonal_sex,1,30倍以上
+202509050811,ギャラクシーS,OP,ダ,ナムラフランク,牡6,5,56.0,11,16,3,2.5,3,58.0,ミッキーアイル,"training_rank,inner_post_senko,bloodline_distance",,0,30倍以上
+202509050811,ギャラクシーS,OP,ダ,ノーブルロジャー,牡4,5,5.3,2,16,1,1.75,2,58.0,パレスマリス,"training_rank,prev2_run_bonus,pace_fit",post_surface,1,3〜7倍
+202509050812,カウントダウンS,3勝クラス,芝,バンドシェル,牡4,5,3.7,1,10,3,4.35,2,58.0,,"same_course,training_rank,prev_run_bonus",,0,3〜7倍
+202602010411,UHB杯,3勝クラス,芝,サムハンター,牡8,5,34.7,13,15,3,0.0,5,52.0,,distance_drop,,0,30倍以上
+202603010110,花見山特別,2勝クラス,芝,ハニーローリエ,牝4,5,19.0,7,16,3,4.625,4,56.0,ルーラーシップ,"training_rank,second_start,prev_run_bonus,prev2_run_bonus,win_count","first_surface,local_prev,post_surface",3,15〜30倍
+202603010411,福島牝馬S,重賞,芝,コガネノソラ,牝5,5,29.2,9,16,1,4.875,7,55.0,ゴールドシップ,"training_rank,second_start,distance_drop,prev2_run_bonus,win_count",post_surface,1,15〜30倍
+202603010510,医王寺特別,2勝クラス,芝,セントールビースト,牡4,5,41.4,10,16,3,2.0,6,58.0,シニスターミニスターSinister Minister,"training_rank,second_start,rising_trend,prev_run_bonus",first_surface,1,30倍以上
+202603010610,尾瀬特別,2勝クラス,ダ,グランキングオー,牡4,5,10.5,5,15,1,0.5,2,58.0,シニスターミニスターSinister Minister,"training_rank,inner_post_senko","local_prev,post_surface",2,7〜15倍
+202603010611,モルガナイトS,OP,芝,レッドアヴァンティ,牡7,5,28.1,11,16,2,3.25,1,55.0,ドゥラメンテ,"training_rank,second_start,rising_trend",local_prev,1,15〜30倍
+202604010311,駿風S,3勝クラス,芝,ロードトレイル,牡5,5,17.7,8,16,2,2.0,6,58.0,,"training_rank,distance_drop",,0,15〜30倍
+202604010410,五泉特別,2勝クラス,ダ,モモンウールー,牝5,5,21.2,7,14,3,2.5,4,53.0,ドレフォンDrefong,"training_rank,pace_fit",,0,15〜30倍
+202604010511,新潟大賞典,重賞,芝,バレエマスター,牡7,5,49.7,12,15,2,0.5,6,55.0,スピルバーグ,training_rank,local_prev,1,30倍以上
+202604010611,弥彦S,3勝クラス,芝,タイキラフター,牡6,5,31.4,8,15,3,1.5,7,58.0,,"training_rank,distance_drop",post_surface,1,30倍以上
+202604010810,火打山特別,2勝クラス,ダ,テセラリアン,牝5,5,23.8,8,15,1,3.5,6,56.0,リアルスティール,"training_rank,second_start,bloodline_distance",,0,15〜30倍
+202604010811,韋駄天S,OP,芝,アメリカンステージ,牡4,5,3.2,1,16,2,0.75,7,57.5,Into Mischief,"training_rank,distance_drop,prev_run_bonus,prev2_run_bonus,grade_history",first_surface,1,3〜7倍
+202605010108,4歳以上2勝クラス,2勝クラス,ダ,セントラルヴァレー,セ5,5,24.9,7,15,3,3.5,2,58.0,Kantharos,"training_rank,pace_fit",post_surface,1,15〜30倍
+202605010109,白嶺S,3勝クラス,ダ,ヴィヴァン,牡8,5,63.8,12,16,1,1.5,1,55.0,ハーツクライ,"same_course,training_rank,pace_fit","local_prev,post_surface",2,30倍以上
+202605010211,根岸S,重賞,ダ,ロードフォンス,牡6,5,13.2,6,16,1,6.0,1,57.0,ロードカナロア,"training_rank,distance_drop,grade_history,win_count,bloodline_distance,pace_fit",post_surface,1,7〜15倍
+202605010510,銀蹄S,3勝クラス,ダ,ストレングス,牡5,5,10.1,5,16,1,2.5,6,58.0,シニスターミニスターSinister Minister,"training_rank,grade_history",,0,7〜15倍
+202605010608,4歳以上2勝クラス,2勝クラス,芝,フェイト,牡6,5,12.8,5,14,2,1.5,1,58.0,リアルスティール,"training_rank,rising_trend,inner_post_senko,bloodline_distance","first_surface,post_surface",2,7〜15倍
+202605010612,4歳以上2勝クラス,2勝クラス,ダ,クインズデネブ,牝5,5,8.0,4,16,1,-2.0,1,56.0,カレンブラックヒル,training_rank,"post_surface,seasonal_sex",2,7〜15倍
+202605010711,ダイヤモンドS,重賞,芝,ブレイヴロッカー,セ6,5,30.1,11,15,3,2.75,1,56.5,ドゥラメンテ,"training_rank,rising_trend,prev2_run_bonus,pace_fit",distance_up,1,30倍以上
+202605010810,ジャパンC2025ベストレース受賞記念,3勝クラス,芝,アスクセクシーモア,牡4,5,38.8,10,14,3,7.0,8,55.0,キタサンブラック,"same_course,training_rank,win_count,bloodline_distance,pace_fit",distance_up,1,30倍以上
+202605010812,大島特別,2勝クラス,ダ,アスクアイルビゼア,牡5,5,4.3,1,16,1,5.375,2,58.0,キズナ,"same_course,training_rank,prev_run_bonus,prev2_run_bonus,inner_post_senko",post_surface,1,3〜7倍
+202605020111,青葉賞,重賞,芝,タイダルロック,牡3,4,6.1,2,17,2,3.0,4,57.0,モーリス,"training_rank,grade_history,win_count",distance_up,1,3〜7倍
+202605020208,4歳以上2勝クラス,2勝クラス,芝,ホウオウシェリー,牝5,5,6.4,5,11,2,3.0,8,56.0,ブリックスアンドモルタルBricks and Mortar,training_rank,,0,3〜7倍
+202605020211,フローラS,重賞,芝,エンネ,牝3,1,6.7,3,12,2,4.875,8,55.0,キズナ,"training_rank,prev_run_bonus,win_count,bloodline_distance",,0,3〜7倍
+202605020311,京王杯SC,重賞,芝,セフィロ,牝6,5,80.6,14,18,2,4.375,3,55.0,イスラボニータ,"training_rank,prev_run_bonus,win_count,bloodline_distance",,0,30倍以上
+202605020312,4歳以上2勝クラス,2勝クラス,ダ,ライフゲート,セ4,5,19.2,6,14,3,-0.5,5,58.0,マインドユアビスケッツMind Your Biscuits,training_rank,local_prev,1,15〜30倍
+202605020512,4歳以上2勝クラス,2勝クラス,ダ,フィドルファドル,牝4,5,11.1,5,16,2,4.0,6,56.0,サトノアラジン,"training_rank,pace_fit",,0,7〜15倍
+202605020512,4歳以上2勝クラス,2勝クラス,ダ,ベルブリエ,牝5,5,187.1,14,16,3,2.0,6,56.0,キズナ,"training_rank,second_start,pace_fit",,0,30倍以上
+202605020608,4歳以上2勝クラス,2勝クラス,芝,ツーネサーン,牡5,5,13.4,6,11,2,4.5,3,58.0,Frankel,"training_rank,inner_post_senko,win_count",,0,7〜15倍
+202605020609,日吉特別,2勝クラス,ダ,ロードブレイズ,牡5,5,13.9,6,9,1,3.0,4,58.0,ロードカナロア,"training_rank,second_start,grade_history,pace_fit",,0,7〜15倍
+202605020609,日吉特別,2勝クラス,ダ,シゲルカミカゼ,牡6,5,42.2,7,9,3,1.5,8,58.0,ドレフォンDrefong,"distance_drop,pace_fit",,0,30倍以上
+202605020709,調布特別,2勝クラス,芝,ミーントゥビー,牝4,5,7.2,4,9,3,4.25,5,56.0,リアルインパクト,"training_rank,prev2_run_bonus,pace_fit",,0,7〜15倍
+202605020709,調布特別,2勝クラス,芝,ヴォンフレ,牝4,5,85.6,8,9,1,3.0,7,56.0,ブラックタイド,"training_rank,bloodline_distance,pace_fit","local_prev,post_surface",2,30倍以上
+202605020711,六社S,3勝クラス,芝,キングスコール,牡4,5,14.9,5,15,1,4.0,4,58.0,ドゥラメンテ,"training_rank,win_count,bloodline_distance,pace_fit",distance_up,1,7〜15倍
+202605020810,青梅特別,2勝クラス,ダ,トルショー,牡4,5,15.5,6,15,1,3.0,4,54.0,シニスターミニスターSinister Minister,"training_rank,pace_fit",local_prev,1,15〜30倍
+202605020810,青梅特別,2勝クラス,ダ,キングツェッペリン,牡5,5,34.7,10,15,3,0.5,5,54.0,モーニン,"training_rank,second_start",local_prev,1,30倍以上
+202605021109,富嶽賞,2勝クラス,ダ,サンドブラスト,牡5,5,30.6,8,16,1,2.25,3,58.0,モーニン,"training_rank,prev2_run_bonus,inner_post_senko",,0,30倍以上
+202605021112,4歳以上2勝クラス,2勝クラス,ダ,レッドリベルタ,牡5,5,8.1,2,16,3,1.5,7,56.0,リアルスティール,"training_rank,bloodline_distance",,0,7〜15倍
+202605021208,青嵐賞,2勝クラス,芝,アバンデル,牡5,5,36.4,7,14,2,4.25,5,58.0,ワールドエース,"training_rank,second_start,grade_history,pace_fit","long_rest,post_surface",2,30倍以上
+202605030411,パラダイスS,OP,芝,ショウナンザナドゥ,牝4,5,41.6,10,13,2,2.5,3,54.0,キズナ,"training_rank,distance_drop",,0,30倍以上
+202605030610,多摩川S,3勝クラス,芝,スマイルアップ,牝7,5,326.1,16,16,3,-1.5,7,56.0,,"second_start,win_count","first_surface,long_rest,post_surface",3,30倍以上
+202605030611,府中牝馬S,重賞,芝,ミアネーロ,牝5,5,94.6,14,16,3,1.75,2,55.0,ドゥラメンテ,"second_start,rising_trend,distance_drop,bloodline_distance","local_prev,long_rest,post_surface",3,30倍以上
+202606010109,招福S,3勝クラス,ダ,アスクデビューモア,牡5,5,11.0,5,11,1,3.0,3,58.0,マインドユアビスケッツMind Your Biscuits,"training_rank,pace_fit",,0,7〜15倍
+202606010110,ジュニアC,OP,芝,ジーティーシンドウ,牡3,1,3.8,3,8,3,5.875,7,57.0,オルフェーヴル,"same_course,training_rank,prev_run_bonus,win_count",,0,3〜7倍
+202606010111,中山金杯,重賞,芝,カラマティアノス,牡4,5,14.8,7,14,1,0.5999999999999996,7,55.0,レイデオロ,"training_rank,bloodline_distance,pace_fit",distance_up,1,7〜15倍
+202606010310,初凪賞,2勝クラス,芝,ストレイトトーカー,牡4,5,2.9,1,16,3,5.5,6,57.0,ファインニードル,"training_rank,grade_history,win_count",,0,〜3倍
+202606010411,フェアリーS,重賞,芝,ビッグカレンルーフ,牝3,5,30.8,10,16,2,1.0,2,55.0,アメリカンペイトリオット,"training_rank,grade_history,win_count","distance_up,seasonal_sex",2,30倍以上
+202606010411,フェアリーS,重賞,芝,レオアジャイル,牝3,2,36.0,11,16,3,-0.125,1,55.0,ダノンスマッシュ,"training_rank,prev2_run_bonus,win_count","distance_up,post_surface,seasonal_sex",3,30倍以上
+202606010611,カーバンクルS,OP,芝,メイクアスナッチ,牝6,5,97.0,13,16,3,2.75,3,52.0,ルーラーシップ,"training_rank,second_start,prev2_run_bonus","local_prev,seasonal_sex",2,30倍以上
+202606010611,カーバンクルS,OP,芝,ウイングレイテスト,牡9,5,12.6,7,16,1,1.5,4,58.0,スクリーンヒーロー,training_rank,post_surface,1,7〜15倍
+202606010612,4歳以上2勝クラス,2勝クラス,芝,スムースベルベット,牝6,5,23.0,10,16,3,5.25,1,56.0,ディスクリートキャットDiscreet Cat,"training_rank,rising_trend,pace_fit",seasonal_sex,1,15〜30倍
+202606010810,初霞賞,2勝クラス,ダ,シグムンド,牡5,5,13.5,4,10,3,0.10000000000000009,7,58.0,アポロキングダム,"training_rank,second_start",,0,7〜15倍
+202606010811,初富士S,3勝クラス,芝,フレーヴァード,牡6,5,22.8,8,18,3,1.5,2,55.0,,"training_rank,second_start","long_rest,post_surface",2,15〜30倍
+202606010907,4歳以上2勝クラス,2勝クラス,芝,コスモアンソロジー,牡4,5,14.5,4,9,2,4.5,5,57.0,ダノンバラード,"training_rank,distance_drop,pace_fit",,0,7〜15倍
+202606010911,AJCC,重賞,芝,エヒト,牡9,5,267.9,14,16,3,-0.5,8,57.0,ルーラーシップ,"training_rank,second_start,bloodline_distance,pace_fit","distance_up,long_rest",2,30倍以上
+202606020210,アクアマリンS,3勝クラス,芝,レッドエヴァンス,セ5,5,16.0,7,15,3,4.5,5,58.0,,"training_rank,second_start,pace_fit",,0,15〜30倍
+202606020212,4歳以上2勝クラス,2勝クラス,ダ,ラストシャリナ,牡4,5,68.5,13,16,1,3.0,1,58.0,アルアイン,"training_rank,inner_post_senko,win_count,bloodline_distance",post_surface,1,30倍以上
+202606020309,潮来特別,2勝クラス,芝,カエルム,牡5,5,21.2,6,12,1,2.5,8,56.0,ブラックタイド,"training_rank,bloodline_distance,pace_fit",local_prev,1,15〜30倍
+202606020311,中山牝馬S,重賞,芝,ビヨンドザヴァレー,牝6,5,28.8,11,16,2,7.125,1,55.0,イスラボニータ,"training_rank,rising_trend,prev2_run_bonus,inner_post_senko,win_count,bloodline_distance",,0,15〜30倍
+202606020410,総武S,OP,ダ,ミッキーヌチバナ,牡8,5,20.6,10,15,3,3.0,7,59.0,ダノンレジェンド,training_rank,,0,15〜30倍
+202606020410,総武S,OP,ダ,ブレイクフォース,牡7,5,14.0,6,15,1,2.1,5,58.0,アジアエクスプレス,training_rank,,0,7〜15倍
+202606020511,アネモネS,OP,芝,ディアダイヤモンド,牝3,3,5.3,2,16,1,5.875,2,55.0,サートゥルナーリア,"training_rank,second_start,prev2_run_bonus,inner_post_senko,win_count",,0,3〜7倍
+202606020511,アネモネS,OP,芝,ルールザウェイヴ,牝3,1,62.7,12,16,2,5.875,8,55.0,ロードカナロア,"same_course,training_rank,prev_run_bonus,win_count,bloodline_distance",,0,30倍以上
+202606020710,韓国馬事会杯,3勝クラス,ダ,リバートゥルー,牝6,5,15.4,7,13,3,4.0,8,56.0,,"same_course,training_rank",,0,15〜30倍
+202606020710,韓国馬事会杯,3勝クラス,ダ,ルージュアベリア,牝5,5,4.4,1,13,1,3.0,7,56.0,キズナ,"training_rank,bloodline_distance,pace_fit",,0,3〜7倍
+202606020810,スピカS,3勝クラス,芝,エラン,牡5,5,11.9,4,9,2,6.5,2,58.0,,"training_rank,second_start,distance_drop,inner_post_senko,win_count",post_surface,1,7〜15倍
+202606020812,4歳以上2勝クラス,2勝クラス,ダ,サツキノジョウ,牝5,5,38.4,10,16,3,3.5,5,56.0,レイデオロ,"second_start,bloodline_distance,pace_fit",,0,30倍以上
+202606020812,4歳以上2勝クラス,2勝クラス,ダ,エルフストラック,牝5,5,17.2,7,16,1,2.5,2,56.0,カリフォルニアクロームCalifornia Chrome,"training_rank,inner_post_senko",,0,15〜30倍
+202606030111,日経賞,重賞,芝,ローシャムパーク,牡7,5,6.2,3,15,3,5.5,8,57.0,ハービンジャーHarbinger,"training_rank,rising_trend,prev_run_bonus,grade_history,pace_fit",distance_up,1,3〜7倍
+202606030112,4歳以上2勝クラス,2勝クラス,ダ,メイショウカシワデ,牡5,5,16.5,6,16,2,5.65,5,58.0,シニスターミニスターSinister Minister,"training_rank,prev2_run_bonus,grade_history,pace_fit",,0,15〜30倍
+202606030211,マーチS,重賞,ダ,サンデーファンデー,牡6,5,12.8,8,15,1,1.675,8,59.0,スズカコーズウェイ,"training_rank,second_start,prev_run_bonus",,0,7〜15倍
+202606030312,4歳以上2勝クラス,2勝クラス,ダ,コパノヴィンセント,牡4,5,101.1,15,16,1,5.3,6,58.0,コパノリッキー,"training_rank,distance_drop,pace_fit",,0,30倍以上
+202606030409,安房特別,2勝クラス,芝,ダイシンアポロン,牡5,5,12.1,6,8,2,4.8,8,58.0,レイデオロ,"training_rank,bloodline_distance,pace_fit",,0,7〜15倍
+202606030510,卯月S,3勝クラス,ダ,キタノソワレ,牝5,5,29.2,9,13,3,1.25,5,56.0,,"training_rank,prev2_run_bonus",,0,15〜30倍
+202606030608,4歳以上2勝クラス,2勝クラス,芝,ソルトブリーズ,牡5,5,6.1,5,10,1,4.0,8,58.0,アドマイヤムーン,"same_course,training_rank,win_count",post_surface,1,3〜7倍
+202606030608,4歳以上2勝クラス,2勝クラス,芝,ヤマニンガラッシア,牡9,5,38.6,9,10,2,3.0,4,58.0,ディープインパクト,"training_rank,bloodline_distance,pace_fit",local_prev,1,30倍以上
+202606030611,春雷S,OP,芝,クラスペディア,牡4,5,16.2,5,16,1,3.55,5,57.0,ミスターメロディ,"training_rank,prev2_run_bonus,bloodline_distance",,0,15〜30倍
+202606030709,袖ケ浦特別,2勝クラス,芝,メイショウヨゾラ,牝5,5,7.6,4,12,1,3.0,6,56.0,グレーターロンドン,"training_rank,distance_drop",,0,7〜15倍
+202606030710,下総S,3勝クラス,ダ,オンザライン,セ8,5,134.2,13,13,3,3.0,3,58.0,,"training_rank,pace_fit",,0,30倍以上
+202606030710,下総S,3勝クラス,ダ,ワイドブリザード,セ5,5,4.7,2,13,1,0.0,6,58.0,カリフォルニアクロームCalifornia Chrome,training_rank,,0,3〜7倍
+202606030811,皐月賞,重賞,芝,ライヒスアドラー,牡3,3,23.4,9,18,3,11.9,5,57.0,シスキンSiskin,"same_course,training_rank,second_start,prev_run_bonus,prev2_run_bonus,grade_history,win_count",,0,15〜30倍
+202606030811,皐月賞,重賞,芝,リアライズシリウス,牡3,4,6.2,4,18,2,11.5,7,57.0,ポエティックフレアPoetic Flare,"training_rank,prev_run_bonus,grade_history,win_count",,0,3〜7倍
+202606030812,サンシャインS,3勝クラス,芝,ロジシルバー,牝6,5,9.8,6,18,2,1.0,1,54.0,,"training_rank,second_start",distance_up,1,7〜15倍
+202607010111,中京スポーツ杯,2勝クラス,ダ,モモンウールー,牝5,5,12.4,5,14,3,1.0,8,53.0,ドレフォンDrefong,"training_rank,distance_drop",,0,7〜15倍
+202607010209,伊良湖特別,2勝クラス,ダ,ランウインディ,牝5,5,10.4,4,15,1,4.1,8,56.0,エスポワールシチー,"training_rank,second_start",,0,7〜15倍
+202607010211,金鯱賞,重賞,芝,ジョバンニ,牡4,5,8.7,6,14,2,5.4,3,57.0,エピファネイア,"training_rank,second_start,distance_drop,bloodline_distance",post_surface,1,7〜15倍
+202607010309,岡崎特別,2勝クラス,芝,パルティクラール,牝6,5,15.5,7,10,2,2.375,6,56.0,ヴィクトワールピサ,"training_rank,distance_drop,prev2_run_bonus",,0,15〜30倍
+202607010310,豊明S,3勝クラス,ダ,ルシフェル,牝5,5,35.3,9,16,2,1.5,7,53.0,,"training_rank,second_start,distance_drop,pace_fit",first_surface,1,30倍以上
+202607010510,ターフオーソリティーオブインディア賞,2勝クラス,芝,ディーガレジェンド,牡5,5,15.8,7,12,1,2.5,6,58.0,モーリス,"training_rank,bloodline_distance",,0,15〜30倍
+202607010511,マレーシアC,3勝クラス,芝,ピックアチェリー,牝5,5,39.9,11,16,3,2.0,7,56.0,,"training_rank,second_start",,0,30倍以上
+202607010512,フィリピンT,2勝クラス,芝,キャッスルレイク,牝4,5,19.9,7,16,3,3.75,6,56.0,サートゥルナーリア,"training_rank,second_start,rising_trend",,0,15〜30倍
+202607010611,高松宮記念,重賞,芝,レッドモンレーヴ,牡7,5,67.0,15,18,2,8.5,3,58.0,ロードカナロア,"fastest_3f,training_rank,second_start,rising_trend,distance_drop,prev2_run_bonus,bloodline_distance",,0,30倍以上
+202607010612,鈴鹿特別,2勝クラス,ダ,メイショウタムシバ,牝5,5,15.7,5,16,2,3.0,7,56.0,ダノンレジェンド,"training_rank,distance_drop",,0,15〜30倍
+202608010110,寿S,3勝クラス,芝,フクノブルーレイク,牡4,5,13.9,6,9,3,2.0,7,57.0,ウインブライト,training_rank,,0,7〜15倍
+202608010111,京都金杯,重賞,芝,ショウナンアデイブ,牡7,5,137.7,18,18,3,4.0,5,54.0,ディープインパクト,"training_rank,distance_drop,bloodline_distance,pace_fit",,0,30倍以上
+202608010112,4歳以上2勝クラス,2勝クラス,芝,ララマセラシオン,牡5,5,31.4,10,12,1,1.5,7,58.0,カリフォルニアクロームCalifornia Chrome,"training_rank,second_start",post_surface,1,30倍以上
+202608010410,新春S,3勝クラス,芝,フライングブレード,牡6,5,279.0,14,15,3,1.5,8,58.0,,"training_rank,pace_fit",,0,30倍以上
+202608010609,稲荷特別,2勝クラス,芝,ジェットマグナム,牡4,5,4.1,3,10,1,3.0,8,57.0,ヘンリーバローズ,training_rank,,0,3〜7倍
+202608010609,稲荷特別,2勝クラス,芝,ピンキープロミス,牡6,5,93.5,9,10,3,2.125,8,58.0,ゴールドシップ,"training_rank,rising_trend,bloodline_distance",,0,30倍以上
+202608010610,紅梅S,OP,芝,テイエムスティール,牝3,1,5.5,2,9,3,5.875,4,55.0,リアルスティール,"training_rank,prev_run_bonus,win_count,bloodline_distance,pace_fit",seasonal_sex,1,3〜7倍
+202608010610,紅梅S,OP,芝,プリンセスモコ,牝3,2,7.3,3,9,2,3.125,1,55.0,Charlatan,"training_rank,prev_run_bonus,prev2_run_bonus,win_count",seasonal_sex,1,7〜15倍
+202608010611,羅生門S,3勝クラス,ダ,ノボリショウリュウ,牡5,5,16.5,6,16,3,1.5,2,58.0,,training_rank,post_surface,1,15〜30倍
+202608010611,羅生門S,3勝クラス,ダ,ジャーヴィス,牡6,5,204.0,14,16,2,0.0,1,58.0,,training_rank,post_surface,1,30倍以上
+202608010612,4歳以上2勝クラス,2勝クラス,芝,モアリジット,牡5,5,37.0,11,18,2,3.75,8,55.0,ロードカナロア,"training_rank,distance_drop,prev2_run_bonus,bloodline_distance",,0,30倍以上
+202608010709,小倉山特別,2勝クラス,ダ,ラヴオントップ,牝5,5,144.0,13,16,2,1.0,5,56.0,ヘニーヒューズHenny Hughes,training_rank,seasonal_sex,1,30倍以上
+202608010711,日経新春杯,重賞,芝,リビアングラス,牡6,5,21.2,9,13,3,-2.5,6,56.0,キズナ,"training_rank,bloodline_distance",distance_up,1,15〜30倍
+202608010809,若駒S,OP,芝,ショウナンハヤナミ,牡3,1,5.4,2,13,1,4.875,5,57.0,レイデオロ,"training_rank,prev_run_bonus,win_count,bloodline_distance",,0,3〜7倍
+202608010811,睦月S,OP,芝,レイベリング,牡6,5,106.5,12,14,1,2.5,4,58.0,Frankel,training_rank,,0,30倍以上
+202608010911,プロキオンS,重賞,ダ,サンデーファンデー,牡6,5,43.4,11,16,2,0.0,8,58.0,スズカコーズウェイ,training_rank,,0,30倍以上
+202608020210,八坂S,3勝クラス,芝,メイショウゲキリン,牡7,5,47.7,7,8,1,2.0,2,58.0,,"same_course,training_rank,inner_post_senko",post_surface,1,30倍以上
+202608020211,シルクロードS,重賞,芝,フィオライア,牝5,5,87.5,16,18,1,1.625,7,54.0,ファインニードル,"same_course,training_rank,rising_trend",seasonal_sex,1,30倍以上
+202608020212,4歳以上2勝クラス,2勝クラス,芝,サクラオーラ,牝7,5,13.9,5,7,3,3.875,1,56.0,シルバーステート,"same_course,training_rank,rising_trend,prev2_run_bonus,pace_fit","post_surface,seasonal_sex",2,7〜15倍
+202608020311,アルデバランS,OP,ダ,リアレスト,牡5,5,87.9,12,16,3,4.5,1,57.0,リアルスティール,"training_rank,bloodline_distance,pace_fit",,0,30倍以上
+202608020508,4歳以上2勝クラス,2勝クラス,ダ,タイガースパーク,牡6,5,47.7,9,13,3,4.0,7,58.0,リオンディーズ,"training_rank,bloodline_distance,pace_fit",,0,30倍以上
+202608030111,天王山S,OP,ダ,ジュンウィンダム,牝6,5,105.7,11,12,1,3.0,2,55.0,カレンブラックヒル,"fastest_3f,training_rank,pace_fit",post_surface,1,30倍以上
+202608030112,4歳以上2勝クラス,2勝クラス,芝,リカントロポ,牡4,5,7.2,4,11,3,3.25,8,58.0,グレーターロンドン,"training_rank,prev_run_bonus,pace_fit",,0,7〜15倍
+202608030209,比良山特別,2勝クラス,芝,エルディアブロ,牡8,5,46.1,8,11,3,3.75,6,54.0,キングカメハメハ,"training_rank,rising_trend,bloodline_distance,pace_fit",,0,30倍以上
+202608030210,センテニアルパークS,3勝クラス,芝,ミスタージーティー,牡5,5,34.4,11,18,3,4.0,1,57.0,,"training_rank,second_start,distance_drop",,0,30倍以上
+202608030412,東大路S,3勝クラス,ダ,ヤマニンアストロン,牡5,5,5.5,3,16,3,2.0,8,56.0,,training_rank,,0,3〜7倍
+202608030509,久御山特別,2勝クラス,芝,クスクス,牝5,5,31.8,7,11,3,2.0,8,56.0,リーチザクラウン,"same_course,training_rank,second_start",,0,30倍以上
+202608030510,鴨川特別,2勝クラス,芝,ヴィスマール,牡5,5,4.9,3,8,1,5.75,3,58.0,ブリックスアンドモルタルBricks and Mortar,"same_course,training_rank,second_start,rising_trend,inner_post_senko",post_surface,1,3〜7倍
+202608030609,烏丸S,3勝クラス,芝,サトノクローク,牡6,5,149.1,12,13,2,0.125,1,54.0,,"training_rank,rising_trend",distance_up,1,30倍以上
+202608030808,4歳以上2勝クラス,2勝クラス,ダ,ジョータルマエ,セ6,5,3.8,2,8,3,1.5,7,58.0,ホッコータルマエ,"same_course,training_rank",,0,3〜7倍
+202608030809,白川特別,2勝クラス,芝,サトノソティラス,牡4,5,5.6,2,10,3,3.875,1,58.0,サトノダイヤモンド,"training_rank,prev2_run_bonus,inner_post_senko,bloodline_distance",,0,3〜7倍
+202608030812,4歳以上2勝クラス,2勝クラス,芝,インブロリオ,牝4,5,7.7,4,12,3,2.0,3,56.0,アドマイヤムーン,"training_rank,second_start,pace_fit",local_prev,1,7〜15倍
+202608030910,シドニーT,3勝クラス,芝,ハニーコム,牝5,5,91.0,12,16,2,1.0,1,56.0,,"training_rank,second_start",distance_up,1,30倍以上
+202608030911,平安S,重賞,ダ,ヴァルツァーシャル,牡7,5,25.9,8,16,2,5.75,3,57.0,マクフィMakfi,"training_rank,second_start,prev2_run_bonus,grade_history,pace_fit",,0,15〜30倍
+202608031008,4歳以上2勝クラス,2勝クラス,ダ,クリノフィガロ,牡5,5,28.3,7,12,2,-0.5,6,58.0,ゴールドシップ,training_rank,,0,15〜30倍
+202608031009,聖護院特別,2勝クラス,芝,アラタマフェーヴル,牡5,5,11.0,5,10,1,2.75,7,58.0,オルフェーヴル,"training_rank,second_start,rising_trend","local_prev,post_surface",2,7〜15倍
+202608031108,4歳以上2勝クラス,2勝クラス,芝,アムールリーベ,牝5,5,38.3,8,12,2,2.5,1,56.0,シルバーステート,"training_rank,pace_fit",,0,30倍以上
+202608031210,安土城S,OP,芝,エコロブルーム,牡5,5,15.4,7,17,1,1.25,8,57.5,ダイワメジャー,"training_rank,prev_run_bonus,bloodline_distance","local_prev,long_rest",2,15〜30倍
+202608031212,渡月橋S,3勝クラス,芝,スマートワイス,牡5,5,3.8,1,18,1,5.0,4,58.0,,"same_course,training_rank,distance_drop",,0,3〜7倍
+202608031212,渡月橋S,3勝クラス,芝,エマヌエーレ,牡6,5,17.0,7,18,3,2.625,4,58.0,,"training_rank,rising_trend",,0,15〜30倍
+202609010108,すみれS,OP,芝,アーレムアレス,牡3,4,2.0,1,7,2,7.875,2,57.0,ハービンジャーHarbinger,"fastest_3f,training_rank,prev2_run_bonus,grade_history,win_count,pace_fit",post_surface,1,〜3倍
+202609010108,すみれS,OP,芝,ラージアンサンブル,牡3,4,14.3,6,7,1,7.675,4,57.0,ベンバトルBenbatl,"training_rank,rising_trend,prev2_run_bonus,win_count",,0,7〜15倍
+202609010210,戎橋S,3勝クラス,芝,ユハンヌス,牡6,5,6.9,3,8,3,4.55,1,58.0,,"training_rank,prev2_run_bonus",,0,3〜7倍
+202609010308,4歳以上2勝クラス,2勝クラス,ダ,エルフストラック,牝5,5,14.8,7,14,2,2.0,3,56.0,カリフォルニアクロームCalifornia Chrome,"training_rank,second_start,inner_post_senko",seasonal_sex,1,7〜15倍
+202609010309,松籟S,3勝クラス,芝,スピードリッチ,牡5,5,10.5,4,9,3,0.5,6,56.0,,"training_rank,win_count",distance_up,1,7〜15倍
+202609010312,4歳以上2勝クラス,2勝クラス,芝,ヨウシタンレイ,牝6,5,10.4,4,18,2,1.0,2,56.0,サトノアラジン,training_rank,"post_surface,seasonal_sex",2,7〜15倍
+202609010410,伊丹S,3勝クラス,ダ,ダブルジョーク,牡6,5,15.4,9,14,3,3.0,6,58.0,,"training_rank,pace_fit",,0,15〜30倍
+202609010510,なにわS,3勝クラス,ダ,ビルカール,牡6,5,26.4,8,15,3,2.0,8,58.0,,training_rank,,0,15〜30倍
+202609010511,フィリーズレビュー,重賞,芝,ギリーズボール,牝3,2,24.5,10,18,1,6.975,1,55.0,エピファネイア,"training_rank,second_start,distance_drop,prev2_run_bonus,win_count",,0,15〜30倍
+202609010511,フィリーズレビュー,重賞,芝,アイニードユー,牝3,5,6.9,4,18,3,6.5,4,55.0,ファインニードル,"training_rank,distance_drop,win_count",,0,3〜7倍
+202609010608,4歳以上2勝クラス,2勝クラス,ダ,バトンインディ,牡5,5,70.5,8,9,2,1.0,3,58.0,パイロPyro,training_rank,,0,30倍以上
+202609010610,岸和田S,3勝クラス,芝,ファインライン,牡5,5,23.9,9,14,1,2.5,1,58.0,ファインニードル,"fastest_3f,training_rank",post_surface,1,15〜30倍
+202609010611,大阪城S,OP,芝,ドラゴンブースト,牡4,5,8.8,7,12,1,5.675,2,58.0,スクリーンヒーロー,"training_rank,prev2_run_bonus,win_count",post_surface,1,7〜15倍
+202609010709,讃岐特別,2勝クラス,芝,ソングオブライフ,牡5,5,7.3,5,15,1,1.75,4,58.0,ブリックスアンドモルタルBricks and Mortar,"training_rank,rising_trend,pace_fit","local_prev,post_surface",2,7〜15倍
+202609010711,コーラルS,OP,ダ,ジャスティンアース,牡5,5,5.5,2,13,1,3.25,7,57.0,キズナ,"training_rank,prev2_run_bonus",,0,3〜7倍
+202609010808,4歳以上2勝クラス,2勝クラス,ダ,ケイアイメキラ,セ6,5,19.8,7,11,1,3.0,8,58.0,パイロPyro,"training_rank,second_start,pace_fit",local_prev,1,15〜30倍
+202609010810,甲南S,3勝クラス,ダ,メイプルタピット,牡5,5,24.0,8,14,2,3.0,3,55.0,,"training_rank,pace_fit",,0,15〜30倍
+202609010811,米子城S,OP,芝,タマモブラックタイ,牡6,5,27.8,11,15,1,4.25,6,56.0,デクラレーションオブウォー,"training_rank,second_start,rising_trend,pace_fit",local_prev,1,15〜30倍
+202609010811,米子城S,OP,芝,アスクワンタイム,牡5,5,6.7,2,15,3,3.0,4,56.0,ロードカナロア,"training_rank,rising_trend,prev_run_bonus,bloodline_distance",post_surface,1,3〜7倍
+202609010910,淀屋橋S,3勝クラス,芝,ナムラローズマリー,牝5,5,20.1,11,16,1,1.0,5,54.0,ミッキーアイル,"training_rank,bloodline_distance",local_prev,1,15〜30倍
+202609010910,淀屋橋S,3勝クラス,芝,ウナギノボリ,牡7,5,117.2,16,16,2,0.0,1,53.0,,,,0,30倍以上
+202609010911,若葉S,OP,芝,サヴォアフェール,牡3,2,6.8,2,12,3,2.125,6,57.0,エピファネイア,"training_rank,prev_run_bonus,prev2_run_bonus,win_count,bloodline_distance",first_surface,1,3〜7倍
+202609011009,皆生特別,2勝クラス,芝,クイックバイオ,牝5,5,24.6,6,8,2,3.1,8,56.0,ブリックスアンドモルタルBricks and Mortar,"training_rank,pace_fit",,0,15〜30倍
+202609020208,四国新聞杯,2勝クラス,芝,エコテーラー,牝5,5,17.3,6,7,1,4.0,4,56.0,スワーヴリチャード,"training_rank,grade_history,bloodline_distance",,0,15〜30倍
+202609020210,御堂筋S,3勝クラス,芝,ギャンブルルーム,牡5,5,15.4,6,11,1,2.75,4,58.0,キズナ,"training_rank,rising_trend,bloodline_distance",,0,15〜30倍
+202609020211,六甲S,OP,芝,メイショウチタン,牡9,5,29.9,10,13,3,2.0,1,58.0,ロードカナロア,"training_rank,inner_post_senko,bloodline_distance",post_surface,1,15〜30倍
+202609020311,チャーチルダウンズC,重賞,芝,アスクイキゴミ,牡3,1,13.8,5,14,1,6.375,8,57.0,ロードカナロア,"training_rank,prev_run_bonus,win_count,bloodline_distance",,0,7〜15倍
+202609020311,チャーチルダウンズC,重賞,芝,ユウファラオ,牡3,5,243.9,14,14,2,3.5,7,57.0,American Pharoah,"training_rank,pace_fit",,0,30倍以上
+202609020408,4歳以上2勝クラス,2勝クラス,芝,モアリジット,牡5,5,15.5,6,11,1,5.35,4,56.0,ロードカナロア,"same_course,training_rank,rising_trend,prev2_run_bonus,bloodline_distance",,0,15〜30倍
+202609020409,バイオレットS,OP,ダ,ビービークローサー,牡3,2,14.6,7,12,2,8.375,3,57.0,グレーターロンドン,"training_rank,distance_drop,prev2_run_bonus,win_count,pace_fit",,0,7〜15倍
+202609020512,4歳以上2勝クラス,2勝クラス,ダ,ゼンノツキヨミ,牝5,5,17.1,6,16,1,2.1,1,56.0,ロードカナロア,"same_course,training_rank,bloodline_distance",post_surface,1,15〜30倍
+202609020512,4歳以上2勝クラス,2勝クラス,ダ,クリノオリーブ,牝5,5,23.9,7,16,2,2.0,6,53.0,ニューイヤーズデイ,"training_rank,distance_drop",,0,15〜30倍
+202609020607,4歳以上2勝クラス,2勝クラス,芝,イゾラフェリーチェ,牝5,5,40.2,7,11,2,2.0,8,56.0,サトノクラウン,training_rank,,0,30倍以上
+202609020608,川西特別,2勝クラス,ダ,スマートカイロス,牡4,5,17.3,6,11,1,4.5,1,58.0,シニスターミニスターSinister Minister,"training_rank,inner_post_senko,win_count",,0,15〜30倍
+202609020609,忘れな草賞,OP,芝,ピカキウイ,牝3,2,24.7,9,14,2,6.125,6,55.0,エピファネイア,"same_course,training_rank,prev_run_bonus,prev2_run_bonus,win_count,bloodline_distance",,0,15〜30倍
+202609020611,桜花賞,重賞,芝,ジッピーチューン,牝3,3,79.3,12,18,3,7.175,6,55.0,ロードカナロア,"training_rank,prev2_run_bonus,grade_history,win_count,bloodline_distance",,0,30倍以上
+202609020709,吹田特別,2勝クラス,ダ,ダノンキラウェア,牡5,5,12.9,6,14,3,1.5,2,58.0,ロードカナロア,"fastest_3f,training_rank,bloodline_distance,pace_fit","first_surface,post_surface",2,7〜15倍
+202609020711,アンタレスS,重賞,ダ,ハグ,牡4,5,95.9,14,16,3,3.0,3,57.0,Justify,"training_rank,inner_post_senko",,0,30倍以上
+202609020812,4歳以上2勝クラス,2勝クラス,ダ,プウスカンドゥール,牝6,5,23.4,9,10,3,3.75,2,56.0,シャンハイボビーShanghai Bobby,"training_rank,prev2_run_bonus,pace_fit",local_prev,1,15〜30倍
+202609030409,武庫川特別,2勝クラス,芝,インフローレ,牝4,5,31.0,10,13,2,2.5,1,56.0,リオンディーズ,"training_rank,distance_drop",,0,30倍以上
+202609030609,高砂特別,2勝クラス,芝,ロードガレリア,牡4,0,3.5,3,7,1,-0.5,2,58.0,,,post_surface,1,3〜7倍
+202609030610,姫路S,3勝クラス,ダ,パシアンジャン,牡5,5,5.3,4,16,2,0.0,4,58.0,,,,0,3〜7倍
+202609030611,しらさぎS,重賞,芝,エルトンバローズ,牡6,5,12.9,7,18,1,-1.0,5,58.0,ディープブリランテ,,,0,7〜15倍
+202609030612,3歳以上2勝クラス,2勝クラス,ダ,ソウルアンドジャズ,セ5,5,17.5,5,13,2,0.1,3,58.0,ブリックスアンドモルタルBricks and Mortar,,,0,15〜30倍
+202610010110,海の中道特別,2勝クラス,芝,ショウナンガチ,牡5,5,10.8,4,8,3,4.75,8,58.0,ドゥラメンテ,"fastest_3f,training_rank,rising_trend,bloodline_distance",,0,7〜15倍
+202610010111,小倉牝馬S,重賞,芝,ボンドガール,牝5,5,17.7,8,18,2,-0.5,8,55.5,ダイワメジャー,"training_rank,grade_history,bloodline_distance","distance_up,seasonal_sex",2,15〜30倍
+202610010210,響灘特別,2勝クラス,ダ,パフ,牡5,5,6.6,3,16,3,1.75,2,58.0,レイデオロ,"training_rank,second_start,prev_run_bonus,inner_post_senko,bloodline_distance",post_surface,1,3〜7倍
+202610010210,響灘特別,2勝クラス,ダ,アイウィル,牡5,5,8.5,5,16,1,1.5,1,58.0,ドレフォンDrefong,"training_rank,second_start,pace_fit",post_surface,1,7〜15倍
+202610010210,響灘特別,2勝クラス,ダ,ギマール,牡5,5,16.4,8,16,2,1.5,2,58.0,カレンブラックヒル,"training_rank,pace_fit",post_surface,1,15〜30倍
+202610010309,有田特別,2勝クラス,ダ,ジョヴィアン,牡6,5,9.0,4,14,2,1.0,5,58.0,Justify,"training_rank,distance_drop",,0,7〜15倍
+202610010311,巌流島S,3勝クラス,芝,トーラスシャイン,牡5,5,8.3,3,18,2,0.5,4,55.0,,training_rank,post_surface,1,7〜15倍
+202610010510,RKB賞,2勝クラス,芝,トーアライデン,牡6,5,22.9,9,16,1,2.75,6,58.0,マインドユアビスケッツMind Your Biscuits,"training_rank,second_start,rising_trend",,0,15〜30倍
+202610010511,豊前S,3勝クラス,ダ,プルートマスター,牡7,5,14.8,10,16,3,1.5,5,55.0,,"second_start,win_count",,0,7〜15倍
+202610010511,豊前S,3勝クラス,ダ,ゴッドブルービー,牡6,5,6.5,2,16,2,1.25,2,57.0,,"training_rank,second_start,prev_run_bonus,inner_post_senko",post_surface,1,3〜7倍
+202610010610,由布院特別,2勝クラス,ダ,タイセイミッション,セ5,5,8.0,5,15,3,2.25,6,58.0,キタサンブラック,"training_rank,prev2_run_bonus",,0,7〜15倍
+202610010611,小倉日経賞,OP,芝,シルトホルン,牡6,5,6.6,4,12,2,-2.75,8,58.0,スクリーンヒーロー,"training_rank,prev2_run_bonus",distance_up,1,3〜7倍
+202610010810,大濠特別,2勝クラス,芝,トウカイエルデ,牡5,5,20.0,8,18,2,2.5,6,56.0,オルフェーヴル,"training_rank,grade_history",,0,15〜30倍
+202610010811,北九州短距離S,OP,芝,ジョーメッドヴィン,牡5,5,11.2,4,18,1,1.5,4,57.0,ドレフォンDrefong,training_rank,post_surface,1,7〜15倍
+202610010910,皿倉山特別,2勝クラス,芝,エコロレイズ,牡5,5,13.2,6,16,1,2.0,5,58.0,アメリカンペイトリオット,training_rank,,0,7〜15倍
+202610011110,早鞆特別,2勝クラス,ダ,アラナコア,牡5,5,9.9,6,16,3,2.0,2,56.0,ブリックスアンドモルタルBricks and Mortar,"training_rank,pace_fit",post_surface,1,7〜15倍
+202610011111,別府特別,2勝クラス,芝,ワザモノ,牡8,5,106.1,15,15,2,1.0,7,58.0,マツリダゴッホ,training_rank,,0,30倍以上
+202610011210,西日本新聞杯,2勝クラス,芝,ディアドコス,牡6,5,26.0,11,18,3,0.5,4,58.0,ネロ,training_rank,"long_rest,post_surface",2,15〜30倍
+202610011211,関門橋S,3勝クラス,芝,モズロックンロール,牡6,5,17.1,7,17,2,0.0,5,58.0,,training_rank,,0,15〜30倍
