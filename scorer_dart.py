@@ -37,6 +37,7 @@ from typing import Optional
 
 from jockey_form import get_jockey_form_bonus
 from training_form import get_training_score
+from aptitude_index import venue_aptitude_score
 
 # -------------------------------------------------------------------
 # 定数
@@ -124,7 +125,7 @@ RACE_GRADE_MAP: dict[str, int] = {
     "巴賞": 5, "七夕賞": 5, "プロキオンS": 5,
     "小倉2歳S": 5, "北九州記念": 5, "レパードS": 5,
     "エルムS": 5, "カペラS": 5, "シリウスS": 5, "マリーンC": 5,
-    "キーンランドC": 5, "札幌2歳S": 5,
+    "キーンランドC": 5, "札幌2歳S": 5, "函館2歳S": 5, "新潟2歳S": 5, "中京2歳S": 5,
     "エニフS": 5,
     "ラジオNIKKEI賞": 5,
     "アルテミスS": 5,
@@ -193,6 +194,7 @@ class ScoreBreakdown:
     seasonal_sex:          float = 0.0  # -1
     track_condition:       float = 0.0  # -2〜+2（道悪適性）
     pace_fit:              float = 0.0  # -2〜+2（ペース適性：スロー×先行/ハイ×差し）
+    venue_aptitude:        float = 0.0  # -1.5〜+2.0（競馬場巧者指数：当該場2走以上の場複勝率・aptitude_index.py）
     # 手動チェック用（自動採点には含めない）
     manual_inner_post: bool = False  # 内枠（1〜3枠）→ 先行確認要
 
@@ -216,6 +218,7 @@ class ScoreBreakdown:
             + max(self.bloodline_distance, 0.0)
             + max(self.track_condition, 0.0)
             + max(self.pace_fit, 0.0)
+            + max(self.venue_aptitude, 0.0)
         )
         negatives = (
             self.first_surface
@@ -234,6 +237,7 @@ class ScoreBreakdown:
             + min(self.bloodline_distance, 0.0)
             + min(self.track_condition, 0.0)
             + min(self.pace_fit, 0.0)
+            + min(self.venue_aptitude, 0.0)
         )
         return positives + max(negatives, -5.0)
 
@@ -1301,6 +1305,7 @@ def score_all(entries: list, race_info, training_data: dict = None,
                                  force_senko=(entry.horse_name in senko_set))
             )),
             pace_fit               = calc_pace_fit(all_styles[i], race_pace),
+            venue_aptitude         = venue_aptitude_score(recent, race_venue),
         )
         results.append((entry, d))
 
@@ -1342,6 +1347,7 @@ SCORE_LABELS = {
     "seasonal_sex":           "季節×性別",
     "track_condition":        "道悪適性",
     "pace_fit":               "ペース適性",
+    "venue_aptitude":         "競馬場巧者",
 }
 
 
