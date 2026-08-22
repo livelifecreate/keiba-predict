@@ -29,11 +29,14 @@
 """
 
 import re
+import os
 import requests
 from bs4 import BeautifulSoup
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from typing import Optional
+import trio_formation
+import class_achievement as _class_ach
 
 from jockey_form import get_jockey_form_bonus
 from training_form import get_training_score
@@ -195,6 +198,7 @@ class ScoreBreakdown:
     track_condition:       float = 0.0  # -2〜+2（道悪適性）
     pace_fit:              float = 0.0  # -2〜+2（ペース適性：スロー×先行/ハイ×差し）
     venue_aptitude:        float = 0.0  # -1.5〜+2.0（競馬場巧者指数：当該場2走以上の場複勝率・aptitude_index.py）
+    class_achievement:     float = 0.0  # 0〜+4（格×着差のクラス実績・class_achievement.py。ON時はgrade系を置換）
     # 手動チェック用（自動採点には含めない）
     manual_inner_post: bool = False  # 内枠（1〜3枠）→ 先行確認要
 
@@ -212,6 +216,7 @@ class ScoreBreakdown:
             + self.prev_run_bonus
             + self.prev2_run_bonus
             + self.grade_history
+            + self.class_achievement
             + self.inner_post_senko
             + self.win_count
             + self.jockey_form
@@ -833,11 +838,18 @@ def check_win_count(recent: list) -> float:
     """
     if not recent:
         return 0.0
-    wins = sum(1 for p in recent[:5] if getattr(p, "position", 99) == 1)
+    r5 = recent[:5]
+    wins = sum(1 for p in r5 if getattr(p, "position", 99) == 1)
     if wins >= 2:
         return 2.0
     if wins >= 1:
         return 1.0
+    if os.environ.get("WIN_ACH", "0") == "1":
+        placings = sum(1 for p in r5 if getattr(p, "position", 99) in (2, 3))
+        if placings >= 2:
+            return 1.0
+        if placings == 1:
+            return 0.5
     return 0.0
 
 
@@ -1307,6 +1319,13 @@ def score_all(entries: list, race_info, training_data: dict = None,
             pace_fit               = calc_pace_fit(all_styles[i], race_pace),
             venue_aptitude         = venue_aptitude_score(recent, race_venue),
         )
+        # クラス実績スコア（ON時は既存grade系3因子を置換・class_achievement.py）
+        # 現クラスより上での実績のみ評価（相対化）。OP戦はG1-G3のみ、同格実績は0になる。
+        if _class_ach.enabled():
+            d.class_achievement     = _class_ach.class_achievement_score(recent, race_class)
+            d.prev_high_grade_close = 0.0
+            d.prev2_high_grade_close = 0.0
+            d.grade_history         = 0.0
         results.append((entry, d))
 
     return results
@@ -1327,6 +1346,7 @@ SCORE_LABELS = {
     "prev_run_bonus":         "前走好走",
     "prev2_run_bonus":        "前々走好走",
     "grade_history":          "グレード実績(3-4走前)",
+    "class_achievement":      "クラス実績(格×着差)",
     "bloodline_distance":     "血統距離適性",
     "first_surface":          "初馬場種別",
     "distance_up":            "距離延長",
@@ -1491,33 +1511,21 @@ def save_csv(results: list[tuple], race_info, odds_map: dict = None, training_da
 
             h1 = nums[0]
 
-            # 推奨BOX: 3勝クラス×ダ→4頭BOX(4点) ROI107.4%(2026-07-12更新), OP以上→5頭BOX(10点) ROI124%
-            # このファイル(scorer_dart.py)はダート専用のためrace_class==3は常に3勝×ダ。
-            # 3勝×芝(scorer_turf.py側)は同時期に軸1頭+相手4頭(6点)へ置き換え済み。
-            if race_class == 3:
-                box_pool = nums[:4]
-                box_label = f"4頭BOX ({len(list(_comb(box_pool, 3)))}点) ← ROI107.4%"
-            else:
-                box_pool = nums[:5]
-                box_label = f"5頭BOX ({len(list(_comb(box_pool, 3)))}点) ← ROI124%"
+            # 買い目を「1軸(予想1位)-相手」の三連複に一本化（2026-08-02）。
+            # 相手幅は trio_formation.TRIO_RELAY で一元管理（デフォルト相手2〜6位=10点）。
+            # クラス別に 4box/5box と分けていたが、予想1位が最も信頼できる軸であることが
+            # 判明し、1軸-相手型に統一した。詳細は trio_formation.py 参照。
+            axis, relay, formb_list, _pts = trio_formation.formation(nums, race_class)
+            r_start, r_end = trio_formation.relay_range(race_class)
+            box_label = trio_formation.label(race_class)
 
-            formb_list = sorted(
-                [tuple(sorted(c, key=_sort_key)) for c in _comb(box_pool, 3)],
-                key=lambda c: tuple(_sort_key(x) for x in c)
-            )
-
+            # 参考: より攻める2軸型（予想1・2位固定-相手3〜9位）
             ax0, ax1 = nums[0], nums[1]
             form7 = set()
             for b in nums[2:9]:
                 if b not in (ax0, ax1):
                     form7.add(tuple(sorted([ax0, ax1, b], key=_sort_key)))
             form7_list = sorted(form7, key=lambda c: tuple(_sort_key(x) for x in c))
-
-            pool10 = nums[1:6]
-            form10 = sorted(
-                {tuple(sorted([h1, a, b], key=_sort_key)) for a, b in _comb(pool10, 2)},
-                key=lambda c: tuple(_sort_key(x) for x in c)
-            )
 
             writer.writerow([])
             writer.writerow(["■買いサイン", sign, sign_detail])
@@ -1527,23 +1535,16 @@ def save_csv(results: list[tuple], race_info, odds_map: dict = None, training_da
                 for line in eval_comment:
                     writer.writerow(["", line])
             writer.writerow([])
-            writer.writerow(["■三連複BOX",
+            writer.writerow(["■三連複1軸-相手",
                              box_label,
-                             f"対象馬:{','.join(str(x) for x in box_pool)}",
+                             f"軸:{axis}番{top_entry.horse_name} / 相手(予想{r_start}〜{r_end}位):{','.join(str(x) for x in relay)}",
                              f"{len(formb_list)}点"])
             for c in formb_list:
                 writer.writerow(["", f"{c[0]}－{c[1]}－{c[2]}"])
             writer.writerow([])
-            writer.writerow(["■三連複10点",
-                             f"軸:{h1}番{top_entry.horse_name}",
-                             f"相手(2〜6位):{','.join(str(x) for x in pool10)}",
-                             f"{len(form10)}点"])
-            for c in form10:
-                writer.writerow(["", f"{c[0]}－{c[1]}－{c[2]}"])
-            writer.writerow([])
-            writer.writerow(["■三連複7点",
+            writer.writerow(["■参考:2軸型(3〜9位相手)",
                              f"軸:{ax0}番{top_entry.horse_name}×{ax1}番{sec_entry.horse_name}",
-                             f"相手(3〜9位):{','.join(nums[2:9])}",
+                             f"相手(3〜9位):{','.join(str(x) for x in nums[2:9])}",
                              f"{len(form7_list)}点"])
             for c in form7_list:
                 writer.writerow(["", f"{c[0]}－{c[1]}－{c[2]}"])

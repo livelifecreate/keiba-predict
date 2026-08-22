@@ -27,6 +27,7 @@ from scorer_dart import score_all as score_dart, save_csv as save_csv_dart
 from netkeiba_scraper import TrainingData as TD, fetch_training_data
 from jra_scraper import build_jra_url, get_entry_list as get_entry_list_jra, fetch_track_condition, JraParamError
 from hli_calculator import calculate_hli
+import trio_formation
 
 
 def _fetch_training(race_id: str) -> dict:
@@ -36,6 +37,17 @@ def _fetch_training(race_id: str) -> dict:
         return result or {}
     except Exception:
         return {}
+
+
+def _cached_odds_map(race_id: str) -> dict:
+    """race_resultキャッシュの終値オッズを {馬名: odds} で返す（過去日の再現予想用フォールバック）。
+    終値は発走前の市場評価そのもので、バックテストのオッズ利用と同一。着順は参照しない。"""
+    from cache_store import cache_get
+    d = cache_get("race_result", race_id)
+    if not d:
+        return {}
+    return {e.get("horse_name"): e.get("odds", 0)
+            for e in d.get("entries", []) if e.get("horse_name") and e.get("odds")}
 
 
 _jra_param_error_warned = False  # 同一実行中に何度も警告しない
@@ -126,28 +138,21 @@ def gen_eval_comment(sorted_results, odds_map, n_horses, sign_level, sign_detail
         lines.append(f"[A] {top_entry.horse_name}（1着固定）× 紐4頭（2-3着）12点")
         lines.append(f"[B] 紐4頭（1着）× {top_entry.horse_name}（2着固定）× 紐4頭（3着）12点")
 
-    elif sign_level == "box4axis":
-        # 3勝クラス×芝: 軸1頭+相手4頭(6点) ROI117.5%（2026-07-12、純粋4頭BOXのROI11.5%悪化を受けて置き換え）
-        if gap < 1:
-            lines.append(f"上位横並び（乖離{gap:.1f}pt）。三連複1軸4頭(6点)で軸を固定しつつ相手をカバー。")
-        elif 14 <= n_horses <= 17:
-            lines.append(f"{n_horses}頭立て。三連複1軸4頭(6点)でカバレッジを確保。")
-        if not lines:
-            lines.append(f"乖離{gap:.1f}pt・{n_horses}頭。三連複1軸4頭(6点)推奨（ROI117.5%）。")
-
-    elif sign_level in ("box4", "box5"):
-        buy_n = 4 if sign_level == "box4" else 5
-        buy_pts = 4 if buy_n == 4 else 10
+    elif sign_level == "trio_axis":
+        # 全クラス共通: 1軸(予想1位)-相手 の三連複（相手幅は trio_formation で管理）
+        start, end = trio_formation.relay_range(race_class)
+        pts = trio_formation.point_count(race_class)
+        form = f"三連複1軸-相手{end - start + 1}頭({pts}点)"
         if odds1 and odds1 < 2:
-            lines.append(f"断然人気{odds1:.1f}倍：複勝率87.9%・三連複{buy_n}頭BOX回収率141%（バックテスト33R）。")
+            lines.append(f"断然人気{odds1:.1f}倍：予想1位の複勝率が高く軸信頼度大。{form}で相手を広くカバー。")
         if gap < 1:
-            lines.append(f"上位横並び（乖離{gap:.1f}pt）。三連複{buy_n}頭BOX({buy_pts}点)で広くカバー。")
+            lines.append(f"上位横並び（乖離{gap:.1f}pt）。1位を軸に固定し{form}で相手をカバー。")
         elif 14 <= n_horses <= 17:
-            lines.append(f"{n_horses}頭立て。三連複{buy_n}頭BOX({buy_pts}点)でカバレッジを確保。")
-        if odds1 and 5 <= odds1 < 10 and race_class >= 4:
-            lines.append(f"OP以上×{odds1:.1f}倍帯。三連複{buy_n}頭BOX推奨。")
+            lines.append(f"{n_horses}頭立て。{form}でカバレッジを確保。")
+        if odds1 and odds1 >= 10 and race_class >= 3:
+            lines.append(f"軸{odds1:.1f}倍(高配当帯)：当たれば妙味大だが軸が飛ぶと全外れのため妙味重視の一番。")
         if not lines:
-            lines.append(f"乖離{gap:.1f}pt・{n_horses}頭。三連複{buy_n}頭BOX({buy_pts}点)推奨。")
+            lines.append(f"乖離{gap:.1f}pt・{n_horses}頭。予想1位を軸に{form}推奨（5頭BOXを的中率・ROIとも上回る型）。")
 
     return lines
 
@@ -155,7 +160,7 @@ def gen_eval_comment(sorted_results, odds_map, n_horses, sign_level, sign_detail
 def calc_buy_sign(sorted_results, odds_map, n_horses, race_class=0, surface=""):
     """
     Returns: (sign_level, sign_text, detail_text)
-      sign_level: "tierce" / "box4" / "box4axis" / "box5" / "skip" / "neutral"
+      sign_level: "tierce" / "trio_axis" / "skip" / "neutral"
       race_class: 0=未勝利 1=1勝 2=2勝 3=3勝 4=OP 5=GIII 6=GII 7=GI
       surface: "芝" / "ダ"（3勝クラスの買い目分岐に使用。2026-07-12〜）
     """
@@ -189,14 +194,13 @@ def calc_buy_sign(sorted_results, odds_map, n_horses, race_class=0, surface=""):
         detail = f"3勝クラス×{odds1:.1f}倍 / 乖離{gap:.1f}pt {n}頭 / A+B 24点"
         return "tierce", "🏇 三連単A+B推奨", detail
 
-    # 買い目: 3勝クラス×ダ→4頭BOX(4点、ROI107.4%)、3勝クラス×芝→軸1頭+相手4頭(6点、ROI117.5%)、
-    #         OP以上→5頭BOX(10点)
-    # 2026-07-12: 3勝クラス×芝の純粋4頭BOXは騎手フォーム・調教評価スコア導入後にROI11.5%まで
-    # 悪化したため、同じ4頭プールでも軸型(1軸4頭)に置き換えた。3勝クラス×ダは変更なし。
+    # 買い目: 全クラス「1軸(予想1位)-相手」の三連複フォーメーションに一本化（2026-08-02）。
+    # 相手幅は trio_formation.TRIO_RELAY で一元管理（デフォルト相手2〜6位=10点）。
+    # 経緯: クラス別に box4/box4axis/box5 と分岐していたが、予想順位別複勝率が
+    #   1位49%>2位42%>3位35%… と単調で1位が最も信頼できる軸と判明。2軸型は不安定な
+    #   予想2位を必須にするため夏に弱く、1軸-相手2〜6位(10点)が5頭BOXを的中率・ROI
+    #   両面で上回った（全期間n=688: 18.5%/115.4% vs 17.9%/108.8%）。
     # ※ 乖離≥5ptの高信頼7点推奨は廃止（バックテスト: 単勝ROI50%・5BOX ROI40%）
-    is_box4      = (race_class == 3 and surface == "ダ")
-    is_box4axis  = (race_class == 3 and surface != "ダ")
-
     ctx = []
     if odds1 and odds1 < 2:
         ctx.append(f"断然人気{odds1:.1f}倍(複勝87.9%/5BOX回収141%)")
@@ -211,11 +215,7 @@ def calc_buy_sign(sorted_results, odds_map, n_horses, race_class=0, surface=""):
     ctx.append(f"乖離{gap:.1f}pt/{n}頭")
     detail = " / ".join(ctx)
 
-    if is_box4:
-        return "box4", "三連複4頭BOX (4点)", detail
-    if is_box4axis:
-        return "box4axis", "三連複1軸4頭 (6点)", detail
-    return "box5", "三連複5頭BOX (10点)", detail
+    return "trio_axis", f"三連複{trio_formation.label(race_class)}", detail
 
 
 # ── クラス判定 ─────────────────────────────────────────────────────────
@@ -233,6 +233,8 @@ def main(argv=None):
     parser.add_argument("--all-class", action="store_true", help="全クラス（デフォルト: 2勝以上）")
     parser.add_argument("--venue",     default="",          help="会場絞り込み（例: 東京）")
     parser.add_argument("--min-class", type=int, default=2, help="最低クラス（0=未勝利 2=2勝 4=OP）")
+    parser.add_argument("--dates",     default="",
+                        help="対象日を明示指定（YYYY-MM-DD,...）。過去日の再現予想用。指定時は当日オッズ取得失敗時にrace_resultキャッシュの終値へフォールバック")
     parser.add_argument("--track",     default="",
                         help="馬場状態（例: 良 / 稍重 / 重 / 不良 / 東京:良,阪神:稍重）")
     args = parser.parse_args(argv)
@@ -251,7 +253,9 @@ def main(argv=None):
         sat = today + datetime.timedelta(days=days_to_sat)
         sun = sat + datetime.timedelta(days=1)
 
-    if args.sat:
+    if args.dates:
+        dates = [datetime.date.fromisoformat(d.strip()) for d in args.dates.split(",") if d.strip()]
+    elif args.sat:
         dates = [sat]
     elif args.sun:
         dates = [sun]
@@ -320,6 +324,12 @@ def main(argv=None):
             print(f"  → スキップ（新馬戦）")
             continue
 
+        # 障害戦スキップ（フラット用採点ロジックの対象外。surfaceが空で道悪/コース補正も効かない）
+        if "障害" in (race_info.conditions or "") or "障害" in race_info.name \
+                or race_info.name.endswith("JS") or race_info.surface not in ("芝", "ダ"):
+            print(f"  → スキップ（障害戦）")
+            continue
+
         # クラスフィルタ
         race_class = race_class_from_conditions(race_info.conditions, race_info.name)
         if race_class < min_class:
@@ -351,11 +361,22 @@ def main(argv=None):
                 odds_map = {num_to_name[k]: v for k, v in odds_raw.items() if k in num_to_name}
                 if odds_map:
                     print(f"  [オッズ] netkeiba APIから{len(odds_map)}頭取得")
+        if not odds_map and args.dates:
+            # 過去日の再現予想: 当日オッズが取れないためrace_resultキャッシュの終値を使う
+            odds_map = _cached_odds_map(race_id)
+            if odds_map:
+                print(f"  [オッズ] race_resultキャッシュ終値から{len(odds_map)}頭取得（再現予想）")
         if not odds_map:
             print(f"  [オッズ] 取得失敗（発走後またはAPI不応答）")
 
-        # 馬場状態: --track引数 > JRA公式 > netkeiba shutuba
-        tc = get_track(race_info.venue, jra_track or race_info.track_condition)
+        # 馬場状態: --track引数 > JRA公式 > netkeiba shutuba > (再現予想時)race_resultキャッシュ
+        auto_tc = jra_track or race_info.track_condition
+        if not auto_tc and args.dates:
+            from cache_store import cache_get
+            _d = cache_get("race_result", race_id)
+            if _d:
+                auto_tc = _d.get("track_condition", "")
+        tc = get_track(race_info.venue, auto_tc)
         tc_src = "手動指定" if track_map else ("JRA公式" if jra_track else ("netkeiba" if race_info.track_condition else "未取得"))
         print(f"  [馬場] {tc or '未取得'}（{tc_src}）")
 
@@ -409,12 +430,8 @@ def main(argv=None):
         # ファイル名タグ（買いサインのみ付与）
         if sign_level == "tierce":
             sign_tag = "★三連単A+B"
-        elif sign_level == "box4":
-            sign_tag = "★三連複4頭BOX"
-        elif sign_level == "box4axis":
-            sign_tag = "★三連複1軸4頭"
-        elif sign_level == "box5":
-            sign_tag = "★三連複5頭BOX"
+        elif sign_level == "trio_axis":
+            sign_tag = "★三連複1軸相手"
         else:
             sign_tag = None
 
@@ -442,7 +459,7 @@ def main(argv=None):
 
         print(f"  → {sign_text}  {sign_detail}")
 
-        if sign_level in ("tierce", "box4", "box4axis", "box5"):
+        if sign_level in ("tierce", "trio_axis"):
             def horse_label(i):
                 if len(sorted_r) > i:
                     e = sorted_r[i][0]
@@ -464,6 +481,9 @@ def main(argv=None):
                 "top3":       horse_label(2),
                 "top4":       horse_label(3),
                 "top5":       horse_label(4),
+                "top6":       horse_label(5),
+                "top7":       horse_label(6),
+                "top8":       horse_label(7),
                 "level":      sign_level,
                 "race_class": race_class,
             })
@@ -474,9 +494,7 @@ def main(argv=None):
     print(f"{'='*65}")
 
     tierces    = [s for s in sign_summary if s["level"] == "tierce"]
-    box4s      = [s for s in sign_summary if s["level"] == "box4"]
-    box4axiss  = [s for s in sign_summary if s["level"] == "box4axis"]
-    box5s      = [s for s in sign_summary if s["level"] == "box5"]
+    trios      = [s for s in sign_summary if s["level"] == "trio_axis"]
 
     if tierces:
         print("\n🏇 三連単A+Bフォーメーション（24点）")
@@ -489,38 +507,17 @@ def main(argv=None):
             print(f"  ({s['detail']})")
             print(f"  race_id: {s['race_id']}")
 
-    if box4s:
-        print("\n三連複4頭BOX (4点) ── 3勝クラス")
-        for s in box4s:
-            horses = "・".join(h for h in [s.get(f"top{i}","") for i in range(1, 5)] if h)
-            surface = s.get("surface", "")
-            print(f"  {s['date']} {s['venue']} {s['name']}  {s['dist']}  {s['n']}頭")
-            print(f"  BOX: {horses}")
-            print(f"  馬連: {s['top1']} × {s['top2']}")
-            if surface == "ダ":
-                print(f"  ワイド: {s['top1']} × {s['top2']}")
-            print(f"  ({s['detail']})")
-            print(f"  race_id: {s['race_id']}")
-
-    if box4axiss:
-        print("\n三連複1軸4頭 (6点) ── 3勝クラス×芝")
-        for s in box4axiss:
+    if trios:
+        # 相手幅は trio_formation.TRIO_RELAY で決まる（クラス別に変わりうるので各行で算出）
+        print("\n三連複 1軸-相手 フォーメーション ── 全クラス共通")
+        for s in trios:
+            rc = s.get("race_class", 0)
+            start, end = trio_formation.relay_range(rc)
             axis = s["top1"]
-            himo = "・".join(h for h in [s.get("top2",""), s.get("top3",""), s.get("top4",""), s.get("top5","")] if h)
+            himo = "・".join(h for h in [s.get(f"top{i}","") for i in range(2, end + 1)] if h)
             print(f"  {s['date']} {s['venue']} {s['name']}  {s['dist']}  {s['n']}頭")
-            print(f"  軸: {axis} → 相手: {himo}  6点")
+            print(f"  軸: {axis} → 相手(予想{start}〜{end}位): {himo}  {trio_formation.point_count(rc)}点")
             print(f"  馬連: {s['top1']} × {s['top2']}")
-            print(f"  ({s['detail']})")
-            print(f"  race_id: {s['race_id']}")
-
-    if box5s:
-        print("\n三連複5頭BOX (10点) + 馬連・ワイド ── OP以上")
-        for s in box5s:
-            horses = "・".join(h for h in [s.get(f"top{i}","") for i in range(1, 6)] if h)
-            print(f"  {s['date']} {s['venue']} {s['name']}  {s['dist']}  {s['n']}頭")
-            print(f"  BOX: {horses}")
-            print(f"  馬連: {s['top1']} × {s['top2']}")
-            print(f"  ワイド: {s['top1']} × {s['top2']}")
             print(f"  ({s['detail']})")
             print(f"  race_id: {s['race_id']}")
 
