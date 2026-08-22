@@ -1,0 +1,1597 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>順位間スコアギャップ検証レポート</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Helvetica Neue', 'Hiragino Sans', sans-serif; background: #f5f6fa; color: #2c3e50; font-size: 14px; }
+  .header { background: linear-gradient(135deg, #1a2980, #26d0ce); color: white; padding: 32px 40px; }
+  .header h1 { font-size: 24px; font-weight: 700; margin-bottom: 6px; }
+  .header p { opacity: 0.85; font-size: 13px; }
+  .container { max-width: 1200px; margin: 0 auto; padding: 24px 20px; }
+  .section { background: white; border-radius: 10px; padding: 24px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+  .section h2 { font-size: 18px; font-weight: 700; border-left: 4px solid #1a2980; padding-left: 12px; margin-bottom: 16px; color: #1a2980; }
+  .section h4 { font-size: 13.5px; font-weight: 700; margin: 20px 0 8px; color: #34495e; }
+  .purpose { font-weight: 400; color: #7f8c8d; font-size: 12px; }
+  table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  .table-wrap { overflow-x: auto; }
+  th { background: #1a2980; color: white; padding: 7px 10px; text-align: left; font-weight: 600; white-space: nowrap; }
+  td { padding: 6px 10px; border-bottom: 1px solid #ecf0f1; white-space: nowrap; }
+  .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 20px; }
+  @media (max-width: 720px) { .summary-grid { grid-template-columns: repeat(2, 1fr); } }
+  .kpi { background: #f0f3ff; border-radius: 8px; padding: 14px 16px; text-align: center; }
+  .kpi-val { font-size: 20px; font-weight: 800; color: #1a2980; }
+  .kpi-label { font-size: 11px; color: #7f8c8d; margin-top: 3px; }
+  .note { background: #fef9e7; border-left: 3px solid #f39c12; padding: 10px 14px; border-radius: 0 6px 6px 0; font-size: 12px; margin: 12px 0; line-height: 1.7; }
+  .finding { background: #eaf4fb; border-left: 3px solid #2980b9; padding: 10px 14px; border-radius: 0 6px 6px 0; font-size: 12px; margin: 12px 0; line-height: 1.7; }
+  .conclusion { background: #eafaf1; border-left: 3px solid #27ae60; padding: 12px 16px; border-radius: 0 6px 6px 0; font-size: 13px; margin: 12px 0; line-height: 1.9; }
+  .guide-table td, .guide-table th { white-space: normal; }
+  footer { text-align: center; color: #95a5a6; font-size: 11px; padding: 20px; }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>順位間スコアギャップ検証レポート</h1>
+  <p>競馬予想システム ／ 対象: 2勝クラス以上・n=660レース ／ 現行ロジック（jockey_form + training_form込み） ／ 生成日: 2026-07-12</p>
+</div>
+
+<div class="container">
+
+<div class="section">
+  <h2>使い方ガイド（全体傾向からの示唆）</h2>
+  <div class="conclusion">
+    <table class="guide-table">
+      <tr><th>状況</th><th>示唆される買い方</th></tr>
+      <tr><td>1-2位ギャップ ≥3pt</td><td>1位を軸に信頼できる（単勝・3連単軸・複勝厚張り）。勝率17-18%→26-30%、複勝率42-50%→58-61%に上昇</td></tr>
+      <tr><td>1-2位ギャップ &lt;3pt</td><td>1位2位を対等に扱う（馬連流し・ワイドBOX、3連単は1-2位入れ替え両面）</td></tr>
+      <tr><td>2-3位ギャップ（大小問わず）</td><td>3位は基本的に切らない。ギャップが大きくても3位複勝率は下がらない（今回のデータでは根拠なし）</td></tr>
+      <tr><td>4-5位ギャップ ≥3pt</td><td>5位を紐から外して点数を絞ってよい（両者3着内率が2.2%→0.0%に低下）</td></tr>
+    </table>
+  </div>
+  <div class="note">
+    末尾の帯（5pt以上等）はクラスによってはn&lt;10と少なく、参考程度に見てください。各テーブルはn≥5のみ表示しています。
+    セルの濃淡はヒートマップ（濃いほど高い％）。
+  </div>
+</div>
+
+
+    <div class="section">
+      <h2>全体（n=660レース）</h2>
+      
+    <h4>1位-2位のギャップ <span class="purpose">（軸としての信頼度）</span></h4>
+    <div class="table-wrap">
+    <table>
+      <tr>
+        <th>ギャップ帯</th><th>n</th><th>順位維持率</th><th>上位勝率</th>
+        <th>上位側複勝率</th><th>下位側複勝率</th><th>両者3着内率</th>
+      </tr>
+      
+        <tr>
+            <td style="font-weight:700">0〜0.5pt</td>
+            <td style="text-align:center;color:#7f8c8d">100</td>
+            <td style="text-align:center;background:rgb(61,74,147);color:#fff;font-weight:600">59.0%</td>
+            <td style="text-align:center;background:rgb(151,158,197);color:#2c3e50;font-weight:600">18.0%</td>
+            <td style="text-align:center;background:rgb(107,116,172);color:#fff;font-weight:600">42.0%</td>
+            <td style="text-align:center;background:rgb(128,136,184);color:#fff;font-weight:600">36.0%</td>
+            <td style="text-align:center;background:rgb(132,140,187);color:#2c3e50;font-weight:600">16.0%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">0.5〜1pt</td>
+            <td style="text-align:center;color:#7f8c8d">84</td>
+            <td style="text-align:center;background:rgb(68,80,151);color:#fff;font-weight:600">57.1%</td>
+            <td style="text-align:center;background:rgb(152,159,198);color:#2c3e50;font-weight:600">17.9%</td>
+            <td style="text-align:center;background:rgb(78,90,157);color:#fff;font-weight:600">50.0%</td>
+            <td style="text-align:center;background:rgb(112,121,175);color:#fff;font-weight:600">40.5%</td>
+            <td style="text-align:center;background:rgb(64,76,149);color:#fff;font-weight:600">25.0%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">1〜2pt</td>
+            <td style="text-align:center;color:#7f8c8d">162</td>
+            <td style="text-align:center;background:rgb(91,102,164);color:#fff;font-weight:600">50.0%</td>
+            <td style="text-align:center;background:rgb(149,156,196);color:#2c3e50;font-weight:600">18.5%</td>
+            <td style="text-align:center;background:rgb(76,88,156);color:#fff;font-weight:600">50.6%</td>
+            <td style="text-align:center;background:rgb(67,80,151);color:#fff;font-weight:600">53.1%</td>
+            <td style="text-align:center;background:rgb(52,65,142);color:#fff;font-weight:600">26.5%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">2〜3pt</td>
+            <td style="text-align:center;color:#7f8c8d">118</td>
+            <td style="text-align:center;background:rgb(74,86,155);color:#fff;font-weight:600">55.1%</td>
+            <td style="text-align:center;background:rgb(158,164,201);color:#2c3e50;font-weight:600">16.9%</td>
+            <td style="text-align:center;background:rgb(99,109,168);color:#fff;font-weight:600">44.1%</td>
+            <td style="text-align:center;background:rgb(99,109,168);color:#fff;font-weight:600">44.1%</td>
+            <td style="text-align:center;background:rgb(106,115,172);color:#fff;font-weight:600">19.5%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">3〜5pt</td>
+            <td style="text-align:center;color:#7f8c8d">119</td>
+            <td style="text-align:center;background:rgb(70,82,152);color:#fff;font-weight:600">56.3%</td>
+            <td style="text-align:center;background:rgb(105,115,172);color:#fff;font-weight:600">26.1%</td>
+            <td style="text-align:center;background:rgb(50,64,141);color:#fff;font-weight:600">58.0%</td>
+            <td style="text-align:center;background:rgb(98,108,168);color:#fff;font-weight:600">44.5%</td>
+            <td style="text-align:center;background:rgb(81,93,158);color:#fff;font-weight:600">22.7%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">5pt以上</td>
+            <td style="text-align:center;color:#7f8c8d">77</td>
+            <td style="text-align:center;background:rgb(59,72,146);color:#fff;font-weight:600">59.7%</td>
+            <td style="text-align:center;background:rgb(83,95,160);color:#fff;font-weight:600">29.9%</td>
+            <td style="text-align:center;background:rgb(40,54,135);color:#fff;font-weight:600">61.0%</td>
+            <td style="text-align:center;background:rgb(103,113,171);color:#fff;font-weight:600">42.9%</td>
+            <td style="text-align:center;background:rgb(56,69,144);color:#fff;font-weight:600">26.0%</td>
+        </tr>
+    </table>
+    </div>
+    
+    <h4>2位-3位のギャップ <span class="purpose">（3位を切るか判断）</span></h4>
+    <div class="table-wrap">
+    <table>
+      <tr>
+        <th>ギャップ帯</th><th>n</th><th>順位維持率</th><th>—</th>
+        <th>上位側複勝率</th><th>下位側複勝率</th><th>両者3着内率</th>
+      </tr>
+      
+        <tr>
+            <td style="font-weight:700">0〜0.5pt</td>
+            <td style="text-align:center;color:#7f8c8d">150</td>
+            <td style="text-align:center;background:rgb(74,85,154);color:#fff;font-weight:600">55.3%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(123,132,182);color:#fff;font-weight:600">37.3%</td>
+            <td style="text-align:center;background:rgb(139,147,191);color:#2c3e50;font-weight:600">32.7%</td>
+            <td style="text-align:center;background:rgb(219,221,235);color:#2c3e50;font-weight:600">4.7%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">0.5〜1pt</td>
+            <td style="text-align:center;color:#7f8c8d">142</td>
+            <td style="text-align:center;background:rgb(93,104,165);color:#fff;font-weight:600">49.3%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(123,132,182);color:#fff;font-weight:600">37.3%</td>
+            <td style="text-align:center;background:rgb(116,125,178);color:#fff;font-weight:600">39.4%</td>
+            <td style="text-align:center;background:rgb(168,174,207);color:#2c3e50;font-weight:600">11.3%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">1〜2pt</td>
+            <td style="text-align:center;color:#7f8c8d">159</td>
+            <td style="text-align:center;background:rgb(49,62,140);color:#fff;font-weight:600">62.9%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(91,101,164);color:#fff;font-weight:600">46.5%</td>
+            <td style="text-align:center;background:rgb(150,157,197);color:#2c3e50;font-weight:600">29.6%</td>
+            <td style="text-align:center;background:rgb(173,178,209);color:#2c3e50;font-weight:600">10.7%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">2〜3pt</td>
+            <td style="text-align:center;color:#7f8c8d">102</td>
+            <td style="text-align:center;background:rgb(68,81,151);color:#fff;font-weight:600">56.9%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(71,83,153);color:#fff;font-weight:600">52.0%</td>
+            <td style="text-align:center;background:rgb(140,148,191);color:#2c3e50;font-weight:600">32.4%</td>
+            <td style="text-align:center;background:rgb(150,157,197);color:#2c3e50;font-weight:600">13.7%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">3〜5pt</td>
+            <td style="text-align:center;color:#7f8c8d">78</td>
+            <td style="text-align:center;background:rgb(57,70,145);color:#fff;font-weight:600">60.3%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(51,65,142);color:#fff;font-weight:600">57.7%</td>
+            <td style="text-align:center;background:rgb(151,157,197);color:#2c3e50;font-weight:600">29.5%</td>
+            <td style="text-align:center;background:rgb(147,154,195);color:#2c3e50;font-weight:600">14.1%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">5pt以上</td>
+            <td style="text-align:center;color:#7f8c8d">29</td>
+            <td style="text-align:center;background:rgb(119,128,179);color:#fff;font-weight:600">41.4%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(97,107,167);color:#fff;font-weight:600">44.8%</td>
+            <td style="text-align:center;background:rgb(109,118,174);color:#fff;font-weight:600">41.4%</td>
+            <td style="text-align:center;background:rgb(96,107,167);color:#fff;font-weight:600">20.7%</td>
+        </tr>
+    </table>
+    </div>
+    
+    <h4>3位-4位のギャップ <span class="purpose">（4位を切るか判断）</span></h4>
+    <div class="table-wrap">
+    <table>
+      <tr>
+        <th>ギャップ帯</th><th>n</th><th>順位維持率</th><th>—</th>
+        <th>上位側複勝率</th><th>下位側複勝率</th><th>両者3着内率</th>
+      </tr>
+      
+        <tr>
+            <td style="font-weight:700">0〜0.5pt</td>
+            <td style="text-align:center;color:#7f8c8d">182</td>
+            <td style="text-align:center;background:rgb(59,71,146);color:#fff;font-weight:600">59.9%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(134,142,188);color:#2c3e50;font-weight:600">34.1%</td>
+            <td style="text-align:center;background:rgb(183,188,215);color:#2c3e50;font-weight:600">20.3%</td>
+            <td style="text-align:center;background:rgb(217,220,234);color:#2c3e50;font-weight:600">4.9%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">0.5〜1pt</td>
+            <td style="text-align:center;color:#7f8c8d">140</td>
+            <td style="text-align:center;background:rgb(86,97,161);color:#fff;font-weight:600">51.4%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(134,142,187);color:#2c3e50;font-weight:600">34.3%</td>
+            <td style="text-align:center;background:rgb(141,149,192);color:#2c3e50;font-weight:600">32.1%</td>
+            <td style="text-align:center;background:rgb(184,188,215);color:#2c3e50;font-weight:600">9.3%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">1〜2pt</td>
+            <td style="text-align:center;color:#7f8c8d">198</td>
+            <td style="text-align:center;background:rgb(101,111,169);color:#fff;font-weight:600">47.0%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(137,145,189);color:#2c3e50;font-weight:600">33.3%</td>
+            <td style="text-align:center;background:rgb(135,143,188);color:#2c3e50;font-weight:600">33.8%</td>
+            <td style="text-align:center;background:rgb(200,204,224);color:#2c3e50;font-weight:600">7.1%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">2〜3pt</td>
+            <td style="text-align:center;color:#7f8c8d">68</td>
+            <td style="text-align:center;background:rgb(86,97,161);color:#fff;font-weight:600">51.5%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(146,153,194);color:#2c3e50;font-weight:600">30.9%</td>
+            <td style="text-align:center;background:rgb(135,143,188);color:#2c3e50;font-weight:600">33.8%</td>
+            <td style="text-align:center;background:rgb(176,181,211);color:#2c3e50;font-weight:600">10.3%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">3〜5pt</td>
+            <td style="text-align:center;color:#7f8c8d">62</td>
+            <td style="text-align:center;background:rgb(80,92,158);color:#fff;font-weight:600">53.2%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(147,154,195);color:#2c3e50;font-weight:600">30.6%</td>
+            <td style="text-align:center;background:rgb(175,180,210);color:#2c3e50;font-weight:600">22.6%</td>
+            <td style="text-align:center;background:rgb(255,255,255);color:#2c3e50;font-weight:600">0.0%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">5pt以上</td>
+            <td style="text-align:center;color:#7f8c8d">10</td>
+            <td style="text-align:center;background:rgb(26,41,128);color:#fff;font-weight:600">70.0%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(114,123,176);color:#fff;font-weight:600">40.0%</td>
+            <td style="text-align:center;background:rgb(219,222,235);color:#2c3e50;font-weight:600">10.0%</td>
+            <td style="text-align:center;background:rgb(255,255,255);color:#2c3e50;font-weight:600">0.0%</td>
+        </tr>
+    </table>
+    </div>
+    
+    <h4>4位-5位のギャップ <span class="purpose">（5位を切るか判断）</span></h4>
+    <div class="table-wrap">
+    <table>
+      <tr>
+        <th>ギャップ帯</th><th>n</th><th>順位維持率</th><th>—</th>
+        <th>上位側複勝率</th><th>下位側複勝率</th><th>両者3着内率</th>
+      </tr>
+      
+        <tr>
+            <td style="font-weight:700">0〜0.5pt</td>
+            <td style="text-align:center;color:#7f8c8d">188</td>
+            <td style="text-align:center;background:rgb(67,79,150);color:#fff;font-weight:600">57.4%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(140,148,191);color:#2c3e50;font-weight:600">32.4%</td>
+            <td style="text-align:center;background:rgb(157,163,200);color:#2c3e50;font-weight:600">27.7%</td>
+            <td style="text-align:center;background:rgb(206,209,227);color:#2c3e50;font-weight:600">6.4%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">0.5〜1pt</td>
+            <td style="text-align:center;color:#7f8c8d">167</td>
+            <td style="text-align:center;background:rgb(94,104,165);color:#fff;font-weight:600">49.1%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(176,181,211);color:#2c3e50;font-weight:600">22.2%</td>
+            <td style="text-align:center;background:rgb(170,175,208);color:#2c3e50;font-weight:600">24.0%</td>
+            <td style="text-align:center;background:rgb(213,216,232);color:#2c3e50;font-weight:600">5.4%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">1〜2pt</td>
+            <td style="text-align:center;color:#7f8c8d">170</td>
+            <td style="text-align:center;background:rgb(66,78,150);color:#fff;font-weight:600">57.6%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(142,150,192);color:#2c3e50;font-weight:600">31.8%</td>
+            <td style="text-align:center;background:rgb(172,177,209);color:#2c3e50;font-weight:600">23.5%</td>
+            <td style="text-align:center;background:rgb(219,221,235);color:#2c3e50;font-weight:600">4.7%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">2〜3pt</td>
+            <td style="text-align:center;color:#7f8c8d">82</td>
+            <td style="text-align:center;background:rgb(79,90,157);color:#fff;font-weight:600">53.7%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(160,166,202);color:#2c3e50;font-weight:600">26.8%</td>
+            <td style="text-align:center;background:rgb(160,166,202);color:#2c3e50;font-weight:600">26.8%</td>
+            <td style="text-align:center;background:rgb(217,220,234);color:#2c3e50;font-weight:600">4.9%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">3〜5pt</td>
+            <td style="text-align:center;color:#7f8c8d">45</td>
+            <td style="text-align:center;background:rgb(65,78,150);color:#fff;font-weight:600">57.8%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(176,181,211);color:#2c3e50;font-weight:600">22.2%</td>
+            <td style="text-align:center;background:rgb(200,203,224);color:#2c3e50;font-weight:600">15.6%</td>
+            <td style="text-align:center;background:rgb(238,239,245);color:#2c3e50;font-weight:600">2.2%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">5pt以上</td>
+            <td style="text-align:center;color:#7f8c8d">8</td>
+            <td style="text-align:center;background:rgb(26,41,128);color:#fff;font-weight:600">75.0%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(122,131,181);color:#fff;font-weight:600">37.5%</td>
+            <td style="text-align:center;background:rgb(210,213,230);color:#2c3e50;font-weight:600">12.5%</td>
+            <td style="text-align:center;background:rgb(255,255,255);color:#2c3e50;font-weight:600">0.0%</td>
+        </tr>
+    </table>
+    </div>
+    
+    <h4>5位-6位のギャップ <span class="purpose">（6位を切るか判断）</span></h4>
+    <div class="table-wrap">
+    <table>
+      <tr>
+        <th>ギャップ帯</th><th>n</th><th>順位維持率</th><th>—</th>
+        <th>上位側複勝率</th><th>下位側複勝率</th><th>両者3着内率</th>
+      </tr>
+      
+        <tr>
+            <td style="font-weight:700">0〜0.5pt</td>
+            <td style="text-align:center;color:#7f8c8d">215</td>
+            <td style="text-align:center;background:rgb(78,89,157);color:#fff;font-weight:600">54.0%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(172,178,209);color:#2c3e50;font-weight:600">23.3%</td>
+            <td style="text-align:center;background:rgb(181,186,214);color:#2c3e50;font-weight:600">20.9%</td>
+            <td style="text-align:center;background:rgb(233,235,243);color:#2c3e50;font-weight:600">2.8%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">0.5〜1pt</td>
+            <td style="text-align:center;color:#7f8c8d">170</td>
+            <td style="text-align:center;background:rgb(100,111,169);color:#fff;font-weight:600">47.1%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(176,181,211);color:#2c3e50;font-weight:600">22.4%</td>
+            <td style="text-align:center;background:rgb(182,187,214);color:#2c3e50;font-weight:600">20.6%</td>
+            <td style="text-align:center;background:rgb(232,234,242);color:#2c3e50;font-weight:600">2.9%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">1〜2pt</td>
+            <td style="text-align:center;color:#7f8c8d">180</td>
+            <td style="text-align:center;background:rgb(96,107,167);color:#fff;font-weight:600">48.3%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(164,170,204);color:#2c3e50;font-weight:600">25.6%</td>
+            <td style="text-align:center;background:rgb(170,176,208);color:#2c3e50;font-weight:600">23.9%</td>
+            <td style="text-align:center;background:rgb(225,227,238);color:#2c3e50;font-weight:600">3.9%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">2〜3pt</td>
+            <td style="text-align:center;color:#7f8c8d">61</td>
+            <td style="text-align:center;background:rgb(126,134,183);color:#fff;font-weight:600">39.3%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(173,179,210);color:#2c3e50;font-weight:600">23.0%</td>
+            <td style="text-align:center;background:rgb(179,184,213);color:#2c3e50;font-weight:600">21.3%</td>
+            <td style="text-align:center;background:rgb(242,243,248);color:#2c3e50;font-weight:600">1.6%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">3〜5pt</td>
+            <td style="text-align:center;color:#7f8c8d">27</td>
+            <td style="text-align:center;background:rgb(61,73,147);color:#fff;font-weight:600">59.3%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(124,133,182);color:#fff;font-weight:600">37.0%</td>
+            <td style="text-align:center;background:rgb(189,194,218);color:#2c3e50;font-weight:600">18.5%</td>
+            <td style="text-align:center;background:rgb(170,175,208);color:#2c3e50;font-weight:600">11.1%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">5pt以上</td>
+            <td style="text-align:center;color:#7f8c8d">7</td>
+            <td style="text-align:center;background:rgb(26,41,128);color:#fff;font-weight:600">71.4%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(53,67,143);color:#fff;font-weight:600">57.1%</td>
+            <td style="text-align:center;background:rgb(103,113,171);color:#fff;font-weight:600">42.9%</td>
+            <td style="text-align:center;background:rgb(145,152,194);color:#2c3e50;font-weight:600">14.3%</td>
+        </tr>
+    </table>
+    </div>
+    
+    </div>
+    
+    <div class="section">
+      <h2>2勝クラス（n=311レース）</h2>
+      
+    <h4>1位-2位のギャップ <span class="purpose">（軸としての信頼度）</span></h4>
+    <div class="table-wrap">
+    <table>
+      <tr>
+        <th>ギャップ帯</th><th>n</th><th>順位維持率</th><th>上位勝率</th>
+        <th>上位側複勝率</th><th>下位側複勝率</th><th>両者3着内率</th>
+      </tr>
+      
+        <tr>
+            <td style="font-weight:700">0〜0.5pt</td>
+            <td style="text-align:center;color:#7f8c8d">41</td>
+            <td style="text-align:center;background:rgb(63,76,148);color:#fff;font-weight:600">58.5%</td>
+            <td style="text-align:center;background:rgb(129,137,185);color:#fff;font-weight:600">22.0%</td>
+            <td style="text-align:center;background:rgb(91,102,164);color:#fff;font-weight:600">46.3%</td>
+            <td style="text-align:center;background:rgb(108,118,173);color:#fff;font-weight:600">41.5%</td>
+            <td style="text-align:center;background:rgb(50,63,141);color:#fff;font-weight:600">26.8%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">0.5〜1pt</td>
+            <td style="text-align:center;color:#7f8c8d">43</td>
+            <td style="text-align:center;background:rgb(72,84,153);color:#fff;font-weight:600">55.8%</td>
+            <td style="text-align:center;background:rgb(121,130,181);color:#fff;font-weight:600">23.3%</td>
+            <td style="text-align:center;background:rgb(58,71,145);color:#fff;font-weight:600">55.8%</td>
+            <td style="text-align:center;background:rgb(132,140,186);color:#2c3e50;font-weight:600">34.9%</td>
+            <td style="text-align:center;background:rgb(95,105,166);color:#fff;font-weight:600">20.9%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">1〜2pt</td>
+            <td style="text-align:center;color:#7f8c8d">74</td>
+            <td style="text-align:center;background:rgb(100,110,169);color:#fff;font-weight:600">47.3%</td>
+            <td style="text-align:center;background:rgb(138,146,190);color:#2c3e50;font-weight:600">20.3%</td>
+            <td style="text-align:center;background:rgb(54,67,144);color:#fff;font-weight:600">56.8%</td>
+            <td style="text-align:center;background:rgb(35,50,133);color:#fff;font-weight:600">62.2%</td>
+            <td style="text-align:center;background:rgb(26,41,128);color:#fff;font-weight:600">35.1%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">2〜3pt</td>
+            <td style="text-align:center;color:#7f8c8d">56</td>
+            <td style="text-align:center;background:rgb(91,102,164);color:#fff;font-weight:600">50.0%</td>
+            <td style="text-align:center;background:rgb(162,168,203);color:#2c3e50;font-weight:600">16.1%</td>
+            <td style="text-align:center;background:rgb(78,90,157);color:#fff;font-weight:600">50.0%</td>
+            <td style="text-align:center;background:rgb(66,78,150);color:#fff;font-weight:600">53.6%</td>
+            <td style="text-align:center;background:rgb(64,76,149);color:#fff;font-weight:600">25.0%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">3〜5pt</td>
+            <td style="text-align:center;color:#7f8c8d">64</td>
+            <td style="text-align:center;background:rgb(65,78,150);color:#fff;font-weight:600">57.8%</td>
+            <td style="text-align:center;background:rgb(102,112,170);color:#fff;font-weight:600">26.6%</td>
+            <td style="text-align:center;background:rgb(51,64,142);color:#fff;font-weight:600">57.8%</td>
+            <td style="text-align:center;background:rgb(106,116,172);color:#fff;font-weight:600">42.2%</td>
+            <td style="text-align:center;background:rgb(111,120,175);color:#fff;font-weight:600">18.8%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">5pt以上</td>
+            <td style="text-align:center;color:#7f8c8d">33</td>
+            <td style="text-align:center;background:rgb(46,60,139);color:#fff;font-weight:600">63.6%</td>
+            <td style="text-align:center;background:rgb(64,76,149);color:#fff;font-weight:600">33.3%</td>
+            <td style="text-align:center;background:rgb(26,41,128);color:#fff;font-weight:600">66.7%</td>
+            <td style="text-align:center;background:rgb(84,95,160);color:#fff;font-weight:600">48.5%</td>
+            <td style="text-align:center;background:rgb(26,41,128);color:#fff;font-weight:600">30.3%</td>
+        </tr>
+    </table>
+    </div>
+    
+    <h4>2位-3位のギャップ <span class="purpose">（3位を切るか判断）</span></h4>
+    <div class="table-wrap">
+    <table>
+      <tr>
+        <th>ギャップ帯</th><th>n</th><th>順位維持率</th><th>—</th>
+        <th>上位側複勝率</th><th>下位側複勝率</th><th>両者3着内率</th>
+      </tr>
+      
+        <tr>
+            <td style="font-weight:700">0〜0.5pt</td>
+            <td style="text-align:center;color:#7f8c8d">75</td>
+            <td style="text-align:center;background:rgb(71,83,153);color:#fff;font-weight:600">56.0%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(118,127,179);color:#fff;font-weight:600">38.7%</td>
+            <td style="text-align:center;background:rgb(146,153,195);color:#2c3e50;font-weight:600">30.7%</td>
+            <td style="text-align:center;background:rgb(224,226,238);color:#2c3e50;font-weight:600">4.0%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">0.5〜1pt</td>
+            <td style="text-align:center;color:#7f8c8d">58</td>
+            <td style="text-align:center;background:rgb(119,128,179);color:#fff;font-weight:600">41.4%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(145,152,194);color:#2c3e50;font-weight:600">31.0%</td>
+            <td style="text-align:center;background:rgb(90,101,163);color:#fff;font-weight:600">46.6%</td>
+            <td style="text-align:center;background:rgb(162,168,203);color:#2c3e50;font-weight:600">12.1%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">1〜2pt</td>
+            <td style="text-align:center;color:#7f8c8d">76</td>
+            <td style="text-align:center;background:rgb(57,70,145);color:#fff;font-weight:600">60.5%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(46,60,139);color:#fff;font-weight:600">59.2%</td>
+            <td style="text-align:center;background:rgb(143,150,193);color:#2c3e50;font-weight:600">31.6%</td>
+            <td style="text-align:center;background:rgb(144,151,193);color:#2c3e50;font-weight:600">14.5%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">2〜3pt</td>
+            <td style="text-align:center;color:#7f8c8d">53</td>
+            <td style="text-align:center;background:rgb(39,53,135);color:#fff;font-weight:600">66.0%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(48,62,140);color:#fff;font-weight:600">58.5%</td>
+            <td style="text-align:center;background:rgb(141,149,192);color:#2c3e50;font-weight:600">32.1%</td>
+            <td style="text-align:center;background:rgb(139,147,191);color:#2c3e50;font-weight:600">15.1%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">3〜5pt</td>
+            <td style="text-align:center;color:#7f8c8d">35</td>
+            <td style="text-align:center;background:rgb(30,45,130);color:#fff;font-weight:600">68.6%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(43,57,137);color:#fff;font-weight:600">60.0%</td>
+            <td style="text-align:center;background:rgb(154,160,199);color:#2c3e50;font-weight:600">28.6%</td>
+            <td style="text-align:center;background:rgb(167,173,206);color:#2c3e50;font-weight:600">11.4%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">5pt以上</td>
+            <td style="text-align:center;color:#7f8c8d">14</td>
+            <td style="text-align:center;background:rgb(161,167,203);color:#2c3e50;font-weight:600">28.6%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(78,90,157);color:#fff;font-weight:600">50.0%</td>
+            <td style="text-align:center;background:rgb(53,67,143);color:#fff;font-weight:600">57.1%</td>
+            <td style="text-align:center;background:rgb(36,50,133);color:#fff;font-weight:600">28.6%</td>
+        </tr>
+    </table>
+    </div>
+    
+    <h4>3位-4位のギャップ <span class="purpose">（4位を切るか判断）</span></h4>
+    <div class="table-wrap">
+    <table>
+      <tr>
+        <th>ギャップ帯</th><th>n</th><th>順位維持率</th><th>—</th>
+        <th>上位側複勝率</th><th>下位側複勝率</th><th>両者3着内率</th>
+      </tr>
+      
+        <tr>
+            <td style="font-weight:700">0〜0.5pt</td>
+            <td style="text-align:center;color:#7f8c8d">83</td>
+            <td style="text-align:center;background:rgb(61,74,147);color:#fff;font-weight:600">59.0%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(119,127,179);color:#fff;font-weight:600">38.6%</td>
+            <td style="text-align:center;background:rgb(165,171,205);color:#2c3e50;font-weight:600">25.3%</td>
+            <td style="text-align:center;background:rgb(190,195,219);color:#2c3e50;font-weight:600">8.4%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">0.5〜1pt</td>
+            <td style="text-align:center;color:#7f8c8d">65</td>
+            <td style="text-align:center;background:rgb(73,85,154);color:#fff;font-weight:600">55.4%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(114,123,176);color:#fff;font-weight:600">40.0%</td>
+            <td style="text-align:center;background:rgb(141,148,191);color:#2c3e50;font-weight:600">32.3%</td>
+            <td style="text-align:center;background:rgb(172,177,209);color:#2c3e50;font-weight:600">10.8%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">1〜2pt</td>
+            <td style="text-align:center;color:#7f8c8d">93</td>
+            <td style="text-align:center;background:rgb(103,113,171);color:#fff;font-weight:600">46.2%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(137,145,189);color:#2c3e50;font-weight:600">33.3%</td>
+            <td style="text-align:center;background:rgb(141,148,191);color:#2c3e50;font-weight:600">32.3%</td>
+            <td style="text-align:center;background:rgb(197,201,223);color:#2c3e50;font-weight:600">7.5%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">2〜3pt</td>
+            <td style="text-align:center;color:#7f8c8d">30</td>
+            <td style="text-align:center;background:rgb(80,92,158);color:#fff;font-weight:600">53.3%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(149,156,196);color:#2c3e50;font-weight:600">30.0%</td>
+            <td style="text-align:center;background:rgb(160,167,202);color:#2c3e50;font-weight:600">26.7%</td>
+            <td style="text-align:center;background:rgb(178,183,212);color:#2c3e50;font-weight:600">10.0%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">3〜5pt</td>
+            <td style="text-align:center;color:#7f8c8d">33</td>
+            <td style="text-align:center;background:rgb(106,115,172);color:#fff;font-weight:600">45.5%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(169,175,207);color:#2c3e50;font-weight:600">24.2%</td>
+            <td style="text-align:center;background:rgb(158,165,201);color:#2c3e50;font-weight:600">27.3%</td>
+            <td style="text-align:center;background:rgb(255,255,255);color:#2c3e50;font-weight:600">0.0%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">5pt以上</td>
+            <td style="text-align:center;color:#7f8c8d">7</td>
+            <td style="text-align:center;background:rgb(26,41,128);color:#fff;font-weight:600">71.4%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(103,113,171);color:#fff;font-weight:600">42.9%</td>
+            <td style="text-align:center;background:rgb(204,207,227);color:#2c3e50;font-weight:600">14.3%</td>
+            <td style="text-align:center;background:rgb(255,255,255);color:#2c3e50;font-weight:600">0.0%</td>
+        </tr>
+    </table>
+    </div>
+    
+    <h4>4位-5位のギャップ <span class="purpose">（5位を切るか判断）</span></h4>
+    <div class="table-wrap">
+    <table>
+      <tr>
+        <th>ギャップ帯</th><th>n</th><th>順位維持率</th><th>—</th>
+        <th>上位側複勝率</th><th>下位側複勝率</th><th>両者3着内率</th>
+      </tr>
+      
+        <tr>
+            <td style="font-weight:700">0〜0.5pt</td>
+            <td style="text-align:center;color:#7f8c8d">78</td>
+            <td style="text-align:center;background:rgb(70,82,152);color:#fff;font-weight:600">56.4%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(137,145,189);color:#2c3e50;font-weight:600">33.3%</td>
+            <td style="text-align:center;background:rgb(164,170,204);color:#2c3e50;font-weight:600">25.6%</td>
+            <td style="text-align:center;background:rgb(206,209,227);color:#2c3e50;font-weight:600">6.4%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">0.5〜1pt</td>
+            <td style="text-align:center;color:#7f8c8d">78</td>
+            <td style="text-align:center;background:rgb(95,106,166);color:#fff;font-weight:600">48.7%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(173,178,209);color:#2c3e50;font-weight:600">23.1%</td>
+            <td style="text-align:center;background:rgb(178,183,212);color:#2c3e50;font-weight:600">21.8%</td>
+            <td style="text-align:center;background:rgb(216,218,233);color:#2c3e50;font-weight:600">5.1%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">1〜2pt</td>
+            <td style="text-align:center;color:#7f8c8d">88</td>
+            <td style="text-align:center;background:rgb(72,84,153);color:#fff;font-weight:600">55.7%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(138,146,190);color:#2c3e50;font-weight:600">33.0%</td>
+            <td style="text-align:center;background:rgb(182,187,214);color:#2c3e50;font-weight:600">20.5%</td>
+            <td style="text-align:center;background:rgb(237,238,245);color:#2c3e50;font-weight:600">2.3%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">2〜3pt</td>
+            <td style="text-align:center;color:#7f8c8d">38</td>
+            <td style="text-align:center;background:rgb(82,94,159);color:#fff;font-weight:600">52.6%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(153,159,198);color:#2c3e50;font-weight:600">28.9%</td>
+            <td style="text-align:center;background:rgb(162,168,203);color:#2c3e50;font-weight:600">26.3%</td>
+            <td style="text-align:center;background:rgb(194,198,221);color:#2c3e50;font-weight:600">7.9%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">3〜5pt</td>
+            <td style="text-align:center;color:#7f8c8d">23</td>
+            <td style="text-align:center;background:rgb(70,82,152);color:#fff;font-weight:600">56.5%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(209,212,229);color:#2c3e50;font-weight:600">13.0%</td>
+            <td style="text-align:center;background:rgb(193,197,221);color:#2c3e50;font-weight:600">17.4%</td>
+            <td style="text-align:center;background:rgb(222,224,236);color:#2c3e50;font-weight:600">4.3%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">5pt以上</td>
+            <td style="text-align:center;color:#7f8c8d">6</td>
+            <td style="text-align:center;background:rgb(36,51,133);color:#fff;font-weight:600">66.7%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(78,90,157);color:#fff;font-weight:600">50.0%</td>
+            <td style="text-align:center;background:rgb(196,200,222);color:#2c3e50;font-weight:600">16.7%</td>
+            <td style="text-align:center;background:rgb(255,255,255);color:#2c3e50;font-weight:600">0.0%</td>
+        </tr>
+    </table>
+    </div>
+    
+    <h4>5位-6位のギャップ <span class="purpose">（6位を切るか判断）</span></h4>
+    <div class="table-wrap">
+    <table>
+      <tr>
+        <th>ギャップ帯</th><th>n</th><th>順位維持率</th><th>—</th>
+        <th>上位側複勝率</th><th>下位側複勝率</th><th>両者3着内率</th>
+      </tr>
+      
+        <tr>
+            <td style="font-weight:700">0〜0.5pt</td>
+            <td style="text-align:center;color:#7f8c8d">99</td>
+            <td style="text-align:center;background:rgb(93,103,165);color:#fff;font-weight:600">49.5%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(187,191,217);color:#2c3e50;font-weight:600">19.2%</td>
+            <td style="text-align:center;background:rgb(165,171,205);color:#2c3e50;font-weight:600">25.3%</td>
+            <td style="text-align:center;background:rgb(216,218,233);color:#2c3e50;font-weight:600">5.1%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">0.5〜1pt</td>
+            <td style="text-align:center;color:#7f8c8d">76</td>
+            <td style="text-align:center;background:rgb(91,102,164);color:#fff;font-weight:600">50.0%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(176,181,211);color:#2c3e50;font-weight:600">22.4%</td>
+            <td style="text-align:center;background:rgb(213,216,231);color:#2c3e50;font-weight:600">11.8%</td>
+            <td style="text-align:center;background:rgb(255,255,255);color:#2c3e50;font-weight:600">0.0%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">1〜2pt</td>
+            <td style="text-align:center;color:#7f8c8d">84</td>
+            <td style="text-align:center;background:rgb(87,98,162);color:#fff;font-weight:600">51.2%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(171,176,208);color:#2c3e50;font-weight:600">23.8%</td>
+            <td style="text-align:center;background:rgb(179,184,213);color:#2c3e50;font-weight:600">21.4%</td>
+            <td style="text-align:center;background:rgb(236,237,244);color:#2c3e50;font-weight:600">2.4%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">2〜3pt</td>
+            <td style="text-align:center;color:#7f8c8d">31</td>
+            <td style="text-align:center;background:rgb(117,126,178);color:#fff;font-weight:600">41.9%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(186,191,217);color:#2c3e50;font-weight:600">19.4%</td>
+            <td style="text-align:center;background:rgb(186,191,217);color:#2c3e50;font-weight:600">19.4%</td>
+            <td style="text-align:center;background:rgb(255,255,255);color:#2c3e50;font-weight:600">0.0%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">3〜5pt</td>
+            <td style="text-align:center;color:#7f8c8d">16</td>
+            <td style="text-align:center;background:rgb(111,121,175);color:#fff;font-weight:600">43.8%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(145,152,194);color:#2c3e50;font-weight:600">31.2%</td>
+            <td style="text-align:center;background:rgb(210,213,230);color:#2c3e50;font-weight:600">12.5%</td>
+            <td style="text-align:center;background:rgb(207,210,228);color:#2c3e50;font-weight:600">6.2%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">5pt以上</td>
+            <td style="text-align:center;color:#7f8c8d">5</td>
+            <td style="text-align:center;background:rgb(26,41,128);color:#fff;font-weight:600">80.0%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(43,57,137);color:#fff;font-weight:600">60.0%</td>
+            <td style="text-align:center;background:rgb(114,123,176);color:#fff;font-weight:600">40.0%</td>
+            <td style="text-align:center;background:rgb(102,112,170);color:#fff;font-weight:600">20.0%</td>
+        </tr>
+    </table>
+    </div>
+    
+    </div>
+    
+    <div class="section">
+      <h2>3勝クラス（n=152レース）</h2>
+      
+    <h4>1位-2位のギャップ <span class="purpose">（軸としての信頼度）</span></h4>
+    <div class="table-wrap">
+    <table>
+      <tr>
+        <th>ギャップ帯</th><th>n</th><th>順位維持率</th><th>上位勝率</th>
+        <th>上位側複勝率</th><th>下位側複勝率</th><th>両者3着内率</th>
+      </tr>
+      
+        <tr>
+            <td style="font-weight:700">0〜0.5pt</td>
+            <td style="text-align:center;color:#7f8c8d">27</td>
+            <td style="text-align:center;background:rgb(36,51,133);color:#fff;font-weight:600">66.7%</td>
+            <td style="text-align:center;background:rgb(212,215,231);color:#2c3e50;font-weight:600">7.4%</td>
+            <td style="text-align:center;background:rgb(111,121,175);color:#fff;font-weight:600">40.7%</td>
+            <td style="text-align:center;background:rgb(163,169,204);color:#2c3e50;font-weight:600">25.9%</td>
+            <td style="text-align:center;background:rgb(226,228,239);color:#2c3e50;font-weight:600">3.7%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">0.5〜1pt</td>
+            <td style="text-align:center;color:#7f8c8d">16</td>
+            <td style="text-align:center;background:rgb(71,83,153);color:#fff;font-weight:600">56.2%</td>
+            <td style="text-align:center;background:rgb(219,221,235);color:#2c3e50;font-weight:600">6.2%</td>
+            <td style="text-align:center;background:rgb(57,69,145);color:#fff;font-weight:600">56.2%</td>
+            <td style="text-align:center;background:rgb(122,131,181);color:#fff;font-weight:600">37.5%</td>
+            <td style="text-align:center;background:rgb(26,41,128);color:#fff;font-weight:600">31.2%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">1〜2pt</td>
+            <td style="text-align:center;color:#7f8c8d">44</td>
+            <td style="text-align:center;background:rgb(69,81,151);color:#fff;font-weight:600">56.8%</td>
+            <td style="text-align:center;background:rgb(137,145,189);color:#2c3e50;font-weight:600">20.5%</td>
+            <td style="text-align:center;background:rgb(78,90,157);color:#fff;font-weight:600">50.0%</td>
+            <td style="text-align:center;background:rgb(102,112,170);color:#fff;font-weight:600">43.2%</td>
+            <td style="text-align:center;background:rgb(116,125,177);color:#fff;font-weight:600">18.2%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">2〜3pt</td>
+            <td style="text-align:center;color:#7f8c8d">26</td>
+            <td style="text-align:center;background:rgb(78,90,157);color:#fff;font-weight:600">53.8%</td>
+            <td style="text-align:center;background:rgb(166,172,206);color:#2c3e50;font-weight:600">15.4%</td>
+            <td style="text-align:center;background:rgb(92,102,164);color:#fff;font-weight:600">46.2%</td>
+            <td style="text-align:center;background:rgb(105,115,172);color:#fff;font-weight:600">42.3%</td>
+            <td style="text-align:center;background:rgb(137,145,189);color:#2c3e50;font-weight:600">15.4%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">3〜5pt</td>
+            <td style="text-align:center;color:#7f8c8d">21</td>
+            <td style="text-align:center;background:rgb(36,51,133);color:#fff;font-weight:600">66.7%</td>
+            <td style="text-align:center;background:rgb(91,101,164);color:#fff;font-weight:600">28.6%</td>
+            <td style="text-align:center;background:rgb(103,113,171);color:#fff;font-weight:600">42.9%</td>
+            <td style="text-align:center;background:rgb(120,129,180);color:#fff;font-weight:600">38.1%</td>
+            <td style="text-align:center;background:rgb(109,119,174);color:#fff;font-weight:600">19.0%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">5pt以上</td>
+            <td style="text-align:center;color:#7f8c8d">18</td>
+            <td style="text-align:center;background:rgb(26,41,128);color:#fff;font-weight:600">72.2%</td>
+            <td style="text-align:center;background:rgb(26,41,128);color:#fff;font-weight:600">50.0%</td>
+            <td style="text-align:center;background:rgb(26,41,128);color:#fff;font-weight:600">66.7%</td>
+            <td style="text-align:center;background:rgb(117,126,178);color:#fff;font-weight:600">38.9%</td>
+            <td style="text-align:center;background:rgb(42,56,137);color:#fff;font-weight:600">27.8%</td>
+        </tr>
+    </table>
+    </div>
+    
+    <h4>2位-3位のギャップ <span class="purpose">（3位を切るか判断）</span></h4>
+    <div class="table-wrap">
+    <table>
+      <tr>
+        <th>ギャップ帯</th><th>n</th><th>順位維持率</th><th>—</th>
+        <th>上位側複勝率</th><th>下位側複勝率</th><th>両者3着内率</th>
+      </tr>
+      
+        <tr>
+            <td style="font-weight:700">0〜0.5pt</td>
+            <td style="text-align:center;color:#7f8c8d">32</td>
+            <td style="text-align:center;background:rgb(91,102,164);color:#fff;font-weight:600">50.0%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(133,141,187);color:#2c3e50;font-weight:600">34.4%</td>
+            <td style="text-align:center;background:rgb(111,121,175);color:#fff;font-weight:600">40.6%</td>
+            <td style="text-align:center;background:rgb(207,210,228);color:#2c3e50;font-weight:600">6.2%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">0.5〜1pt</td>
+            <td style="text-align:center;color:#7f8c8d">41</td>
+            <td style="text-align:center;background:rgb(39,53,135);color:#fff;font-weight:600">65.9%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(100,110,169);color:#fff;font-weight:600">43.9%</td>
+            <td style="text-align:center;background:rgb(169,174,207);color:#2c3e50;font-weight:600">24.4%</td>
+            <td style="text-align:center;background:rgb(199,202,224);color:#2c3e50;font-weight:600">7.3%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">1〜2pt</td>
+            <td style="text-align:center;color:#7f8c8d">38</td>
+            <td style="text-align:center;background:rgb(39,53,135);color:#fff;font-weight:600">65.8%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(153,159,198);color:#2c3e50;font-weight:600">28.9%</td>
+            <td style="text-align:center;background:rgb(171,176,208);color:#2c3e50;font-weight:600">23.7%</td>
+            <td style="text-align:center;background:rgb(235,236,243);color:#2c3e50;font-weight:600">2.6%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">2〜3pt</td>
+            <td style="text-align:center;color:#7f8c8d">20</td>
+            <td style="text-align:center;background:rgb(124,132,182);color:#fff;font-weight:600">40.0%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(96,106,167);color:#fff;font-weight:600">45.0%</td>
+            <td style="text-align:center;background:rgb(114,123,176);color:#fff;font-weight:600">40.0%</td>
+            <td style="text-align:center;background:rgb(178,183,212);color:#2c3e50;font-weight:600">10.0%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">3〜5pt</td>
+            <td style="text-align:center;color:#7f8c8d">16</td>
+            <td style="text-align:center;background:rgb(91,102,164);color:#fff;font-weight:600">50.0%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(100,110,169);color:#fff;font-weight:600">43.8%</td>
+            <td style="text-align:center;background:rgb(122,131,181);color:#fff;font-weight:600">37.5%</td>
+            <td style="text-align:center;background:rgb(207,210,228);color:#2c3e50;font-weight:600">6.2%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">5pt以上</td>
+            <td style="text-align:center;color:#7f8c8d">5</td>
+            <td style="text-align:center;background:rgb(58,71,146);color:#fff;font-weight:600">60.0%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(114,123,176);color:#fff;font-weight:600">40.0%</td>
+            <td style="text-align:center;background:rgb(184,189,215);color:#2c3e50;font-weight:600">20.0%</td>
+            <td style="text-align:center;background:rgb(255,255,255);color:#2c3e50;font-weight:600">0.0%</td>
+        </tr>
+    </table>
+    </div>
+    
+    <h4>3位-4位のギャップ <span class="purpose">（4位を切るか判断）</span></h4>
+    <div class="table-wrap">
+    <table>
+      <tr>
+        <th>ギャップ帯</th><th>n</th><th>順位維持率</th><th>—</th>
+        <th>上位側複勝率</th><th>下位側複勝率</th><th>両者3着内率</th>
+      </tr>
+      
+        <tr>
+            <td style="font-weight:700">0〜0.5pt</td>
+            <td style="text-align:center;color:#7f8c8d">48</td>
+            <td style="text-align:center;background:rgb(50,63,141);color:#fff;font-weight:600">62.5%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(152,158,197);color:#2c3e50;font-weight:600">29.2%</td>
+            <td style="text-align:center;background:rgb(196,200,222);color:#2c3e50;font-weight:600">16.7%</td>
+            <td style="text-align:center;background:rgb(238,240,246);color:#2c3e50;font-weight:600">2.1%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">0.5〜1pt</td>
+            <td style="text-align:center;color:#7f8c8d">27</td>
+            <td style="text-align:center;background:rgb(97,107,167);color:#fff;font-weight:600">48.1%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(124,133,182);color:#fff;font-weight:600">37.0%</td>
+            <td style="text-align:center;background:rgb(150,157,197);color:#2c3e50;font-weight:600">29.6%</td>
+            <td style="text-align:center;background:rgb(170,175,208);color:#2c3e50;font-weight:600">11.1%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">1〜2pt</td>
+            <td style="text-align:center;color:#7f8c8d">45</td>
+            <td style="text-align:center;background:rgb(124,132,182);color:#fff;font-weight:600">40.0%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(153,159,198);color:#2c3e50;font-weight:600">28.9%</td>
+            <td style="text-align:center;background:rgb(98,108,168);color:#fff;font-weight:600">44.4%</td>
+            <td style="text-align:center;background:rgb(187,191,217);color:#2c3e50;font-weight:600">8.9%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">2〜3pt</td>
+            <td style="text-align:center;color:#7f8c8d">14</td>
+            <td style="text-align:center;background:rgb(114,123,177);color:#fff;font-weight:600">42.9%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(154,160,199);color:#2c3e50;font-weight:600">28.6%</td>
+            <td style="text-align:center;background:rgb(78,90,157);color:#fff;font-weight:600">50.0%</td>
+            <td style="text-align:center;background:rgb(200,204,224);color:#2c3e50;font-weight:600">7.1%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">3〜5pt</td>
+            <td style="text-align:center;color:#7f8c8d">15</td>
+            <td style="text-align:center;background:rgb(58,71,146);color:#fff;font-weight:600">60.0%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(137,145,189);color:#2c3e50;font-weight:600">33.3%</td>
+            <td style="text-align:center;background:rgb(208,211,229);color:#2c3e50;font-weight:600">13.3%</td>
+            <td style="text-align:center;background:rgb(255,255,255);color:#2c3e50;font-weight:600">0.0%</td>
+        </tr>
+    </table>
+    </div>
+    
+    <h4>4位-5位のギャップ <span class="purpose">（5位を切るか判断）</span></h4>
+    <div class="table-wrap">
+    <table>
+      <tr>
+        <th>ギャップ帯</th><th>n</th><th>順位維持率</th><th>—</th>
+        <th>上位側複勝率</th><th>下位側複勝率</th><th>両者3着内率</th>
+      </tr>
+      
+        <tr>
+            <td style="font-weight:700">0〜0.5pt</td>
+            <td style="text-align:center;color:#7f8c8d">48</td>
+            <td style="text-align:center;background:rgb(57,70,145);color:#fff;font-weight:600">60.4%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(130,138,185);color:#2c3e50;font-weight:600">35.4%</td>
+            <td style="text-align:center;background:rgb(145,152,194);color:#2c3e50;font-weight:600">31.2%</td>
+            <td style="text-align:center;background:rgb(191,195,219);color:#2c3e50;font-weight:600">8.3%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">0.5〜1pt</td>
+            <td style="text-align:center;color:#7f8c8d">36</td>
+            <td style="text-align:center;background:rgb(136,144,189);color:#2c3e50;font-weight:600">36.1%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(186,191,217);color:#2c3e50;font-weight:600">19.4%</td>
+            <td style="text-align:center;background:rgb(98,108,168);color:#fff;font-weight:600">44.4%</td>
+            <td style="text-align:center;background:rgb(170,175,208);color:#2c3e50;font-weight:600">11.1%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">1〜2pt</td>
+            <td style="text-align:center;color:#7f8c8d">37</td>
+            <td style="text-align:center;background:rgb(26,41,128);color:#fff;font-weight:600">73.0%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(131,139,186);color:#2c3e50;font-weight:600">35.1%</td>
+            <td style="text-align:center;background:rgb(169,174,207);color:#2c3e50;font-weight:600">24.3%</td>
+            <td style="text-align:center;background:rgb(193,197,220);color:#2c3e50;font-weight:600">8.1%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">2〜3pt</td>
+            <td style="text-align:center;color:#7f8c8d">18</td>
+            <td style="text-align:center;background:rgb(109,119,174);color:#fff;font-weight:600">44.4%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(157,163,200);color:#2c3e50;font-weight:600">27.8%</td>
+            <td style="text-align:center;background:rgb(157,163,200);color:#2c3e50;font-weight:600">27.8%</td>
+            <td style="text-align:center;background:rgb(255,255,255);color:#2c3e50;font-weight:600">0.0%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">3〜5pt</td>
+            <td style="text-align:center;color:#7f8c8d">11</td>
+            <td style="text-align:center;background:rgb(46,60,139);color:#fff;font-weight:600">63.6%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(158,165,201);color:#2c3e50;font-weight:600">27.3%</td>
+            <td style="text-align:center;background:rgb(222,225,237);color:#2c3e50;font-weight:600">9.1%</td>
+            <td style="text-align:center;background:rgb(255,255,255);color:#2c3e50;font-weight:600">0.0%</td>
+        </tr>
+    </table>
+    </div>
+    
+    <h4>5位-6位のギャップ <span class="purpose">（6位を切るか判断）</span></h4>
+    <div class="table-wrap">
+    <table>
+      <tr>
+        <th>ギャップ帯</th><th>n</th><th>順位維持率</th><th>—</th>
+        <th>上位側複勝率</th><th>下位側複勝率</th><th>両者3着内率</th>
+      </tr>
+      
+        <tr>
+            <td style="font-weight:700">0〜0.5pt</td>
+            <td style="text-align:center;color:#7f8c8d">49</td>
+            <td style="text-align:center;background:rgb(68,80,151);color:#fff;font-weight:600">57.1%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(154,160,199);color:#2c3e50;font-weight:600">28.6%</td>
+            <td style="text-align:center;background:rgb(197,201,223);color:#2c3e50;font-weight:600">16.3%</td>
+            <td style="text-align:center;background:rgb(255,255,255);color:#2c3e50;font-weight:600">0.0%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">0.5〜1pt</td>
+            <td style="text-align:center;color:#7f8c8d">36</td>
+            <td style="text-align:center;background:rgb(82,93,159);color:#fff;font-weight:600">52.8%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(147,154,195);color:#2c3e50;font-weight:600">30.6%</td>
+            <td style="text-align:center;background:rgb(166,172,206);color:#2c3e50;font-weight:600">25.0%</td>
+            <td style="text-align:center;background:rgb(212,215,231);color:#2c3e50;font-weight:600">5.6%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">1〜2pt</td>
+            <td style="text-align:center;color:#7f8c8d">44</td>
+            <td style="text-align:center;background:rgb(135,143,188);color:#2c3e50;font-weight:600">36.4%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(166,172,206);color:#2c3e50;font-weight:600">25.0%</td>
+            <td style="text-align:center;background:rgb(134,142,188);color:#2c3e50;font-weight:600">34.1%</td>
+            <td style="text-align:center;background:rgb(185,190,216);color:#2c3e50;font-weight:600">9.1%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">2〜3pt</td>
+            <td style="text-align:center;color:#7f8c8d">14</td>
+            <td style="text-align:center;background:rgb(138,145,190);color:#2c3e50;font-weight:600">35.7%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(129,137,185);color:#2c3e50;font-weight:600">35.7%</td>
+            <td style="text-align:center;background:rgb(179,184,213);color:#2c3e50;font-weight:600">21.4%</td>
+            <td style="text-align:center;background:rgb(255,255,255);color:#2c3e50;font-weight:600">0.0%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">3〜5pt</td>
+            <td style="text-align:center;color:#7f8c8d">7</td>
+            <td style="text-align:center;background:rgb(26,41,128);color:#fff;font-weight:600">85.7%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(53,67,143);color:#fff;font-weight:600">57.1%</td>
+            <td style="text-align:center;background:rgb(103,113,171);color:#fff;font-weight:600">42.9%</td>
+            <td style="text-align:center;background:rgb(36,50,133);color:#fff;font-weight:600">28.6%</td>
+        </tr>
+    </table>
+    </div>
+    
+    </div>
+    
+    <div class="section">
+      <h2>OP（n=105レース）</h2>
+      
+    <h4>1位-2位のギャップ <span class="purpose">（軸としての信頼度）</span></h4>
+    <div class="table-wrap">
+    <table>
+      <tr>
+        <th>ギャップ帯</th><th>n</th><th>順位維持率</th><th>上位勝率</th>
+        <th>上位側複勝率</th><th>下位側複勝率</th><th>両者3着内率</th>
+      </tr>
+      
+        <tr>
+            <td style="font-weight:700">0〜0.5pt</td>
+            <td style="text-align:center;color:#7f8c8d">15</td>
+            <td style="text-align:center;background:rgb(80,92,158);color:#fff;font-weight:600">53.3%</td>
+            <td style="text-align:center;background:rgb(102,112,170);color:#fff;font-weight:600">26.7%</td>
+            <td style="text-align:center;background:rgb(114,123,176);color:#fff;font-weight:600">40.0%</td>
+            <td style="text-align:center;background:rgb(90,101,163);color:#fff;font-weight:600">46.7%</td>
+            <td style="text-align:center;background:rgb(102,112,170);color:#fff;font-weight:600">20.0%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">0.5〜1pt</td>
+            <td style="text-align:center;color:#7f8c8d">18</td>
+            <td style="text-align:center;background:rgb(91,102,164);color:#fff;font-weight:600">50.0%</td>
+            <td style="text-align:center;background:rgb(159,165,201);color:#2c3e50;font-weight:600">16.7%</td>
+            <td style="text-align:center;background:rgb(137,145,189);color:#2c3e50;font-weight:600">33.3%</td>
+            <td style="text-align:center;background:rgb(59,71,146);color:#fff;font-weight:600">55.6%</td>
+            <td style="text-align:center;background:rgb(42,56,137);color:#fff;font-weight:600">27.8%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">1〜2pt</td>
+            <td style="text-align:center;color:#7f8c8d">20</td>
+            <td style="text-align:center;background:rgb(75,86,155);color:#fff;font-weight:600">55.0%</td>
+            <td style="text-align:center;background:rgb(197,201,223);color:#2c3e50;font-weight:600">10.0%</td>
+            <td style="text-align:center;background:rgb(114,123,176);color:#fff;font-weight:600">40.0%</td>
+            <td style="text-align:center;background:rgb(96,106,167);color:#fff;font-weight:600">45.0%</td>
+            <td style="text-align:center;background:rgb(102,112,170);color:#fff;font-weight:600">20.0%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">2〜3pt</td>
+            <td style="text-align:center;color:#7f8c8d">17</td>
+            <td style="text-align:center;background:rgb(26,41,128);color:#fff;font-weight:600">70.6%</td>
+            <td style="text-align:center;background:rgb(120,129,180);color:#fff;font-weight:600">23.5%</td>
+            <td style="text-align:center;background:rgb(89,99,162);color:#fff;font-weight:600">47.1%</td>
+            <td style="text-align:center;background:rgb(151,158,197);color:#2c3e50;font-weight:600">29.4%</td>
+            <td style="text-align:center;background:rgb(75,87,155);color:#fff;font-weight:600">23.5%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">3〜5pt</td>
+            <td style="text-align:center;color:#7f8c8d">20</td>
+            <td style="text-align:center;background:rgb(91,102,164);color:#fff;font-weight:600">50.0%</td>
+            <td style="text-align:center;background:rgb(83,94,159);color:#fff;font-weight:600">30.0%</td>
+            <td style="text-align:center;background:rgb(26,41,128);color:#fff;font-weight:600">75.0%</td>
+            <td style="text-align:center;background:rgb(78,90,157);color:#fff;font-weight:600">50.0%</td>
+            <td style="text-align:center;background:rgb(26,41,128);color:#fff;font-weight:600">35.0%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">5pt以上</td>
+            <td style="text-align:center;color:#7f8c8d">15</td>
+            <td style="text-align:center;background:rgb(80,92,158);color:#fff;font-weight:600">53.3%</td>
+            <td style="text-align:center;background:rgb(216,219,233);color:#2c3e50;font-weight:600">6.7%</td>
+            <td style="text-align:center;background:rgb(90,101,163);color:#fff;font-weight:600">46.7%</td>
+            <td style="text-align:center;background:rgb(137,145,189);color:#2c3e50;font-weight:600">33.3%</td>
+            <td style="text-align:center;background:rgb(102,112,170);color:#fff;font-weight:600">20.0%</td>
+        </tr>
+    </table>
+    </div>
+    
+    <h4>2位-3位のギャップ <span class="purpose">（3位を切るか判断）</span></h4>
+    <div class="table-wrap">
+    <table>
+      <tr>
+        <th>ギャップ帯</th><th>n</th><th>順位維持率</th><th>—</th>
+        <th>上位側複勝率</th><th>下位側複勝率</th><th>両者3着内率</th>
+      </tr>
+      
+        <tr>
+            <td style="font-weight:700">0〜0.5pt</td>
+            <td style="text-align:center;color:#7f8c8d">30</td>
+            <td style="text-align:center;background:rgb(69,81,152);color:#fff;font-weight:600">56.7%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(125,134,183);color:#fff;font-weight:600">36.7%</td>
+            <td style="text-align:center;background:rgb(160,167,202);color:#2c3e50;font-weight:600">26.7%</td>
+            <td style="text-align:center;background:rgb(229,231,241);color:#2c3e50;font-weight:600">3.3%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">0.5〜1pt</td>
+            <td style="text-align:center;color:#7f8c8d">21</td>
+            <td style="text-align:center;background:rgb(146,153,194);color:#2c3e50;font-weight:600">33.3%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(154,160,199);color:#2c3e50;font-weight:600">28.6%</td>
+            <td style="text-align:center;background:rgb(87,98,161);color:#fff;font-weight:600">47.6%</td>
+            <td style="text-align:center;background:rgb(145,152,194);color:#2c3e50;font-weight:600">14.3%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">1〜2pt</td>
+            <td style="text-align:center;color:#7f8c8d">23</td>
+            <td style="text-align:center;background:rgb(27,42,128);color:#fff;font-weight:600">69.6%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(101,111,170);color:#fff;font-weight:600">43.5%</td>
+            <td style="text-align:center;background:rgb(178,183,212);color:#2c3e50;font-weight:600">21.7%</td>
+            <td style="text-align:center;background:rgb(188,192,218);color:#2c3e50;font-weight:600">8.7%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">2〜3pt</td>
+            <td style="text-align:center;color:#7f8c8d">10</td>
+            <td style="text-align:center;background:rgb(58,71,146);color:#fff;font-weight:600">60.0%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(26,41,128);color:#fff;font-weight:600">70.0%</td>
+            <td style="text-align:center;background:rgb(78,90,157);color:#fff;font-weight:600">50.0%</td>
+            <td style="text-align:center;background:rgb(26,41,128);color:#fff;font-weight:600">30.0%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">3〜5pt</td>
+            <td style="text-align:center;color:#7f8c8d">18</td>
+            <td style="text-align:center;background:rgb(73,85,154);color:#fff;font-weight:600">55.6%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(39,53,135);color:#fff;font-weight:600">61.1%</td>
+            <td style="text-align:center;background:rgb(176,181,211);color:#2c3e50;font-weight:600">22.2%</td>
+            <td style="text-align:center;background:rgb(127,135,184);color:#fff;font-weight:600">16.7%</td>
+        </tr>
+    </table>
+    </div>
+    
+    <h4>3位-4位のギャップ <span class="purpose">（4位を切るか判断）</span></h4>
+    <div class="table-wrap">
+    <table>
+      <tr>
+        <th>ギャップ帯</th><th>n</th><th>順位維持率</th><th>—</th>
+        <th>上位側複勝率</th><th>下位側複勝率</th><th>両者3着内率</th>
+      </tr>
+      
+        <tr>
+            <td style="font-weight:700">0〜0.5pt</td>
+            <td style="text-align:center;color:#7f8c8d">29</td>
+            <td style="text-align:center;background:rgb(51,65,142);color:#fff;font-weight:600">62.1%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(109,118,174);color:#fff;font-weight:600">41.4%</td>
+            <td style="text-align:center;background:rgb(194,198,221);color:#2c3e50;font-weight:600">17.2%</td>
+            <td style="text-align:center;background:rgb(229,230,240);color:#2c3e50;font-weight:600">3.4%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">0.5〜1pt</td>
+            <td style="text-align:center;color:#7f8c8d">23</td>
+            <td style="text-align:center;background:rgb(98,108,168);color:#fff;font-weight:600">47.8%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(193,197,221);color:#2c3e50;font-weight:600">17.4%</td>
+            <td style="text-align:center;background:rgb(132,140,187);color:#2c3e50;font-weight:600">34.8%</td>
+            <td style="text-align:center;background:rgb(188,192,218);color:#2c3e50;font-weight:600">8.7%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">1〜2pt</td>
+            <td style="text-align:center;color:#7f8c8d">28</td>
+            <td style="text-align:center;background:rgb(79,91,157);color:#fff;font-weight:600">53.6%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(141,149,192);color:#2c3e50;font-weight:600">32.1%</td>
+            <td style="text-align:center;background:rgb(154,160,199);color:#2c3e50;font-weight:600">28.6%</td>
+            <td style="text-align:center;background:rgb(227,229,239);color:#2c3e50;font-weight:600">3.6%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">2〜3pt</td>
+            <td style="text-align:center;color:#7f8c8d">15</td>
+            <td style="text-align:center;background:rgb(80,92,158);color:#fff;font-weight:600">53.3%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(160,167,202);color:#2c3e50;font-weight:600">26.7%</td>
+            <td style="text-align:center;background:rgb(184,189,215);color:#2c3e50;font-weight:600">20.0%</td>
+            <td style="text-align:center;background:rgb(153,160,198);color:#2c3e50;font-weight:600">13.3%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">3〜5pt</td>
+            <td style="text-align:center;color:#7f8c8d">10</td>
+            <td style="text-align:center;background:rgb(58,71,146);color:#fff;font-weight:600">60.0%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(149,156,196);color:#2c3e50;font-weight:600">30.0%</td>
+            <td style="text-align:center;background:rgb(184,189,215);color:#2c3e50;font-weight:600">20.0%</td>
+            <td style="text-align:center;background:rgb(255,255,255);color:#2c3e50;font-weight:600">0.0%</td>
+        </tr>
+    </table>
+    </div>
+    
+    <h4>4位-5位のギャップ <span class="purpose">（5位を切るか判断）</span></h4>
+    <div class="table-wrap">
+    <table>
+      <tr>
+        <th>ギャップ帯</th><th>n</th><th>順位維持率</th><th>—</th>
+        <th>上位側複勝率</th><th>下位側複勝率</th><th>両者3着内率</th>
+      </tr>
+      
+        <tr>
+            <td style="font-weight:700">0〜0.5pt</td>
+            <td style="text-align:center;color:#7f8c8d">37</td>
+            <td style="text-align:center;background:rgb(96,106,166);color:#fff;font-weight:600">48.6%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(150,157,196);color:#2c3e50;font-weight:600">29.7%</td>
+            <td style="text-align:center;background:rgb(159,166,202);color:#2c3e50;font-weight:600">27.0%</td>
+            <td style="text-align:center;background:rgb(234,235,243);color:#2c3e50;font-weight:600">2.7%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">0.5〜1pt</td>
+            <td style="text-align:center;color:#7f8c8d">29</td>
+            <td style="text-align:center;background:rgb(74,86,154);color:#fff;font-weight:600">55.2%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(182,186,214);color:#2c3e50;font-weight:600">20.7%</td>
+            <td style="text-align:center;background:rgb(218,221,234);color:#2c3e50;font-weight:600">10.3%</td>
+            <td style="text-align:center;background:rgb(255,255,255);color:#2c3e50;font-weight:600">0.0%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">1〜2pt</td>
+            <td style="text-align:center;color:#7f8c8d">18</td>
+            <td style="text-align:center;background:rgb(91,102,164);color:#fff;font-weight:600">50.0%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(176,181,211);color:#2c3e50;font-weight:600">22.2%</td>
+            <td style="text-align:center;background:rgb(176,181,211);color:#2c3e50;font-weight:600">22.2%</td>
+            <td style="text-align:center;background:rgb(212,215,231);color:#2c3e50;font-weight:600">5.6%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">2〜3pt</td>
+            <td style="text-align:center;color:#7f8c8d">16</td>
+            <td style="text-align:center;background:rgb(71,83,153);color:#fff;font-weight:600">56.2%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(210,213,230);color:#2c3e50;font-weight:600">12.5%</td>
+            <td style="text-align:center;background:rgb(145,152,194);color:#2c3e50;font-weight:600">31.2%</td>
+            <td style="text-align:center;background:rgb(207,210,228);color:#2c3e50;font-weight:600">6.2%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">3〜5pt</td>
+            <td style="text-align:center;color:#7f8c8d">5</td>
+            <td style="text-align:center;background:rgb(26,41,128);color:#fff;font-weight:600">80.0%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(43,57,137);color:#fff;font-weight:600">60.0%</td>
+            <td style="text-align:center;background:rgb(255,255,255);color:#2c3e50;font-weight:600">0.0%</td>
+            <td style="text-align:center;background:rgb(255,255,255);color:#2c3e50;font-weight:600">0.0%</td>
+        </tr>
+    </table>
+    </div>
+    
+    <h4>5位-6位のギャップ <span class="purpose">（6位を切るか判断）</span></h4>
+    <div class="table-wrap">
+    <table>
+      <tr>
+        <th>ギャップ帯</th><th>n</th><th>順位維持率</th><th>—</th>
+        <th>上位側複勝率</th><th>下位側複勝率</th><th>両者3着内率</th>
+      </tr>
+      
+        <tr>
+            <td style="font-weight:700">0〜0.5pt</td>
+            <td style="text-align:center;color:#7f8c8d">35</td>
+            <td style="text-align:center;background:rgb(86,97,161);color:#fff;font-weight:600">51.4%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(174,179,210);color:#2c3e50;font-weight:600">22.9%</td>
+            <td style="text-align:center;background:rgb(184,189,215);color:#2c3e50;font-weight:600">20.0%</td>
+            <td style="text-align:center;background:rgb(232,234,242);color:#2c3e50;font-weight:600">2.9%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">0.5〜1pt</td>
+            <td style="text-align:center;color:#7f8c8d">27</td>
+            <td style="text-align:center;background:rgb(170,175,208);color:#2c3e50;font-weight:600">25.9%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(215,218,233);color:#2c3e50;font-weight:600">11.1%</td>
+            <td style="text-align:center;background:rgb(111,121,175);color:#fff;font-weight:600">40.7%</td>
+            <td style="text-align:center;background:rgb(226,228,239);color:#2c3e50;font-weight:600">3.7%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">1〜2pt</td>
+            <td style="text-align:center;color:#7f8c8d">31</td>
+            <td style="text-align:center;background:rgb(86,97,161);color:#fff;font-weight:600">51.6%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(152,159,198);color:#2c3e50;font-weight:600">29.0%</td>
+            <td style="text-align:center;background:rgb(164,170,204);color:#2c3e50;font-weight:600">25.8%</td>
+            <td style="text-align:center;background:rgb(230,232,241);color:#2c3e50;font-weight:600">3.2%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">2〜3pt</td>
+            <td style="text-align:center;color:#7f8c8d">10</td>
+            <td style="text-align:center;background:rgb(156,163,200);color:#2c3e50;font-weight:600">30.0%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(184,189,215);color:#2c3e50;font-weight:600">20.0%</td>
+            <td style="text-align:center;background:rgb(149,156,196);color:#2c3e50;font-weight:600">30.0%</td>
+            <td style="text-align:center;background:rgb(178,183,212);color:#2c3e50;font-weight:600">10.0%</td>
+        </tr>
+    </table>
+    </div>
+    
+    </div>
+    
+    <div class="section">
+      <h2>重賞（n=92レース）</h2>
+      
+    <h4>1位-2位のギャップ <span class="purpose">（軸としての信頼度）</span></h4>
+    <div class="table-wrap">
+    <table>
+      <tr>
+        <th>ギャップ帯</th><th>n</th><th>順位維持率</th><th>上位勝率</th>
+        <th>上位側複勝率</th><th>下位側複勝率</th><th>両者3着内率</th>
+      </tr>
+      
+        <tr>
+            <td style="font-weight:700">0〜0.5pt</td>
+            <td style="text-align:center;color:#7f8c8d">17</td>
+            <td style="text-align:center;background:rgb(81,93,159);color:#fff;font-weight:600">52.9%</td>
+            <td style="text-align:center;background:rgb(154,160,199);color:#2c3e50;font-weight:600">17.6%</td>
+            <td style="text-align:center;background:rgb(130,138,186);color:#2c3e50;font-weight:600">35.3%</td>
+            <td style="text-align:center;background:rgb(151,158,197);color:#2c3e50;font-weight:600">29.4%</td>
+            <td style="text-align:center;background:rgb(209,212,230);color:#2c3e50;font-weight:600">5.9%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">0.5〜1pt</td>
+            <td style="text-align:center;color:#7f8c8d">7</td>
+            <td style="text-align:center;background:rgb(26,41,128);color:#fff;font-weight:600">85.7%</td>
+            <td style="text-align:center;background:rgb(173,178,209);color:#2c3e50;font-weight:600">14.3%</td>
+            <td style="text-align:center;background:rgb(103,113,171);color:#fff;font-weight:600">42.9%</td>
+            <td style="text-align:center;background:rgb(103,113,171);color:#fff;font-weight:600">42.9%</td>
+            <td style="text-align:center;background:rgb(36,50,133);color:#fff;font-weight:600">28.6%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">1〜2pt</td>
+            <td style="text-align:center;color:#7f8c8d">24</td>
+            <td style="text-align:center;background:rgb(118,127,179);color:#fff;font-weight:600">41.7%</td>
+            <td style="text-align:center;background:rgb(159,165,201);color:#2c3e50;font-weight:600">16.7%</td>
+            <td style="text-align:center;background:rgb(108,117,173);color:#fff;font-weight:600">41.7%</td>
+            <td style="text-align:center;background:rgb(78,90,157);color:#fff;font-weight:600">50.0%</td>
+            <td style="text-align:center;background:rgb(96,106,166);color:#fff;font-weight:600">20.8%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">2〜3pt</td>
+            <td style="text-align:center;color:#7f8c8d">19</td>
+            <td style="text-align:center;background:rgb(65,77,149);color:#fff;font-weight:600">57.9%</td>
+            <td style="text-align:center;background:rgb(164,170,204);color:#2c3e50;font-weight:600">15.8%</td>
+            <td style="text-align:center;background:rgb(180,185,213);color:#2c3e50;font-weight:600">21.1%</td>
+            <td style="text-align:center;background:rgb(143,150,193);color:#2c3e50;font-weight:600">31.6%</td>
+            <td style="text-align:center;background:rgb(214,217,232);color:#2c3e50;font-weight:600">5.3%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">3〜5pt</td>
+            <td style="text-align:center;color:#7f8c8d">14</td>
+            <td style="text-align:center;background:rgb(114,123,177);color:#fff;font-weight:600">42.9%</td>
+            <td style="text-align:center;background:rgb(173,178,209);color:#2c3e50;font-weight:600">14.3%</td>
+            <td style="text-align:center;background:rgb(53,67,143);color:#fff;font-weight:600">57.1%</td>
+            <td style="text-align:center;background:rgb(53,67,143);color:#fff;font-weight:600">57.1%</td>
+            <td style="text-align:center;background:rgb(36,50,133);color:#fff;font-weight:600">28.6%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">5pt以上</td>
+            <td style="text-align:center;color:#7f8c8d">11</td>
+            <td style="text-align:center;background:rgb(135,143,188);color:#2c3e50;font-weight:600">36.4%</td>
+            <td style="text-align:center;background:rgb(150,157,197);color:#2c3e50;font-weight:600">18.2%</td>
+            <td style="text-align:center;background:rgb(62,75,148);color:#fff;font-weight:600">54.5%</td>
+            <td style="text-align:center;background:rgb(94,105,166);color:#fff;font-weight:600">45.5%</td>
+            <td style="text-align:center;background:rgb(116,125,177);color:#fff;font-weight:600">18.2%</td>
+        </tr>
+    </table>
+    </div>
+    
+    <h4>2位-3位のギャップ <span class="purpose">（3位を切るか判断）</span></h4>
+    <div class="table-wrap">
+    <table>
+      <tr>
+        <th>ギャップ帯</th><th>n</th><th>順位維持率</th><th>—</th>
+        <th>上位側複勝率</th><th>下位側複勝率</th><th>両者3着内率</th>
+      </tr>
+      
+        <tr>
+            <td style="font-weight:700">0〜0.5pt</td>
+            <td style="text-align:center;color:#7f8c8d">13</td>
+            <td style="text-align:center;background:rgb(53,66,143);color:#fff;font-weight:600">61.5%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(119,128,179);color:#fff;font-weight:600">38.5%</td>
+            <td style="text-align:center;background:rgb(119,128,179);color:#fff;font-weight:600">38.5%</td>
+            <td style="text-align:center;background:rgb(196,200,222);color:#2c3e50;font-weight:600">7.7%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">0.5〜1pt</td>
+            <td style="text-align:center;color:#7f8c8d">22</td>
+            <td style="text-align:center;background:rgb(76,88,156);color:#fff;font-weight:600">54.5%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(78,90,157);color:#fff;font-weight:600">50.0%</td>
+            <td style="text-align:center;background:rgb(110,120,175);color:#fff;font-weight:600">40.9%</td>
+            <td style="text-align:center;background:rgb(151,157,197);color:#2c3e50;font-weight:600">13.6%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">1〜2pt</td>
+            <td style="text-align:center;color:#7f8c8d">22</td>
+            <td style="text-align:center;background:rgb(61,74,147);color:#fff;font-weight:600">59.1%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(126,135,183);color:#fff;font-weight:600">36.4%</td>
+            <td style="text-align:center;background:rgb(110,120,175);color:#fff;font-weight:600">40.9%</td>
+            <td style="text-align:center;background:rgb(151,157,197);color:#2c3e50;font-weight:600">13.6%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">2〜3pt</td>
+            <td style="text-align:center;color:#7f8c8d">19</td>
+            <td style="text-align:center;background:rgb(99,110,169);color:#fff;font-weight:600">47.4%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(143,150,193);color:#2c3e50;font-weight:600">31.6%</td>
+            <td style="text-align:center;background:rgb(199,202,224);color:#2c3e50;font-weight:600">15.8%</td>
+            <td style="text-align:center;background:rgb(214,217,232);color:#2c3e50;font-weight:600">5.3%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">3〜5pt</td>
+            <td style="text-align:center;color:#7f8c8d">9</td>
+            <td style="text-align:center;background:rgb(73,85,154);color:#fff;font-weight:600">55.6%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(26,41,128);color:#fff;font-weight:600">66.7%</td>
+            <td style="text-align:center;background:rgb(137,145,189);color:#2c3e50;font-weight:600">33.3%</td>
+            <td style="text-align:center;background:rgb(26,41,128);color:#fff;font-weight:600">33.3%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">5pt以上</td>
+            <td style="text-align:center;color:#7f8c8d">7</td>
+            <td style="text-align:center;background:rgb(68,80,151);color:#fff;font-weight:600">57.1%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(103,113,171);color:#fff;font-weight:600">42.9%</td>
+            <td style="text-align:center;background:rgb(103,113,171);color:#fff;font-weight:600">42.9%</td>
+            <td style="text-align:center;background:rgb(36,50,133);color:#fff;font-weight:600">28.6%</td>
+        </tr>
+    </table>
+    </div>
+    
+    <h4>3位-4位のギャップ <span class="purpose">（4位を切るか判断）</span></h4>
+    <div class="table-wrap">
+    <table>
+      <tr>
+        <th>ギャップ帯</th><th>n</th><th>順位維持率</th><th>—</th>
+        <th>上位側複勝率</th><th>下位側複勝率</th><th>両者3着内率</th>
+      </tr>
+      
+        <tr>
+            <td style="font-weight:700">0〜0.5pt</td>
+            <td style="text-align:center;color:#7f8c8d">22</td>
+            <td style="text-align:center;background:rgb(76,88,156);color:#fff;font-weight:600">54.5%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(190,195,219);color:#2c3e50;font-weight:600">18.2%</td>
+            <td style="text-align:center;background:rgb(207,210,228);color:#2c3e50;font-weight:600">13.6%</td>
+            <td style="text-align:center;background:rgb(255,255,255);color:#2c3e50;font-weight:600">0.0%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">0.5〜1pt</td>
+            <td style="text-align:center;color:#7f8c8d">25</td>
+            <td style="text-align:center;background:rgb(97,108,167);color:#fff;font-weight:600">48.0%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(142,149,192);color:#2c3e50;font-weight:600">32.0%</td>
+            <td style="text-align:center;background:rgb(142,149,192);color:#2c3e50;font-weight:600">32.0%</td>
+            <td style="text-align:center;background:rgb(224,226,238);color:#2c3e50;font-weight:600">4.0%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">1〜2pt</td>
+            <td style="text-align:center;color:#7f8c8d">32</td>
+            <td style="text-align:center;background:rgb(81,92,158);color:#fff;font-weight:600">53.1%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(111,121,175);color:#fff;font-weight:600">40.6%</td>
+            <td style="text-align:center;background:rgb(156,162,200);color:#2c3e50;font-weight:600">28.1%</td>
+            <td style="text-align:center;background:rgb(207,210,228);color:#2c3e50;font-weight:600">6.2%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">2〜3pt</td>
+            <td style="text-align:center;color:#7f8c8d">9</td>
+            <td style="text-align:center;background:rgb(73,85,154);color:#fff;font-weight:600">55.6%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(98,108,168);color:#fff;font-weight:600">44.4%</td>
+            <td style="text-align:center;background:rgb(59,71,146);color:#fff;font-weight:600">55.6%</td>
+            <td style="text-align:center;background:rgb(170,175,208);color:#2c3e50;font-weight:600">11.1%</td>
+        </tr>
+    </table>
+    </div>
+    
+    <h4>4位-5位のギャップ <span class="purpose">（5位を切るか判断）</span></h4>
+    <div class="table-wrap">
+    <table>
+      <tr>
+        <th>ギャップ帯</th><th>n</th><th>順位維持率</th><th>—</th>
+        <th>上位側複勝率</th><th>下位側複勝率</th><th>両者3着内率</th>
+      </tr>
+      
+        <tr>
+            <td style="font-weight:700">0〜0.5pt</td>
+            <td style="text-align:center;color:#7f8c8d">25</td>
+            <td style="text-align:center;background:rgb(32,47,131);color:#fff;font-weight:600">68.0%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(156,162,200);color:#2c3e50;font-weight:600">28.0%</td>
+            <td style="text-align:center;background:rgb(156,162,200);color:#2c3e50;font-weight:600">28.0%</td>
+            <td style="text-align:center;background:rgb(193,197,221);color:#2c3e50;font-weight:600">8.0%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">0.5〜1pt</td>
+            <td style="text-align:center;color:#7f8c8d">24</td>
+            <td style="text-align:center;background:rgb(50,63,141);color:#fff;font-weight:600">62.5%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(166,172,206);color:#2c3e50;font-weight:600">25.0%</td>
+            <td style="text-align:center;background:rgb(196,200,222);color:#2c3e50;font-weight:600">16.7%</td>
+            <td style="text-align:center;background:rgb(222,225,237);color:#2c3e50;font-weight:600">4.2%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">1〜2pt</td>
+            <td style="text-align:center;color:#7f8c8d">27</td>
+            <td style="text-align:center;background:rgb(97,107,167);color:#fff;font-weight:600">48.1%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(150,157,197);color:#2c3e50;font-weight:600">29.6%</td>
+            <td style="text-align:center;background:rgb(137,145,189);color:#2c3e50;font-weight:600">33.3%</td>
+            <td style="text-align:center;background:rgb(198,202,223);color:#2c3e50;font-weight:600">7.4%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">2〜3pt</td>
+            <td style="text-align:center;color:#7f8c8d">10</td>
+            <td style="text-align:center;background:rgb(26,41,128);color:#fff;font-weight:600">70.0%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(114,123,176);color:#fff;font-weight:600">40.0%</td>
+            <td style="text-align:center;background:rgb(184,189,215);color:#2c3e50;font-weight:600">20.0%</td>
+            <td style="text-align:center;background:rgb(255,255,255);color:#2c3e50;font-weight:600">0.0%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">3〜5pt</td>
+            <td style="text-align:center;color:#7f8c8d">6</td>
+            <td style="text-align:center;background:rgb(146,153,194);color:#2c3e50;font-weight:600">33.3%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(196,200,222);color:#2c3e50;font-weight:600">16.7%</td>
+            <td style="text-align:center;background:rgb(137,145,189);color:#2c3e50;font-weight:600">33.3%</td>
+            <td style="text-align:center;background:rgb(255,255,255);color:#2c3e50;font-weight:600">0.0%</td>
+        </tr>
+    </table>
+    </div>
+    
+    <h4>5位-6位のギャップ <span class="purpose">（6位を切るか判断）</span></h4>
+    <div class="table-wrap">
+    <table>
+      <tr>
+        <th>ギャップ帯</th><th>n</th><th>順位維持率</th><th>—</th>
+        <th>上位側複勝率</th><th>下位側複勝率</th><th>両者3着内率</th>
+      </tr>
+      
+        <tr>
+            <td style="font-weight:700">0〜0.5pt</td>
+            <td style="text-align:center;color:#7f8c8d">32</td>
+            <td style="text-align:center;background:rgb(40,54,135);color:#fff;font-weight:600">65.6%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(156,162,200);color:#2c3e50;font-weight:600">28.1%</td>
+            <td style="text-align:center;background:rgb(200,203,224);color:#2c3e50;font-weight:600">15.6%</td>
+            <td style="text-align:center;background:rgb(255,255,255);color:#2c3e50;font-weight:600">0.0%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">0.5〜1pt</td>
+            <td style="text-align:center;color:#7f8c8d">31</td>
+            <td style="text-align:center;background:rgb(86,97,161);color:#fff;font-weight:600">51.6%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(175,180,210);color:#2c3e50;font-weight:600">22.6%</td>
+            <td style="text-align:center;background:rgb(186,191,217);color:#2c3e50;font-weight:600">19.4%</td>
+            <td style="text-align:center;background:rgb(205,208,227);color:#2c3e50;font-weight:600">6.5%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">1〜2pt</td>
+            <td style="text-align:center;color:#7f8c8d">21</td>
+            <td style="text-align:center;background:rgb(68,80,151);color:#fff;font-weight:600">57.1%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(154,160,199);color:#2c3e50;font-weight:600">28.6%</td>
+            <td style="text-align:center;background:rgb(221,223,236);color:#2c3e50;font-weight:600">9.5%</td>
+            <td style="text-align:center;background:rgb(255,255,255);color:#2c3e50;font-weight:600">0.0%</td>
+        </tr>
+        <tr>
+            <td style="font-weight:700">2〜3pt</td>
+            <td style="text-align:center;color:#7f8c8d">6</td>
+            <td style="text-align:center;background:rgb(91,102,164);color:#fff;font-weight:600">50.0%</td>
+            <td style="text-align:center;color:#ccc">—</td>
+            <td style="text-align:center;background:rgb(196,200,222);color:#2c3e50;font-weight:600">16.7%</td>
+            <td style="text-align:center;background:rgb(196,200,222);color:#2c3e50;font-weight:600">16.7%</td>
+            <td style="text-align:center;background:rgb(255,255,255);color:#2c3e50;font-weight:600">0.0%</td>
+        </tr>
+    </table>
+    </div>
+    
+    </div>
+    
+
+</div>
+<footer>競馬予想システム — 順位間スコアギャップ検証（探索的分析・本番未反映）</footer>
+</body>
+</html>

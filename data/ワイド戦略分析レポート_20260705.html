@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ワイド戦略分析レポート</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Helvetica Neue', 'Hiragino Sans', sans-serif; background: #f5f6fa; color: #2c3e50; font-size: 14px; }
+  .header { background: linear-gradient(135deg, #1a2980, #26d0ce); color: white; padding: 32px 40px; }
+  .header h1 { font-size: 24px; font-weight: 700; margin-bottom: 6px; }
+  .header p { opacity: 0.85; font-size: 13px; }
+  .container { max-width: 1140px; margin: 0 auto; padding: 24px 20px; }
+  .section { background: white; border-radius: 10px; padding: 24px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+  .section h2 { font-size: 17px; font-weight: 700; border-left: 4px solid #1a2980; padding-left: 12px; margin-bottom: 18px; color: #1a2980; }
+  .section h3 { font-size: 14px; font-weight: 700; margin: 16px 0 10px; color: #34495e; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .table-wrap { overflow-x: auto; }
+  th { background: #1a2980; color: white; padding: 8px 10px; text-align: left; font-weight: 600; white-space: nowrap; }
+  td { padding: 7px 10px; border-bottom: 1px solid #ecf0f1; white-space: nowrap; }
+  tr:nth-child(even) td { background: #f8f9ff; }
+  tr:hover td { background: #eef2ff; }
+  .row-highlight td { background: #fff7e0 !important; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 700; }
+  .badge-green { background: #d5f5e3; color: #1e8449; }
+  .badge-red { background: #fdecea; color: #c0392b; }
+  .badge-gray { background: #eaecee; color: #566573; }
+  .badge-orange { background: #fef9e7; color: #d68910; }
+  .badge-blue { background: #d6eaf8; color: #1a5276; }
+  .summary-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 20px; }
+  @media (max-width: 720px) { .summary-grid { grid-template-columns: repeat(2, 1fr); } }
+  .kpi { background: #f0f3ff; border-radius: 8px; padding: 14px 16px; text-align: center; }
+  .kpi-val { font-size: 24px; font-weight: 800; color: #1a2980; }
+  .kpi-label { font-size: 11px; color: #7f8c8d; margin-top: 3px; }
+  .roi-high { color: #1e8449; font-weight: 700; }
+  .roi-mid { color: #d68910; font-weight: 700; }
+  .roi-low { color: #c0392b; font-weight: 700; }
+  .note { background: #fef9e7; border-left: 3px solid #f39c12; padding: 10px 14px; border-radius: 0 6px 6px 0; font-size: 12px; margin: 12px 0; line-height: 1.7; }
+  .finding { background: #eaf4fb; border-left: 3px solid #2980b9; padding: 10px 14px; border-radius: 0 6px 6px 0; font-size: 12px; margin: 12px 0; line-height: 1.7; }
+  .conclusion { background: #eafaf1; border-left: 3px solid #27ae60; padding: 12px 16px; border-radius: 0 6px 6px 0; font-size: 13px; margin: 12px 0; line-height: 1.8; }
+  footer { text-align: center; color: #95a5a6; font-size: 11px; padding: 20px; }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>ワイド戦略分析レポート — フォーメーション比較</h1>
+  <p>競馬予想システム ／ 対象期間: 2025/12〜2026/06・n=582レース（2勝クラス以上） ／ 生成日: 2026-07-05</p>
+</div>
+
+<div class="container">
+
+<!-- サマリKPI -->
+<div class="section">
+  <h2>結論サマリ</h2>
+  <div class="summary-grid">
+    <div class="kpi"><div class="kpi-val">148%</div><div class="kpi-label">ワイド1-2 全体ROI（現行運用）</div></div>
+    <div class="kpi"><div class="kpi-val">250%</div><div class="kpi-label">ワイド1-2 全体×ダートROI</div></div>
+    <div class="kpi"><div class="kpi-val">15.3%</div><div class="kpi-label">ワイド1-2 的中率（最も低い）</div></div>
+    <div class="kpi"><div class="kpi-val">55.7%</div><div class="kpi-label">ワイド5頭BOX 的中率（最も高い）</div></div>
+  </div>
+  <div class="conclusion">
+    <b>結論:</b> 頭数を増やすほど的中率は着実に上がるが、ROIはほぼ単調に下がる。<b>ワイド1-2（現行運用）が資金効率では最も優秀</b>で、これを崩す根拠は今回のデータには無い。「当てたい」なら3点BOXが次善（OP×ダートのみROI121%で黒字維持）。4頭・5頭BOXや1軸4〜5頭流しは的中率は稼げるが、ほとんどのセグメントでROI100%を割り込む。
+  </div>
+</div>
+
+<!-- フォーメーション×クラス別 -->
+<div class="section">
+  <h2>フォーメーション別 ROI・的中率（クラス別）</h2>
+  <div class="table-wrap">
+  <table>
+    <tr>
+      <th>フォーメーション</th><th>点数</th>
+      <th>全体的中率</th><th>全体ROI</th>
+      <th>2勝ROI</th><th>3勝ROI</th><th>OP ROI</th><th>重賞ROI</th>
+    </tr>
+    <tr class="row-highlight">
+      <td>ワイド1-2（予想1×2位）</td><td>1</td><td>15.3%</td>
+      <td class="roi-high">148%</td><td class="roi-high">213%</td><td class="roi-high">105%</td><td class="roi-high">163%</td><td class="roi-low">38%</td>
+    </tr>
+    <tr>
+      <td>ワイド3点BOX（上位3頭）</td><td>3</td><td>27.8%</td>
+      <td class="roi-low">87%</td><td class="roi-high">103%</td><td class="roi-low">69%</td><td class="roi-high">100%</td><td class="roi-low">63%</td>
+    </tr>
+    <tr>
+      <td>ワイド4頭BOX</td><td>6</td><td>42.3%</td>
+      <td class="roi-low">75%</td><td class="roi-low">82%</td><td class="roi-low">72%</td><td class="roi-low">80%</td><td class="roi-low">57%</td>
+    </tr>
+    <tr>
+      <td>ワイド5頭BOX</td><td>10</td><td>55.7%</td>
+      <td class="roi-low">79%</td><td class="roi-low">77%</td><td class="roi-high">104%</td><td class="roi-low">71%</td><td class="roi-low">53%</td>
+    </tr>
+    <tr>
+      <td>ワイド1軸3頭流し（軸1位×2〜4位）</td><td>3</td><td>28.9%</td>
+      <td class="roi-low">91%</td><td class="roi-high">118%</td><td class="roi-low">78%</td><td class="roi-low">84%</td><td class="roi-low">51%</td>
+    </tr>
+    <tr>
+      <td>ワイド1軸4頭流し（軸1位×2〜5位）</td><td>4</td><td>32.0%</td>
+      <td class="roi-low">89%</td><td class="roi-high">101%</td><td class="roi-high">103%</td><td class="roi-low">80%</td><td class="roi-low">48%</td>
+    </tr>
+    <tr>
+      <td>ワイド1軸5頭流し（軸1位×2〜6位）</td><td>5</td><td>33.3%</td>
+      <td class="roi-low">79%</td><td class="roi-low">86%</td><td class="roi-low">98%</td><td class="roi-low">70%</td><td class="roi-low">41%</td>
+    </tr>
+  </table>
+  </div>
+  <div class="finding">
+    <b>読み方:</b> 点数を増やす（1点→10点）につれて的中率は15.3%→55.7%まで一貫して上昇するが、ROIは148%→79%まで一貫して下降。3位以下の馬を組み合わせに追加するほど、その追加ペア自体は単体で見ると期待値マイナスであることを意味する。
+  </div>
+</div>
+
+<!-- 芝・ダート別 -->
+<div class="section">
+  <h2>コース別 ROI（全体・直近の買いサイン対象クラス）</h2>
+  <div class="table-wrap">
+  <table>
+    <tr>
+      <th>フォーメーション</th>
+      <th>全体×芝</th><th>全体×ダ</th>
+      <th>OP×芝</th><th>OP×ダ</th>
+      <th>3勝×芝</th><th>3勝×ダ</th>
+    </tr>
+    <tr class="row-highlight">
+      <td>ワイド1-2</td>
+      <td class="roi-low">74%</td><td class="roi-high">250%</td>
+      <td class="roi-high">149%</td><td class="roi-high">180%</td>
+      <td class="roi-low">89%</td><td class="roi-high">123%</td>
+    </tr>
+    <tr>
+      <td>ワイド3点BOX</td>
+      <td class="roi-low">60%</td><td class="roi-high">126%</td>
+      <td class="roi-low">83%</td><td class="roi-high">121%</td>
+      <td class="roi-low">58%</td><td class="roi-low">82%</td>
+    </tr>
+    <tr>
+      <td>ワイド4頭BOX</td>
+      <td class="roi-low">54%</td><td class="roi-high">104%</td>
+      <td class="roi-low">68%</td><td class="roi-low">93%</td>
+      <td class="roi-low">46%</td><td class="roi-high">103%</td>
+    </tr>
+    <tr>
+      <td>ワイド5頭BOX</td>
+      <td class="roi-low">69%</td><td class="roi-low">94%</td>
+      <td class="roi-low">60%</td><td class="roi-low">84%</td>
+      <td class="roi-high">114%</td><td class="roi-low">94%</td>
+    </tr>
+    <tr>
+      <td>ワイド1軸3頭流し</td>
+      <td class="roi-low">61%</td><td class="roi-high">132%</td>
+      <td class="roi-low">73%</td><td class="roi-low">97%</td>
+      <td class="roi-low">67%</td><td class="roi-low">91%</td>
+    </tr>
+    <tr>
+      <td>ワイド1軸4頭流し</td>
+      <td class="roi-low">72%</td><td class="roi-high">114%</td>
+      <td class="roi-low">68%</td><td class="roi-low">95%</td>
+      <td class="roi-high">124%</td><td class="roi-low">79%</td>
+    </tr>
+    <tr>
+      <td>ワイド1軸5頭流し</td>
+      <td class="roi-low">67%</td><td class="roi-low">97%</td>
+      <td class="roi-low">57%</td><td class="roi-low">85%</td>
+      <td class="roi-high">120%</td><td class="roi-low">74%</td>
+    </tr>
+  </table>
+  </div>
+  <div class="finding">
+    <b>OP×ダート（直近の買いサインが該当するセグメント・n=48）:</b> ワイド1-2=180%が突出。次点は3点BOX=121%で黒字を維持するが、4頭BOX以上・1軸流しは軒並み85〜97%と赤字圏に転落する。<br>
+    <b>3勝クラス×芝（n=81）:</b> 唯一「頭数を増やすほどROIが上がる」逆転パターン。1軸4頭流し124%・5頭流し120%・5頭BOX114%が単一ペア(89%)を上回る特異なセグメント（ただしn=81と他より小さく、単発の的中額に引っ張られている可能性あり・継続観察）。
+  </div>
+</div>
+
+<!-- 複数的中率 -->
+<div class="section">
+  <h2>「トリプルで当たる」感覚の検証 — 複数的中率</h2>
+  <div class="table-wrap">
+  <table>
+    <tr><th>フォーメーション</th><th>点数</th><th>的中率（1組以上）</th><th>複数的中率（2組以上）</th><th>全体ROI</th></tr>
+    <tr><td>ワイド1-2</td><td>1</td><td>15.3%</td><td class="roi-red" style="color:#95a5a6;">0.0%（構造上不可）</td><td class="roi-high">148%</td></tr>
+    <tr><td>ワイド3点BOX</td><td>3</td><td>27.8%</td><td>2.1%</td><td class="roi-low">87%</td></tr>
+    <tr><td>ワイド4頭BOX</td><td>6</td><td>42.3%</td><td>7.4%</td><td class="roi-low">75%</td></tr>
+    <tr class="row-highlight"><td>ワイド5頭BOX</td><td>10</td><td>55.7%</td><td><b>15.5%</b></td><td class="roi-low">79%</td></tr>
+    <tr><td>ワイド1軸3頭流し</td><td>3</td><td>28.9%</td><td>6.5%</td><td class="roi-low">91%</td></tr>
+    <tr><td>ワイド1軸4頭流し</td><td>4</td><td>32.0%</td><td>12.0%</td><td class="roi-low">89%</td></tr>
+    <tr><td>ワイド1軸5頭流し</td><td>5</td><td>33.3%</td><td>15.8%</td><td class="roi-low">79%</td></tr>
+  </table>
+  </div>
+  <div class="note">
+    <b>体感の正しさ:</b> 「頭数を増やせば複数的中もある」という直感は正しい。5頭BOXなら約6.4レースに1回、2組以上のワイドが同時的中する（複数的中率15.5%）。<br>
+    <b>ただし収益への影響:</b> 複数的中してもROIは79%（赤字）にとどまる。追加した3〜5位の馬を絡めたペアは的中額が小さい／的中頻度が低いため、"当たる回数"は増えても"儲け"には直結しない。的中の実感と収支は別物として切り分けて考える必要がある。
+  </div>
+</div>
+
+<!-- 推奨 -->
+<div class="section">
+  <h2>推奨（優先度順）</h2>
+  <div class="conclusion">
+    <b>① 現状維持（ROI最優先）:</b> ワイド1-2のみ。OP×ダート180%・OP×芝149%・全体×ダート250%と、コスト100円あたりの効率は他の追加を大きく上回る。<br><br>
+    <b>② 的中率を上げたいなら: ワイド3点BOX（上位3頭）に限定して拡張。</b> OP×ダートでROI121%を維持したまま的中率25%まで引き上げ可能な唯一の選択肢。4頭BOX以降は全セグメントでROI100%割れが多く、実質的な「保険」の価値以上のコストを払うことになる。<br><br>
+    <b>③ 非推奨: 1軸4〜5頭流し・4頭/5頭BOX。</b> 的中率・複数的中率は稼げるが、OP/OP×芝/OP×ダート/重賞のいずれでもROIが80〜98%に沈む。「当たるが儲からない」を地で行く結果であり、n=582の裏付けをもって導入は見送るべき。<br><br>
+    <b>唯一の例外:</b> 3勝クラス×芝（n=81）でのみ1軸4頭流し(124%)・5頭流し(120%)が単一ペア(89%)を上回る。ただしサンプルが小さく単発の的中額に引っ張られている可能性があるため、今後の蓄積を見てから判断（現時点での本番導入は見送り）。
+  </div>
+</div>
+
+<footer>
+  競馬予想システム ／ 検証スクリプト: verify/bet_analysis2.py 拡張（ワイド全フォーメーション） ／ データソース: cache/payouts・cache/race_result
+</footer>
+
+</div>
+</body>
+</html>

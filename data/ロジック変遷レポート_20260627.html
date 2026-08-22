@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>採点ロジック変遷レポート</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Helvetica Neue', 'Hiragino Sans', sans-serif; background: #f5f6fa; color: #2c3e50; font-size: 14px; }
+  .header { background: linear-gradient(135deg, #1a2980, #26d0ce); color: white; padding: 32px 40px; }
+  .header h1 { font-size: 24px; font-weight: 700; margin-bottom: 6px; }
+  .header p { opacity: 0.85; font-size: 13px; }
+  .container { max-width: 1100px; margin: 0 auto; padding: 24px 20px; }
+  .section { background: white; border-radius: 10px; padding: 24px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+  .section h2 { font-size: 17px; font-weight: 700; border-left: 4px solid #1a2980; padding-left: 12px; margin-bottom: 18px; color: #1a2980; }
+  .section h3 { font-size: 14px; font-weight: 700; margin: 16px 0 10px; color: #34495e; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { background: #1a2980; color: white; padding: 8px 12px; text-align: left; font-weight: 600; }
+  td { padding: 7px 12px; border-bottom: 1px solid #ecf0f1; }
+  tr:nth-child(even) td { background: #f8f9ff; }
+  tr:hover td { background: #eef2ff; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 700; }
+  .badge-green { background: #d5f5e3; color: #1e8449; }
+  .badge-red { background: #fdecea; color: #c0392b; }
+  .badge-gray { background: #eaecee; color: #566573; }
+  .badge-orange { background: #fef9e7; color: #d68910; }
+  .badge-blue { background: #d6eaf8; color: #1a5276; }
+  .timeline { position: relative; }
+  .tl-item { display: flex; margin-bottom: 16px; }
+  .tl-date { width: 100px; min-width: 100px; font-size: 12px; color: #7f8c8d; padding-top: 3px; font-weight: 600; }
+  .tl-dot { width: 12px; min-width: 12px; height: 12px; border-radius: 50%; margin-top: 5px; margin-right: 14px; }
+  .tl-body { flex: 1; }
+  .tl-title { font-weight: 700; font-size: 13px; margin-bottom: 4px; }
+  .tl-desc { font-size: 12px; color: #566573; line-height: 1.6; }
+  .dot-phase1 { background: #7f8c8d; }
+  .dot-phase2 { background: #2980b9; }
+  .dot-phase3 { background: #e67e22; }
+  .dot-phase4 { background: #8e44ad; }
+  .dot-phase5 { background: #27ae60; }
+  .dot-phase6 { background: #c0392b; }
+  .summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 20px; }
+  .kpi { background: #f0f3ff; border-radius: 8px; padding: 14px 16px; text-align: center; }
+  .kpi-val { font-size: 26px; font-weight: 800; color: #1a2980; }
+  .kpi-label { font-size: 11px; color: #7f8c8d; margin-top: 3px; }
+  .roi-high { color: #1e8449; font-weight: 700; }
+  .roi-mid { color: #d68910; font-weight: 700; }
+  .roi-low { color: #c0392b; font-weight: 700; }
+  .note { background: #fef9e7; border-left: 3px solid #f39c12; padding: 10px 14px; border-radius: 0 6px 6px 0; font-size: 12px; margin: 12px 0; line-height: 1.7; }
+  .finding { background: #eaf4fb; border-left: 3px solid #2980b9; padding: 10px 14px; border-radius: 0 6px 6px 0; font-size: 12px; margin: 12px 0; line-height: 1.7; }
+  .bar-wrap { display: flex; align-items: center; gap: 8px; }
+  .bar { height: 14px; border-radius: 3px; min-width: 2px; }
+  .bar-pos { background: #27ae60; }
+  .bar-neg { background: #c0392b; }
+  .bar-zero { background: #bdc3c7; }
+  .bar-val { font-size: 11px; min-width: 50px; }
+  footer { text-align: center; color: #95a5a6; font-size: 11px; padding: 20px; }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>採点ロジック変遷レポート</h1>
+  <p>競馬予想システム ／ 対象期間: 2025/12〜2026/06 ／ 生成日: 2026-06-27</p>
+</div>
+
+<div class="container">
+
+<!-- サマリKPI -->
+<div class="section">
+  <h2>現行ベースライン（2026-06-27）</h2>
+  <div class="summary-grid">
+    <div class="kpi"><div class="kpi-val">120.0%</div><div class="kpi-label">馬連1-2 全体ROI（n=359R）</div></div>
+    <div class="kpi"><div class="kpi-val">256.7%</div><div class="kpi-label">馬連1-2 OP ROI</div></div>
+    <div class="kpi"><div class="kpi-val">179.1%</div><div class="kpi-label">馬連1-2 3勝クラスROI</div></div>
+  </div>
+  <table>
+    <tr><th>馬券種</th><th>点数/R</th><th>的中率</th><th>ROI（全体）</th><th>ROI（2勝）</th><th>ROI（3勝）</th><th>ROI（OP）</th><th>ROI（重賞）</th></tr>
+    <tr><td>単勝</td><td>1</td><td>20.6%</td><td class="roi-low">86.4%</td><td class="roi-low">67.6%</td><td class="roi-high">109.0%</td><td class="roi-high">111.7%</td><td class="roi-low">68.6%</td></tr>
+    <tr><td>複勝</td><td>1</td><td>44.3%</td><td class="roi-low">77.0%</td><td class="roi-low">76.1%</td><td class="roi-low">90.5%</td><td class="roi-low">63.8%</td><td class="roi-low">73.3%</td></tr>
+    <tr><td>馬連1-2</td><td>1</td><td>8.1%</td><td class="roi-high">120.0%</td><td class="roi-low">55.2%</td><td class="roi-high">179.1%</td><td class="roi-high">256.7%</td><td class="roi-low">32.5%</td></tr>
+    <tr><td>馬連3点</td><td>3</td><td>17.8%</td><td class="roi-low">98.4%</td><td class="roi-low">57.9%</td><td class="roi-high">122.6%</td><td class="roi-high">185.7%</td><td class="roi-low">61.9%</td></tr>
+    <tr><td>ワイド1-2</td><td>1</td><td>15.0%</td><td class="roi-low">71.3%</td><td class="roi-low">48.2%</td><td class="roi-high">102.5%</td><td class="roi-low">96.8%</td><td class="roi-low">50.9%</td></tr>
+    <tr><td>ワイド3点</td><td>3</td><td>34.3%</td><td class="roi-low">83.1%</td><td class="roi-low">92.1%</td><td class="roi-low">70.1%</td><td class="roi-low">78.7%</td><td class="roi-low">86.1%</td></tr>
+    <tr><td>三連複1-2-3</td><td>1</td><td>2.8%</td><td class="roi-low">50.7%</td><td class="roi-low">96.3%</td><td class="roi-low">21.8%</td><td class="roi-low">21.4%</td><td class="roi-low">15.1%</td></tr>
+    <tr><td>三連複1軸4頭</td><td>6</td><td>12.0%</td><td class="roi-low">62.0%</td><td class="roi-low">49.6%</td><td class="roi-low">50.7%</td><td class="roi-high">147.6%</td><td class="roi-low">12.4%</td></tr>
+    <tr><td>三連複5頭BOX</td><td>10</td><td>17.8%</td><td class="roi-low">71.5%</td><td class="roi-low">49.0%</td><td class="roi-low">47.9%</td><td class="roi-high">177.7%</td><td class="roi-low">43.7%</td></tr>
+  </table>
+  <div class="note" style="margin-top:14px">
+    <b>実運用上の買い方（確定）:</b> 3勝クラス = 馬連1-2 ／ OP = 馬連1-2 + 三連複5頭BOX（芝はBOXのみ）／ 2勝クラス・重賞 = 全見送り
+  </div>
+</div>
+
+<!-- タイムライン -->
+<div class="section">
+  <h2>ロジック変遷タイムライン</h2>
+  <div class="timeline">
+
+    <div class="tl-item">
+      <div class="tl-date">2026-06-07</div>
+      <div class="tl-dot dot-phase1"></div>
+      <div class="tl-body">
+        <div class="tl-title">Phase 1 ／ 初期システム <span class="badge badge-gray">初回コミット</span></div>
+        <div class="tl-desc">
+          scorer.py 単一ファイル（芝/ダート未分離）。前走着順ベースのシンプル採点。
+          馬連ROI: <b>336%</b>（当時CSV・現在のロジックでは再現不可）
+        </div>
+      </div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-date">2026-06-13</div>
+      <div class="tl-dot dot-phase2"></div>
+      <div class="tl-body">
+        <div class="tl-title">Phase 2 ／ 芝/ダート分離・着差ベース評価 <span class="badge badge-blue">バグ修正 + 改善</span></div>
+        <div class="tl-desc">
+          ・scorer_turf.py / scorer_dart.py に分離<br>
+          ・前走評価を<b>着順ベース→着差ベースに変更</b>（1着→+3、0.0秒差→+2、0.1〜0.2秒差→+1）<br>
+          ・parse_past_race 着差パースバグ修正（着差不明: 0.0→−1.0）<br>
+          ・距離延長ペナルティ緩和: 3勝前走1着→−1→0<br>
+          ・脚質・ペース適性スコア（pace_fit）追加<br>
+          <br>コミット記録: 「単勝+1.4pt / 三連複+1.2pt改善（354レース検証）」
+        </div>
+      </div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-date">2026-06-14</div>
+      <div class="tl-dot dot-phase3"></div>
+      <div class="tl-body">
+        <div class="tl-title">Phase 3 ／ 新機能ラッシュ（1日で多数追加） <span class="badge badge-orange">検証なし導入</span></div>
+        <div class="tl-desc">
+          ・content_score 追加（着差・上がり・脚質・人気乖離の過去3走加重和・最大+6pt）<br>
+          ・win_count ボーナス追加（1勝+1 / 2勝+2）<br>
+          ・long_rest 緩和: −3→−1（前走1着は0免除）<br>
+          ・check_same_course 改訂（1着→+3）<br>
+          ・見送りルール大改訂: 2勝クラス全見送り / 重賞見送り / 10倍超廃止<br>
+          <br><b>⚠ 6/14会議で「バックテストなしの本番導入」が問題視。機能導入前検証ルール制定のきっかけ。</b>
+        </div>
+      </div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-date">2026-06-17</div>
+      <div class="tl-dot dot-phase4"></div>
+      <div class="tl-body">
+        <div class="tl-title">Phase 4 ／ 係数グリッドサーチチューニング <span class="badge badge-blue">最適化</span></div>
+        <div class="tl-desc">
+          900組合せグリッドサーチ（訓練データ: 1〜4月）で係数を最適化<br>
+          ・win_count: ×1.0 → <b>×2.50</b>（大幅増）<br>
+          ・prev_run_bonus: ×1.0 → <b>×0.25</b>（大幅減）<br>
+          ・rising_trend: ×1.0 → ×1.25<br>
+          ・place_consistency: ×1.0 → ×0.75<br>
+          <br>旧CSVでの馬連ROI: <b>135.9%（全体）</b> / 3勝×芝: 339% / OP×ダ: 542%
+        </div>
+      </div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-date">2026-06-18〜20</div>
+      <div class="tl-dot dot-phase5"></div>
+      <div class="tl-body">
+        <div class="tl-title">Phase 5 ／ 調教データ統合・馬場状態反映 <span class="badge badge-green">精度向上</span></div>
+        <div class="tl-desc">
+          ・調教ランク（A/B/C/D）を自動採点に統合（RANK_SCORE={A:3, B:2, C:1, D:0}）<br>
+          ・馬場状態（JRA公式 /keiba/baba/）を自動取得して道悪実績スコアに反映<br>
+          ・検証CSVを 検証_新ロジック_調教あり.csv（n=5,587行）に刷新<br>
+          ・JRA URLチェックサム式を確定（全12Rで検証済み）<br>
+          <br>現行ロジックでの馬連ROI: <b>120.0%（全体）</b> / OP: 256.7% / 3勝: 179.1%
+        </div>
+      </div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-date">2026-06-24〜27</div>
+      <div class="tl-dot dot-phase6"></div>
+      <div class="tl-body">
+        <div class="tl-title">Phase 6 ／ 見送りルール精緻化・OP×芝馬連廃止 <span class="badge badge-red">戦略変更</span></div>
+        <div class="tl-desc">
+          ・重賞見送り確定（三連複ROI 0〜6%・n=92）<br>
+          ・OP×芝の馬連廃止（馬連ROI 81%・n=57で期待値マイナス）<br>
+          ・スコア差0〜1ptの一律見送りを禁止（3勝クラスは117〜140%）<br>
+          ・断然人気（オッズ＜2倍）の見送り廃止（5BOX ROI 141%）<br>
+          ・9馬券種標準検証フォーマット（bet_metrics_standard.py）整備
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ROI推移比較 -->
+<div class="section">
+  <h2>馬連1-2 ROI 推移（ロジックフェーズ別）</h2>
+  <table>
+    <tr><th>フェーズ</th><th>CSV/データ</th><th>n（レース数）</th><th>全体ROI</th><th>3勝クラス</th><th>OP</th><th>備考</th></tr>
+    <tr>
+      <td>Phase 1（初期）</td><td>旧CSV（現存せず）</td><td>不明</td>
+      <td class="roi-high">336%</td><td>―</td><td>―</td>
+      <td><span class="badge badge-gray">現行ロジックでは再現不可</span></td>
+    </tr>
+    <tr>
+      <td>Phase 4後（係数チューニング済）</td><td>旧CSV（all_bet_roi）</td><td>303R</td>
+      <td class="roi-high">135.9%</td><td>339%（芝）/ 50.7%（ダ）</td><td>88.8%（芝）/ 542%（ダ）</td>
+      <td><span class="badge badge-orange">調教なし・旧採点</span></td>
+    </tr>
+    <tr>
+      <td>Phase 5後（現行・調教あり）</td><td>検証_新ロジック_調教あり</td><td>359R</td>
+      <td class="roi-high">120.0%</td><td class="roi-high">179.1%</td><td class="roi-high">256.7%（芝ダ混合）</td>
+      <td><span class="badge badge-green">現行ベースライン</span></td>
+    </tr>
+  </table>
+  <div class="finding">
+    <b>重要:</b> Phase 1→4で336%→135.9%（−200pt）の低下、Phase 4→5でさらに135.9%→120.0%（−16pt）の低下。ただし <b>CSVが別物</b>（サンプル・採点基準が異なる）ため単純比較は困難。
+    本当に比較可能なのは同一CSVに対して変更前後を測定したアブレーション結果のみ。
+  </div>
+</div>
+
+<!-- ファクター貢献度 -->
+<div class="section">
+  <h2>各ファクターの1着率への貢献（factor_contribution.csv 分析）</h2>
+  <p style="color:#7f8c8d; font-size:12px; margin-bottom:14px">
+    「そのファクターを0にしたとき」の予想1位1着率の変化。プラス=ファクターが役立っている / マイナス=逆効果
+  </p>
+  <table>
+    <tr><th>ファクター</th><th>1着率変化</th><th>グラフ</th><th>非ゼロ率</th><th>判定</th></tr>
+
+    <tr>
+      <td><code>pace_fit</code></td>
+      <td style="text-align:right">+1.82%</td>
+      <td>
+        <div class="bar-wrap">
+          <div class="bar bar-pos" style="width:120px"></div>
+        </div>
+      </td>
+      <td style="text-align:right">61.2%</td>
+      <td><span class="badge badge-green">有効</span></td>
+    </tr>
+    <tr>
+      <td><code>rising_trend</code></td>
+      <td style="text-align:right">+1.36%</td>
+      <td>
+        <div class="bar-wrap">
+          <div class="bar bar-pos" style="width:90px"></div>
+        </div>
+      </td>
+      <td style="text-align:right">18.8%</td>
+      <td><span class="badge badge-green">有効</span></td>
+    </tr>
+    <tr>
+      <td><code>inner_post_senko</code></td>
+      <td style="text-align:right">+0.76%</td>
+      <td>
+        <div class="bar-wrap">
+          <div class="bar bar-pos" style="width:50px"></div>
+        </div>
+      </td>
+      <td style="text-align:right">9.2%</td>
+      <td><span class="badge badge-green">有効</span></td>
+    </tr>
+    <tr>
+      <td><code>distance_up</code></td>
+      <td style="text-align:right">+0.61%</td>
+      <td>
+        <div class="bar-wrap">
+          <div class="bar bar-pos" style="width:40px"></div>
+        </div>
+      </td>
+      <td style="text-align:right">3.5%</td>
+      <td><span class="badge badge-green">有効</span></td>
+    </tr>
+    <tr>
+      <td><code>place_consistency</code></td>
+      <td style="text-align:right">+0.30%</td>
+      <td>
+        <div class="bar-wrap">
+          <div class="bar bar-zero" style="width:20px"></div>
+        </div>
+      </td>
+      <td style="text-align:right">27.6%</td>
+      <td><span class="badge badge-gray">効果なし</span></td>
+    </tr>
+    <tr>
+      <td><code>local_prev</code></td>
+      <td style="text-align:right">+0.15%</td>
+      <td>
+        <div class="bar-wrap">
+          <div class="bar bar-zero" style="width:10px"></div>
+        </div>
+      </td>
+      <td style="text-align:right">7.8%</td>
+      <td><span class="badge badge-gray">効果なし</span></td>
+    </tr>
+    <tr>
+      <td><code>grade_history</code></td>
+      <td style="text-align:right">+0.00%</td>
+      <td>
+        <div class="bar-wrap">
+          <div class="bar bar-zero" style="width:0px"></div>
+        </div>
+      </td>
+      <td style="text-align:right">16.4%</td>
+      <td><span class="badge badge-gray">効果なし</span></td>
+    </tr>
+    <tr>
+      <td><code>post_surface</code></td>
+      <td style="text-align:right">+0.00%</td>
+      <td>
+        <div class="bar-wrap">
+          <div class="bar bar-zero" style="width:0px"></div>
+        </div>
+      </td>
+      <td style="text-align:right">27.4%</td>
+      <td><span class="badge badge-gray">効果なし</span></td>
+    </tr>
+    <tr>
+      <td><code>long_rest</code></td>
+      <td style="text-align:right">+0.00%</td>
+      <td>
+        <div class="bar-wrap">
+          <div class="bar bar-zero" style="width:0px"></div>
+        </div>
+      </td>
+      <td style="text-align:right">1.7%</td>
+      <td><span class="badge badge-gray">効果なし</span></td>
+    </tr>
+    <tr>
+      <td><code>light_weight</code></td>
+      <td style="text-align:right">+0.00%</td>
+      <td>
+        <div class="bar-wrap">
+          <div class="bar bar-zero" style="width:0px"></div>
+        </div>
+      </td>
+      <td style="text-align:right">2.0%</td>
+      <td><span class="badge badge-gray">効果なし</span></td>
+    </tr>
+    <tr>
+      <td><code>jockey_bonus</code></td>
+      <td style="text-align:right">+0.00%</td>
+      <td>
+        <div class="bar-wrap">
+          <div class="bar bar-zero" style="width:0px"></div>
+        </div>
+      </td>
+      <td style="text-align:right">0.0%</td>
+      <td><span class="badge badge-gray">効果なし</span></td>
+    </tr>
+    <tr>
+      <td><code>first_surface</code></td>
+      <td style="text-align:right">+0.00%</td>
+      <td>
+        <div class="bar-wrap">
+          <div class="bar bar-zero" style="width:0px"></div>
+        </div>
+      </td>
+      <td style="text-align:right">2.9%</td>
+      <td><span class="badge badge-gray">効果なし</span></td>
+    </tr>
+    <tr>
+      <td><code>fastest_3f</code></td>
+      <td style="text-align:right">+0.00%</td>
+      <td>
+        <div class="bar-wrap">
+          <div class="bar bar-zero" style="width:0px"></div>
+        </div>
+      </td>
+      <td style="text-align:right">7.9%</td>
+      <td><span class="badge badge-gray">効果なし</span></td>
+    </tr>
+    <tr>
+      <td><code>content_score</code></td>
+      <td style="text-align:right">+0.00%</td>
+      <td>
+        <div class="bar-wrap">
+          <div class="bar bar-zero" style="width:0px"></div>
+        </div>
+      </td>
+      <td style="text-align:right">0.0%</td>
+      <td><span class="badge badge-gray">効果なし</span></td>
+    </tr>
+    <tr>
+      <td><code>training_rank</code></td>
+      <td style="text-align:right">+0.00%</td>
+      <td>
+        <div class="bar-wrap">
+          <div class="bar bar-zero" style="width:0px"></div>
+        </div>
+      </td>
+      <td style="text-align:right">96.9%</td>
+      <td><span class="badge badge-gray">効果なし</span></td>
+    </tr>
+    <tr>
+      <td><code>prev_high_grade_close</code></td>
+      <td style="text-align:right">+0.00%</td>
+      <td>
+        <div class="bar-wrap">
+          <div class="bar bar-zero" style="width:0px"></div>
+        </div>
+      </td>
+      <td style="text-align:right">0.0%</td>
+      <td><span class="badge badge-gray">効果なし</span></td>
+    </tr>
+    <tr>
+      <td><code>track_condition</code></td>
+      <td style="text-align:right">+0.00%</td>
+      <td>
+        <div class="bar-wrap">
+          <div class="bar bar-zero" style="width:0px"></div>
+        </div>
+      </td>
+      <td style="text-align:right">0.0%</td>
+      <td><span class="badge badge-gray">効果なし</span></td>
+    </tr>
+    <tr>
+      <td><code>special_condition</code></td>
+      <td style="text-align:right">+0.00%</td>
+      <td>
+        <div class="bar-wrap">
+          <div class="bar bar-zero" style="width:0px"></div>
+        </div>
+      </td>
+      <td style="text-align:right">0.3%</td>
+      <td><span class="badge badge-gray">効果なし</span></td>
+    </tr>
+    <tr>
+      <td><code>promotion</code></td>
+      <td style="text-align:right">+0.00%</td>
+      <td>
+        <div class="bar-wrap">
+          <div class="bar bar-zero" style="width:0px"></div>
+        </div>
+      </td>
+      <td style="text-align:right">0.0%</td>
+      <td><span class="badge badge-gray">効果なし</span></td>
+    </tr>
+    <tr>
+      <td><code>weight_change</code></td>
+      <td style="text-align:right">+0.00%</td>
+      <td>
+        <div class="bar-wrap">
+          <div class="bar bar-zero" style="width:0px"></div>
+        </div>
+      </td>
+      <td style="text-align:right">0.0%</td>
+      <td><span class="badge badge-gray">効果なし</span></td>
+    </tr>
+    <tr>
+      <td><code>prev2_high_grade_close</code></td>
+      <td style="text-align:right">+0.00%</td>
+      <td>
+        <div class="bar-wrap">
+          <div class="bar bar-zero" style="width:0px"></div>
+        </div>
+      </td>
+      <td style="text-align:right">0.0%</td>
+      <td><span class="badge badge-gray">効果なし</span></td>
+    </tr>
+    <tr>
+      <td><code>wrong_direction</code></td>
+      <td style="text-align:right">+0.00%</td>
+      <td>
+        <div class="bar-wrap">
+          <div class="bar bar-zero" style="width:0px"></div>
+        </div>
+      </td>
+      <td style="text-align:right">0.0%</td>
+      <td><span class="badge badge-gray">効果なし</span></td>
+    </tr>
+    <tr>
+      <td><code>prev_run_bonus</code></td>
+      <td style="text-align:right">-0.15%</td>
+      <td>
+        <div class="bar-wrap">
+          <div class="bar bar-zero" style="width:10px"></div>
+        </div>
+      </td>
+      <td style="text-align:right">28.1%</td>
+      <td><span class="badge badge-gray">効果なし</span></td>
+    </tr>
+    <tr>
+      <td><code>steep_power</code></td>
+      <td style="text-align:right">-0.15%</td>
+      <td>
+        <div class="bar-wrap">
+          <div class="bar bar-zero" style="width:10px"></div>
+        </div>
+      </td>
+      <td style="text-align:right">14.3%</td>
+      <td><span class="badge badge-gray">効果なし</span></td>
+    </tr>
+    <tr>
+      <td><code>seasonal_sex</code></td>
+      <td style="text-align:right">-0.15%</td>
+      <td>
+        <div class="bar-wrap">
+          <div class="bar bar-zero" style="width:10px"></div>
+        </div>
+      </td>
+      <td style="text-align:right">10.0%</td>
+      <td><span class="badge badge-gray">効果なし</span></td>
+    </tr>
+    <tr>
+      <td><code>distance_drop</code></td>
+      <td style="text-align:right">-0.30%</td>
+      <td>
+        <div class="bar-wrap">
+          <div class="bar bar-neg" style="width:20px"></div>
+        </div>
+      </td>
+      <td style="text-align:right">21.1%</td>
+      <td><span class="badge badge-red">逆効果</span></td>
+    </tr>
+    <tr>
+      <td><code>win_count</code></td>
+      <td style="text-align:right">-0.45%</td>
+      <td>
+        <div class="bar-wrap">
+          <div class="bar bar-neg" style="width:30px"></div>
+        </div>
+      </td>
+      <td style="text-align:right">58.3%</td>
+      <td><span class="badge badge-red">逆効果</span></td>
+    </tr>
+    <tr>
+      <td><code>prev2_run_bonus</code></td>
+      <td style="text-align:right">-0.45%</td>
+      <td>
+        <div class="bar-wrap">
+          <div class="bar bar-neg" style="width:30px"></div>
+        </div>
+      </td>
+      <td style="text-align:right">29.2%</td>
+      <td><span class="badge badge-red">逆効果</span></td>
+    </tr>
+    <tr>
+      <td><code>second_start</code></td>
+      <td style="text-align:right">-0.61%</td>
+      <td>
+        <div class="bar-wrap">
+          <div class="bar bar-neg" style="width:40px"></div>
+        </div>
+      </td>
+      <td style="text-align:right">38.3%</td>
+      <td><span class="badge badge-red">逆効果</span></td>
+    </tr>
+    <tr>
+      <td><code>bloodline_distance</code></td>
+      <td style="text-align:right">-0.91%</td>
+      <td>
+        <div class="bar-wrap">
+          <div class="bar bar-neg" style="width:60px"></div>
+        </div>
+      </td>
+      <td style="text-align:right">34.4%</td>
+      <td><span class="badge badge-red">逆効果</span></td>
+    </tr>
+    <tr>
+      <td><code>same_course</code></td>
+      <td style="text-align:right">-1.06%</td>
+      <td>
+        <div class="bar-wrap">
+          <div class="bar bar-neg" style="width:70px"></div>
+        </div>
+      </td>
+      <td style="text-align:right">27.8%</td>
+      <td><span class="badge badge-red">逆効果</span></td>
+    </tr>
+  </table>
+  <div class="note" style="margin-top:14px">
+    <b>注目点:</b> <code>content_score</code>（内容評価・最大+6pt）と <code>jockey_bonus</code>（騎手ボーナス）は <b>1着率への貢献ゼロ</b>。
+    <code>win_count</code>（勝利数・×2.50係数）は <b>逆効果（−0.5%）</b>。
+    最も効いているのは <code>pace_fit</code>（脚質・ペース適性 +1.8%）と <code>rising_trend</code>（上昇傾向 +1.4%）。
+  </div>
+</div>
+
+<!-- ROI推移（旧CSV詳細） -->
+<div class="section">
+  <h2>Phase 4後 クラス×芝ダ別 ROI 詳細（all_bet_roi.csv）</h2>
+  <table>
+    <tr><th>セグメント</th><th>馬連1-2 ROI</th><th>n</th><th>三連複5頭BOX ROI</th><th>三連複1軸ROI</th></tr>
+<tr><td>全体</td><td class="roi-high">135.9%</td><td>303</td><td>78.5%</td><td>120.4%</td></tr><tr><td>3勝クラス×芝</td><td class="roi-high">339.4%</td><td>36</td><td>64.7%</td><td>69.0%</td></tr><tr><td>3勝クラス×ダ</td><td class="roi-low">50.7%</td><td>43</td><td>48.2%</td><td>90.8%</td></tr><tr><td>OP×芝</td><td class="roi-mid">88.8%</td><td>32</td><td>290.2%</td><td>371.2%</td></tr><tr><td>OP×ダ</td><td class="roi-high">542.3%</td><td>26</td><td>80.4%</td><td>201.0%</td></tr>
+  </table>
+  <div class="note" style="margin-top:14px">
+    <b>注意:</b> このデータは旧CSV（調教なし・旧採点）ベース。OP×ダ の 542% は的中2件の万馬券が大きく影響（n=26）。
+    実装禁止（n不足・2件での高ROIは信頼性低い）。
+  </div>
+</div>
+
+<!-- 知見・提言 -->
+<div class="section">
+  <h2>分析まとめ・改善示唆</h2>
+
+  <h3>「ROIが下がっている気がする」の正体</h3>
+  <table>
+    <tr><th>原因</th><th>詳細</th><th>対処</th></tr>
+    <tr>
+      <td>① CSVが変わるたびに数値が動く</td>
+      <td>旧CSV（n=303）→現行（n=359）は採点基準・サンプルが異なり単純比較不可</td>
+      <td>同一CSVで before/after を比較するアブレーションを徹底</td>
+    </tr>
+    <tr>
+      <td>② 効かないファクターがシグナルを希釈</td>
+      <td>content_score / jockey_bonus は delta=0。追加するほど真のシグナルが薄まる</td>
+      <td>廃止or係数0化を検討（機能導入前検証ルール適用）</td>
+    </tr>
+    <tr>
+      <td>③ win_count ×2.50 係数が過大</td>
+      <td>グリッドサーチ最適値だが訓練データへの過学習の可能性。1着率でわずかにマイナス</td>
+      <td>×1.0へ戻してアブレーション確認</td>
+    </tr>
+    <tr>
+      <td>④ prev_run_bonus ×0.25 に縮小</td>
+      <td>着差ベース評価の情報を「0.25倍」に希薄化。前走結果の反映が弱くなった</td>
+      <td>×0.5〜1.0への引き戻しを検討</td>
+    </tr>
+  </table>
+
+  <h3 style="margin-top:20px">実際に効いていると証明されているファクター（廃止禁止）</h3>
+  <table>
+    <tr><th>ファクター</th><th>1着率改善</th><th>状態</th></tr>
+    <tr><td>pace_fit（脚質・ペース適性）</td><td class="roi-high">+1.8%</td><td><span class="badge badge-green">維持必須</span></td></tr>
+    <tr><td>rising_trend（上昇傾向）</td><td class="roi-high">+1.4%</td><td><span class="badge badge-green">維持必須</span></td></tr>
+    <tr><td>distance_up（距離延長ペナルティ）</td><td class="roi-mid">+0.6%</td><td><span class="badge badge-green">維持</span></td></tr>
+    <tr><td>inner_post_senko（内枠先行）</td><td class="roi-mid">+0.8%</td><td><span class="badge badge-green">維持</span></td></tr>
+  </table>
+
+  <h3 style="margin-top:20px">要検証（機能導入前検証ルール：n≥20・ROI>100%を確認してから判断）</h3>
+  <table>
+    <tr><th>項目</th><th>現状</th><th>推奨アクション</th></tr>
+    <tr><td>content_score 廃止</td><td>delta=0（無貢献）</td><td>アブレーションでROI変化を確認</td></tr>
+    <tr><td>win_count 係数 ×2.50→×1.0</td><td>1着率−0.5%</td><td>係数戻してROI比較</td></tr>
+    <tr><td>prev_run_bonus 係数 ×0.25→×0.5</td><td>微小マイナス</td><td>着差情報をより反映させる方向</td></tr>
+    <tr><td>jockey_bonus 廃止</td><td>delta=0（無貢献）</td><td>削除してもROIに影響なし（推定）</td></tr>
+  </table>
+
+  <div class="finding" style="margin-top:16px">
+    <b>最優先の試験:</b> win_count を×2.50→×1.0 に戻すアブレーション。
+    係数チューニング（Phase 4）で最も大きく変えた箇所であり、1着率でマイナスが出ている。
+    これを1点改善するだけで馬連ROIが数十%回復する可能性がある。
+    n=359・機能導入前検証ルール適合（50件以上）でアブレーション可能。
+  </div>
+</div>
+
+</div>
+<footer>競馬予想システム ／ 採点ロジック変遷レポート ／ 2026-06-27</footer>
+</body>
+</html>

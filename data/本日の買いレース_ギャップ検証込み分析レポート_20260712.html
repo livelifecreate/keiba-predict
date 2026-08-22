@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>本日の買いレース分析レポート（順位間ギャップ検証込み）</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Helvetica Neue', 'Hiragino Sans', sans-serif; background: #f5f6fa; color: #2c3e50; font-size: 14px; }
+  .header { background: linear-gradient(135deg, #1a2980, #26d0ce); color: white; padding: 32px 40px; }
+  .header h1 { font-size: 24px; font-weight: 700; margin-bottom: 6px; }
+  .header p { opacity: 0.85; font-size: 13px; }
+  .container { max-width: 1140px; margin: 0 auto; padding: 24px 20px; }
+  .race-block { background: white; border-radius: 10px; padding: 26px; margin-bottom: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+  .race-title { font-size: 19px; font-weight: 800; color: #1a2980; margin-bottom: 4px; }
+  .race-sub { font-size: 12.5px; color: #7f8c8d; margin-bottom: 16px; }
+  .buy-badge { display:inline-block; background:#1a2980; color:white; font-size:12px; font-weight:700; padding:4px 12px; border-radius: 16px; margin-left: 8px; }
+  h3 { font-size: 14.5px; font-weight: 700; margin: 20px 0 10px; color: #34495e; border-left: 3px solid #26d0ce; padding-left: 10px; }
+  table { width: 100%; border-collapse: collapse; font-size: 12.5px; margin-bottom: 8px; }
+  .table-wrap { overflow-x: auto; }
+  th { background: #1a2980; color: white; padding: 7px 10px; text-align: left; font-weight: 600; white-space: nowrap; }
+  td { padding: 6px 10px; border-bottom: 1px solid #ecf0f1; white-space: nowrap; }
+  .gap-table td.gapval { font-weight: 800; color: #1a2980; text-align:center; }
+  .finding { background: #eaf4fb; border-left: 3px solid #2980b9; padding: 10px 14px; border-radius: 0 6px 6px 0; font-size: 12.5px; margin: 10px 0; line-height: 1.8; }
+  .caution { background: #fdecea; border-left: 3px solid #c0392b; padding: 10px 14px; border-radius: 0 6px 6px 0; font-size: 12.5px; margin: 10px 0; line-height: 1.8; }
+  .conclusion { background: #eafaf1; border-left: 3px solid #27ae60; padding: 12px 16px; border-radius: 0 6px 6px 0; font-size: 13px; margin: 12px 0; line-height: 1.9; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 700; }
+  .badge-green { background: #d5f5e3; color: #1e8449; }
+  .badge-red { background: #fdecea; color: #c0392b; }
+  .badge-gray { background: #eaecee; color: #566573; }
+  .note { background: #fef9e7; border-left: 3px solid #f39c12; padding: 10px 14px; border-radius: 0 6px 6px 0; font-size: 12px; margin: 12px 0; line-height: 1.7; }
+  footer { text-align: center; color: #95a5a6; font-size: 11px; padding: 20px; }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>本日の買いレース分析レポート（順位間ギャップ検証込み）</h1>
+  <p>競馬予想システム ／ 2026-07-12（日） ／ 順位間スコアギャップ検証（クラス別）の知見を各レースの実際のギャップに当てはめて解釈</p>
+</div>
+
+<div class="container">
+
+<div class="race-block">
+  <div class="race-title">福島10R 天の川S <span class="buy-badge">三連複4頭BOX (4点)</span></div>
+  <div class="race-sub">ダート1700m・11頭・3勝クラス・馬場稍重</div>
+
+  <h3>採点順位とギャップ</h3>
+  <div class="table-wrap">
+  <table>
+    <tr><th>順位</th><th>馬番</th><th>馬名</th><th>スコア</th><th>オッズ</th><th>次順位とのギャップ</th></tr>
+    <tr><td>1</td><td>3</td><td>リフレックス</td><td>+12.2</td><td>5.2倍</td><td class="gapval">1.2pt</td></tr>
+    <tr><td>2</td><td>1</td><td>ダカラフェスティヴ</td><td>+11.0</td><td>10.4倍</td><td class="gapval">1.8pt</td></tr>
+    <tr><td>3</td><td>9</td><td>チギリ</td><td>+9.2</td><td>7.8倍</td><td class="gapval">3.1pt</td></tr>
+    <tr><td>4</td><td>6</td><td>サトミノエンジェル</td><td>+6.1</td><td>9.2倍</td><td class="gapval">0.1pt</td></tr>
+    <tr><td>5</td><td>10</td><td>スマートケープ</td><td>+6.0</td><td>4.4倍</td><td>—</td></tr>
+  </table>
+  </div>
+
+  <h3>ギャップ検証（3勝クラス基準）を当てはめた解釈</h3>
+  <div class="table-wrap">
+  <table>
+    <tr><th>ギャップ位置</th><th>今回の値</th><th>該当帯(3勝クラス)</th><th>n</th><th>参考指標</th></tr>
+    <tr><td>1-2位</td><td class="gapval">1.2pt</td><td>1〜2pt帯</td><td>44</td><td>1位勝率20.5%・複勝率50.0%・両者3着内18.2%</td></tr>
+    <tr><td>2-3位</td><td class="gapval">1.8pt</td><td>1〜2pt帯</td><td>38</td><td>順位維持率65.8%・両者3着内わずか2.6%</td></tr>
+    <tr><td>3-4位</td><td class="gapval">3.1pt</td><td>3〜5pt帯</td><td>15</td><td>4位複勝率13.3%（低い）</td></tr>
+    <tr><td>4-5位</td><td class="gapval">0.1pt</td><td>0〜0.5pt帯</td><td>48</td><td>4位複勝率35.4%・5位複勝率31.2%（僅差で拮抗）</td></tr>
+  </table>
+  </div>
+
+  <div class="finding">
+    <strong>1位リフレックスは軸として「中程度」の信頼度。</strong>1-2位ギャップ1.2ptは3勝クラスで最も強いシグナルが出る「3pt以上」帯（勝率28.6〜50%）には届かず、1〜2pt帯（勝率20.5%）にとどまる。単勝の軸にするには弱いが、複勝率50.0%は悪くない水準。
+  </div>
+  <div class="caution">
+    <strong>3位チギリと4位サトミノエンジェルの間（3.1pt）は「4位を切ってよい」水準のギャップ</strong>だが、同時に4位と5位の間はほぼ横並び（0.1pt）。つまり「4位を切って5位を入れる」判断も同時に成り立ちうる、ねじれた状況。現行の買い目（1〜4位の4頭BOX）は、この観点だと5位スマートケープ（4.4倍・1人気）を含めていない点がやや気になる。サンプルも3-4位帯n=15、4-5位帯n=48と少なめなので断定はできないが、余裕があれば5頭に広げる／5位を軸絡みのヒモに加えることを検討する余地がある。
+  </div>
+</div>
+
+<div class="race-block">
+  <div class="race-title">小倉11R 阿蘇S <span class="buy-badge">三連複5頭BOX (10点) + 馬連・ワイド</span></div>
+  <div class="race-sub">ダート1700m・11頭・OP・馬場良</div>
+
+  <h3>採点順位とギャップ</h3>
+  <div class="table-wrap">
+  <table>
+    <tr><th>順位</th><th>馬番</th><th>馬名</th><th>スコア</th><th>オッズ</th><th>次順位とのギャップ</th></tr>
+    <tr><td>1</td><td>11</td><td>モックモック</td><td>+11.6</td><td>1.9倍</td><td class="gapval">0.2pt</td></tr>
+    <tr><td>2</td><td>7</td><td>モンブランミノル</td><td>+11.4</td><td>6.8倍</td><td class="gapval">1.9pt</td></tr>
+    <tr><td>3</td><td>9</td><td>シュラザック</td><td>+9.5</td><td>11.0倍</td><td class="gapval">0.6pt</td></tr>
+    <tr><td>4</td><td>2</td><td>ゴッドブルービー</td><td>+8.9</td><td>12.4倍</td><td class="gapval">2.9pt</td></tr>
+    <tr><td>5</td><td>10</td><td>フェルヴェンテ</td><td>+6.0</td><td>54.7倍</td><td>—</td></tr>
+  </table>
+  </div>
+
+  <h3>ギャップ検証（OP基準）を当てはめた解釈</h3>
+  <div class="table-wrap">
+  <table>
+    <tr><th>ギャップ位置</th><th>今回の値</th><th>該当帯(OP)</th><th>n</th><th>参考指標</th></tr>
+    <tr><td>1-2位</td><td class="gapval">0.2pt</td><td>0〜0.5pt帯</td><td>15</td><td>1位勝率26.7%・複勝率40.0%、<b>2位複勝率46.7%が1位を上回る</b></td></tr>
+    <tr><td>2-3位</td><td class="gapval">1.9pt</td><td>1〜2pt帯</td><td>23</td><td>2位複勝率43.5% ＞ 3位21.7%</td></tr>
+    <tr><td>3-4位</td><td class="gapval">0.6pt</td><td>0.5〜1pt帯</td><td>23</td><td><b>4位複勝率34.8%が3位17.4%を上回る逆転</b></td></tr>
+    <tr><td>4-5位</td><td class="gapval">2.9pt</td><td>2〜3pt帯</td><td>16</td><td>5位複勝率31.2% ＞ 4位12.5%（n少・大穴のため参考程度）</td></tr>
+  </table>
+  </div>
+
+  <div class="finding">
+    <strong>1位モックモックを単勝的な絶対軸として扱うのは今回のデータ的に不向き。</strong>
+    1-2位ギャップ0.2ptはほぼ横並びで、このOP帯（n=15）では実際に2位側の複勝率（46.7%）が1位（40.0%）を上回るという逆転が観測されている。
+    今回の買い目が単勝ではなく「馬連・ワイドで11番×7番を両方拾う」形になっているのは、このデータの示唆と一致している。
+  </div>
+  <div class="finding">
+    3-4位ギャップ0.6ptの帯でも同様に4位（ゴッドブルービー）の複勝率が3位（シュラザック）を上回る逆転が出ており、
+    僅差の場合は順位通りに信頼しない方がよいというパターンが今回も再現された。5頭BOXで既に4位・5位ともカバーされているため、
+    現行の買い目構成（5頭BOX）はこの観点から見ても妥当。
+  </div>
+  <div class="caution">
+    4-5位ギャップ2.9pt帯での「5位が4位を上回る」逆転は n=16 と小さく、かつ5位フェルヴェンテは54.7倍の大穴のため
+    ノイズの可能性が高い。ここは参考程度に留めるべき。
+  </div>
+</div>
+
+<div class="race-block">
+  <div class="race-title">総括</div>
+  <div class="conclusion">
+    両レースとも「隣接順位間のギャップが小さい箇所では、スコア下位側が上位側の複勝率を上回ることがある」という
+    順位間ギャップ検証の知見が実際に再現された。特に阿蘇Sの1-2位（0.2pt）・3-4位（0.6pt）の逆転は、
+    今回の買い目が単勝やピンポイントの軸打ちではなく、馬連・ワイド・BOXという「幅を持たせた」構成になっている
+    ことの妥当性を裏付けている。天の川Sについては3-4位ギャップ（3.1pt）が「4位を切ってよい」水準である一方、
+    4-5位ギャップ（0.1pt）はほぼ同点というねじれがあり、現行の4頭BOXから5位を含める形への拡張を検討する余地がある。
+  </div>
+  <div class="note">
+    いずれもクラス別のサンプル数が n=15〜48 と限られる帯を参照しているため、断定的な結論ではなく
+    「参考情報としての解釈」である点に留意。
+  </div>
+</div>
+
+</div>
+<footer>競馬予想システム — 2026-07-12 買いレース分析（順位間スコアギャップ検証を反映・探索的解釈）</footer>
+</body>
+</html>
