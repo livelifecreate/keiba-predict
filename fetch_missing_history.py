@@ -111,6 +111,14 @@ def fetch_full_history(horse_id: str) -> list[dict]:
             "corner":   corner,
             "last3f":   last3f,
             "weight":   weight,
+            # スピード指数・ラップ分析用（列が無ければ空文字）
+            "time":     get("タイム"),      # "1:58.2"
+            "pace":     get("ペース"),      # "35.5-34.8"
+            "carried":  get("斤量"),        # "57"
+            "frame":    get("枠番"),
+            "num":      get("馬番"),
+            "odds":     get("オッズ"),
+            "jockey":   get("騎手"),
         })
     return results
 
