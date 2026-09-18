@@ -84,6 +84,32 @@ def _fetch_jra_odds(race_id: str, race_date: datetime.date, entries) -> tuple[di
         print(f"  [_fetch_jra_odds エラー] {e}")
         return {}, ""
 
+def _save_history_snapshots(entries, race_date) -> int:
+    """出馬表から取った各馬の近走(recent_races)を horse_history スナップショットとして保存する。
+    バックテスト(rerun_all.py)は cache_get_before('horse_history', hid, 'YYYY/MM/DD') を読むため、
+    当日予想と同じ過去走データで後から再現・検証できるようになる。保存数を返す。"""
+    if not race_date:
+        return 0
+    from cache_store import cache_exists, cache_set
+    cutoff = race_date.strftime("%Y/%m/%d") if hasattr(race_date, "strftime") else str(race_date)
+    saved = 0
+    for e in entries:
+        hid = getattr(e, "horse_id", "")
+        if not hid or not e.recent_races:
+            continue
+        key = f"{hid}_{cutoff}"
+        if cache_exists("horse_history", key):
+            continue
+        try:
+            cache_set("horse_history", key, list(e.recent_races))
+            saved += 1
+        except Exception:
+            pass
+    if saved:
+        print(f"  [履歴] {saved}頭の過去走スナップショットを保存")
+    return saved
+
+
 # ── 事前確認チェック ──────────────────────────────────────────────────────
 
 def pre_output_check(sorted_results, odds_map, race_class, n_horses, race_name) -> list[str]:
@@ -318,6 +344,10 @@ def main(argv=None):
         if not entries:
             print("  → 出走なし")
             continue
+
+        # 実運用で使った過去走をそのままスナップショット保存（バックテストと同一データ経路にする・2026-09-18）
+        # cache/horse_history/{horse_id}_{YYYY_MM_DD}.json。既存があれば上書きしない。
+        _save_history_snapshots(entries, race.get("date"))
 
         # 新馬戦スキップ
         if "新馬" in race_info.name:

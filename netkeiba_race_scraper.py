@@ -186,20 +186,38 @@ def search_race(keyword: str, dates: list[datetime.date] = None) -> Optional[str
 # ──────────────────────────────────────────────────────────────
 # 出馬表パース
 # ──────────────────────────────────────────────────────────────
+# netkeiba の Past セルの格付け要素 → parse_past_race / fetch_missing_history と同じ表記に揃える
+#   "2勝" → "(2勝クラス)" のように括弧付きクラス名に変換（parse_race_class が CLASS_RANK で判定できる形）
+#   GI/GII/GIII/L/OP はそのままレース名の末尾に付ける（fetch_missing_history.format_as_history_string と同形式）
+_PAST_GRADE_SUFFIX = {
+    "1勝": "(1勝クラス)", "2勝": "(2勝クラス)", "3勝": "(3勝クラス)",
+    "未勝利": "(未勝利)", "新馬": "(新馬)",
+}
+
+
 def _parse_past_cell(parts: list[str]) -> Optional[str]:
     """
     netkeiba の Past セル（'|'区切り）を parse_past_race 互換の文字列に変換する。
+    出力形式は fetch_missing_history.format_as_history_string（バックテスト用スナップショット）と同一:
+      "2026年7月25日札幌ライラック(2勝クラス)4着11頭4番人気2600芝484kg3F 35.5(0.6)1角:8 4角:8"
 
-    parts[0]: '2026.04.05\xa0阪神'   (date + venue)
-    parts[1]: '6'                    (position)
-    parts[2]: '大阪杯'               (race_name)
-    parts[3]: 'GI'                   (grade)
-    parts[4]: '芝2000 1:58.1'        (surface + distance + time)
-    parts[5]: '良'                   (track)
-    parts[6]: '15頭\xa012番\xa05人 ルメール 58.0'
-    parts[7]: '11-11-11-4\xa0(35.2)\xa0492(+8)'
-    parts[8]: 'クロワデュノール'     (2nd horse)
-    parts[9]: '(0.5)'               (margin; negative = winner)
+    parts の並び（格付け要素は「レース名に格が含まれる場合は存在しない」ため位置が1つずれる）:
+      [0] '2026.07.25\xa0札幌'        (date + venue)
+      [1] '4'                        (position)
+      [2] 'ライラック'                (race_name)
+      [3] '2勝'                       (grade: 1勝/2勝/3勝/L/OP/GI/GII/GIII …。'4歳以上1勝クラス' 等の場合は無い)
+      [i] '芝2600 2:41.6'            (surface + distance + time)
+      [i+1] '良'                     (track)
+      [i+2] '11頭\xa06番\xa04人 古川奈穂 58.0'
+      [i+3] '8-8-8-8\xa0(35.5)\xa0484(+4)'   (通過順・上がり3F・馬体重)
+      [i+4] 'ボンドロア'             (2nd horse / 勝ち馬)
+      [i+5] '(0.6)'                  (margin; negative = winner)
+
+    2026-09-18 修正: 旧実装は格付け要素を固定位置で読んでいたため
+      (a) 'ライラック2勝' のようにクラスがレース名に連結され parse_race_class が OP(4) 扱いにしていた
+      (b) 格付け要素が無い行で全項目が1つずれ、頭数・上がり・通過順が欠落していた
+      (c) 通過順の先頭だけを1角として保存し4角を捨てていた（脚質判定がバックテストと乖離）
+      (d) 人気を '5番人気' 固定にしていた
     """
     if len(parts) < 8:
         return None
@@ -215,21 +233,31 @@ def _parse_past_cell(parts: list[str]) -> Optional[str]:
 
     pos       = parts[1].strip()
     race_name = parts[2].strip()
-    grade     = parts[3].strip()        # GI / GII / GIII / 空文字
-    surf_dist = parts[4].strip()        # 芝2000 1:58.1
-    head_etc  = parts[6].replace("\xa0", " ")
-    lap_hw    = parts[7].replace("\xa0", " ")
-    second    = parts[8].strip() if len(parts) > 8 else ""
-    margin_raw = parts[9].strip() if len(parts) > 9 else "(0)"
+
+    # 格付け要素の有無を判定（次の要素が '芝'/'ダ'/'障' で始まればコース要素＝格付け無し）
+    i = 3
+    grade = ""
+    if not re.match(r"^(芝|ダ|障)", parts[3].strip()):
+        grade = parts[3].strip()
+        i = 4
+    if len(parts) < i + 4:
+        return None
+
+    surf_dist  = parts[i].strip()                       # 芝2400(外) 2:22.6
+    head_etc   = parts[i + 2].replace("\xa0", " ")       # 11頭 6番 4人 古川奈穂 58.0
+    lap_hw     = parts[i + 3].replace("\xa0", " ")       # 8-8-8-8 (35.5) 484(+4)
+    margin_raw = parts[i + 5].strip() if len(parts) > i + 5 else "(0)"
 
     # 距離・馬場
-    sd_m = re.match(r"(芝|ダ)(\d+)", surf_dist)
+    sd_m = re.match(r"(芝|ダ|障)(\d+)", surf_dist)
     surface = sd_m.group(1) if sd_m else ""
     dist    = sd_m.group(2) if sd_m else ""
 
-    # 頭数
+    # 頭数・人気
     head_m = re.search(r"(\d+)頭", head_etc)
     heads  = head_m.group(0) if head_m else ""
+    pop_m  = re.search(r"(\d+)人", head_etc)
+    pop    = f"{pop_m.group(1)}番人気" if pop_m else ""
 
     # 馬体重
     hw_m = re.search(r"(\d{3,4})\(", lap_hw)
@@ -241,18 +269,23 @@ def _parse_past_cell(parts: list[str]) -> Optional[str]:
 
     # 着差（勝ち馬との差を絶対値で）
     mg_m = re.search(r"\((-?[\d.]+)\)", margin_raw)
-    margin_str = f"({abs(float(mg_m.group(1)))})" if mg_m else "(0)"
+    margin_str = f"({abs(float(mg_m.group(1))):.1f})" if mg_m else "(0)"
 
-    # 通過順位（先頭の数字 = 1コーナー通過順位）
-    corner_m = re.match(r"(\d+)[-]", lap_hw.strip())
-    corner_str = f"1角:{corner_m.group(1)}" if corner_m else ""
+    # 通過順位（先頭=1角、末尾=最終コーナー=4角相当）
+    corner_str = ""
+    corner_m = re.match(r"((?:\d+-)*\d+)", lap_hw.strip())
+    if corner_m:
+        cs = corner_m.group(1).split("-")
+        corner_str = f"1角:{cs[0]} 4角:{cs[-1]}"
 
-    # JRA互換文字列を組み立て
+    grade_suffix = _PAST_GRADE_SUFFIX.get(grade, grade)
+
+    # JRA互換文字列を組み立て（スナップショットと同形式）
     return (
-        f"{date_jp}{venue}{race_name}{grade}"
-        f"{pos}着{heads}5番人気"
+        f"{date_jp}{venue}{race_name}{grade_suffix}"
+        f"{pos}着{heads}{pop}"
         f"{dist}{surface}{hw}{last3f}"
-        f"{second}{margin_str}{corner_str}"
+        f"{margin_str}{corner_str}"
     )
 
 

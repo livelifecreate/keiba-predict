@@ -175,7 +175,7 @@ def cutoff_to_comparable(cutoff: str) -> str:
     return cutoff
 
 
-def main():
+def main(limit: int = 0, max_fail: int = 5):
     files = sorted(CACHE_RACE.glob("*.json"))
     total = len(files)
     filled = 0
@@ -185,7 +185,26 @@ def main():
     # 全馬×全レースで「欠落している」リストを収集
     missing: list[tuple[str, str, str]] = []  # (horse_id, cutoff, race_label)
 
-    print("欠落チェック中...")
+    print("欠落チェック中...", flush=True)
+    # 高速化: cache_get_before を毎回呼ぶ（globで全走査）と数分かかるため、
+    # スナップショットのファイル名を1回だけ集めて {horse_id: [日付]} で判定する
+    from collections import defaultdict as _dd
+    from datetime import timedelta as _td
+    snap_dates: dict[str, list[str]] = _dd(list)
+    for p in (CACHE_RACE.parent / "horse_history").glob("*_*.json"):
+        m = re.match(r"^(\d+)_(\d{4}_\d{2}_\d{2})\.json$", p.name)
+        if m:
+            snap_dates[m.group(1)].append(m.group(2))
+
+    def _has_recent_snapshot(hid: str, cutoff: str, days: int = 7) -> bool:
+        ds = snap_dates.get(hid)
+        if not ds:
+            return False
+        c = datetime.strptime(cutoff, "%Y/%m/%d")
+        lo = (c - _td(days=days)).strftime("%Y_%m_%d")
+        hi = cutoff.replace("/", "_")
+        return any(lo <= d <= hi for d in ds)
+
     seen = set()
     for f in files:
         try:
@@ -211,8 +230,7 @@ def main():
             if key in seen:
                 continue
             seen.add(key)
-            existing = cache_get_before("horse_history", hid, cutoff, max_days_back=7)
-            if existing:
+            if _has_recent_snapshot(hid, cutoff):
                 already += 1
             else:
                 missing.append((hid, cutoff, f"{date_str} {data['race_name']}"))
@@ -229,16 +247,24 @@ def main():
     for hid, cutoff, _ in missing:
         horse_dates.setdefault(hid, []).append(cutoff)
 
-    print(f"\nユニーク馬数: {len(horse_dates)}頭 → netkeiba取得開始\n")
+    if limit:
+        horse_dates = dict(list(horse_dates.items())[:limit])
+    print(f"\nユニーク馬数: {len(horse_dates)}頭 → netkeiba取得開始\n", flush=True)
 
+    consecutive_fail = 0
     for i, (hid, cutoffs) in enumerate(horse_dates.items()):
         if i % 20 == 0:
-            print(f"  {i}/{len(horse_dates)}頭処理中...", flush=True)
+            print(f"  {i}/{len(horse_dates)}頭処理中... (補完{filled} スキップ{skipped})", flush=True)
 
         raw_records = fetch_full_history(hid)
         if not raw_records:
             skipped += 1
+            consecutive_fail += 1
+            if consecutive_fail >= max_fail:
+                print(f"\n⚠ 連続{consecutive_fail}頭で取得失敗 → netkeibaの通信制限の可能性。中断します（再実行で続きから再開可）", flush=True)
+                break
             continue
+        consecutive_fail = 0
 
         # 各レース日ごとにフィルタしてキャッシュ
         for cutoff in cutoffs:
@@ -268,6 +294,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--test", action="store_true", help="3頭だけテスト実行")
     parser.add_argument("--run", action="store_true", help="本番実行")
+    parser.add_argument("--limit", type=int, default=0, help="--run時に取得する馬数の上限（少数テスト用）")
+    parser.add_argument("--max-fail", type=int, default=5, help="連続取得失敗がこの数に達したら中断（netkeiba通信制限の検知）")
     args = parser.parse_args()
 
     if args.test:
@@ -285,6 +313,6 @@ if __name__ == "__main__":
                 s = format_as_history_string(rec)
                 print(f"  → {s}")
     elif args.run:
-        main()
+        main(limit=args.limit, max_fail=args.max_fail)
     else:
         print("--test か --run を指定してください")

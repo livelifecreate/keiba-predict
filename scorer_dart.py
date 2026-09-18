@@ -1264,7 +1264,7 @@ def score_all(entries: list, race_info, training_data: dict = None,
 
         # 調教スコア（コメント文言の実績複勝率ベース、データ不足時はA/B/C/D評価にフォールバック）
         td = training_data.get(entry.horse_name)
-        t_score = get_training_score(td.rank, td.comment) if td else 0
+        t_score = get_training_score(td.rank, td.comment, as_of=race_date) if td else 0  # 時点統計（レース日より前の実績のみ）
 
         # 昇級+距離延長の重複ペナルティ軽減：両方発動時に各1点緩和
         promo   = check_promotion(recent, race_class)
@@ -1302,7 +1302,7 @@ def score_all(entries: list, race_info, training_data: dict = None,
             place_consistency      = check_place_consistency(recent) * _COEFF_PLACE,
             win_count              = check_win_count(recent) * _COEFF_WIN,
             content_score          = 0.0,  # 廃止（2026-06-14）
-            jockey_form            = get_jockey_form_bonus(entry.jockey, race_class),
+            jockey_form            = get_jockey_form_bonus(entry.jockey, race_class, as_of=race_date),
             steep_power            = check_steep_power(recent, race_venue),
             weight_change          = check_weight_change(recent, getattr(entry, "horse_weight", 0),
                                        manual_diff=(weight_diffs or {}).get(entry.horse_name, 0)),

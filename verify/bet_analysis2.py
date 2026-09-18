@@ -19,17 +19,68 @@ def parse_amounts(s: str) -> list[int]:
     """'1,390円540円110円' → [1390, 540, 110]"""
     return [int(m.replace(',', '')) for m in re.findall(r'[\d,]+(?=円)', s)]
 
-def parse_horse_nums(s: str) -> list[int]:
-    """'11144' → [11, 14, 4]  ※馬番は1〜18"""
-    nums, i = [], 0
-    while i < len(s):
-        if i + 2 <= len(s) and int(s[i:i+2]) <= 18:
-            nums.append(int(s[i:i+2]))
-            i += 2
-        else:
-            nums.append(int(s[i:i+1]))
-            i += 1
-    return nums
+def parse_horse_nums(s: str, count: int | None = None, group: int = 1) -> list[int]:
+    """'11144' → [11, 14, 4]  ※馬番は1〜18
+
+    count を渡すと「ちょうど count 個の馬番に分割できる」全候補を列挙し、各 group 個の
+    まとまり（馬連=2・3連複=3）内で重複しない候補を採用する。
+    旧実装（貪欲に2桁を優先）は '157'(1-5-7) を [15, 7] と誤読し、3連複の約19%で
+    馬番数が合わなくなっていた（2026-09-18 修正）。count 未指定時は旧挙動。
+    """
+    s = (s or "").strip()
+    if not s:
+        return []
+    if count is None:
+        nums, i = [], 0
+        while i < len(s):
+            if i + 2 <= len(s) and int(s[i:i+2]) <= 18:
+                nums.append(int(s[i:i+2]))
+                i += 2
+            else:
+                nums.append(int(s[i:i+1]))
+                i += 1
+        return nums
+
+    results: list[list[int]] = []
+
+    def rec(i: int, acc: list[int]):
+        if len(acc) > count:
+            return
+        if i == len(s):
+            if len(acc) == count:
+                results.append(list(acc))
+            return
+        for w in (1, 2):
+            if i + w > len(s):
+                continue
+            seg = s[i:i+w]
+            if w == 2 and seg[0] == "0":
+                continue
+            v = int(seg)
+            if not 1 <= v <= 18:
+                continue
+            acc.append(v)
+            rec(i + w, acc)
+            acc.pop()
+
+    rec(0, [])
+    # 各グループ内で重複しない候補のみ
+    valid = []
+    for r in results:
+        ok = all(len(set(r[j:j+group])) == group for j in range(0, count, group))
+        if ok:
+            valid.append(r)
+    if not valid:
+        return []
+    # 候補が複数でもグループの集合が同じなら同一視
+    return valid[0]
+
+
+# 馬券種ごとの1組あたり馬番数
+_GROUP_SIZE = {
+    "単勝": 1, "複勝": 1, "枠連": 2, "馬連": 2, "ワイド": 2, "馬単": 2,
+    "3連複": 3, "三連複": 3, "3連単": 3, "三連単": 3,
+}
 
 
 def get_payout(race_id: str, bet_type: str) -> tuple[list[int], list[int]]:
@@ -41,8 +92,11 @@ def get_payout(race_id: str, bet_type: str) -> tuple[list[int], list[int]]:
     raw = v.get('raw', [])
     if len(raw) < 3:
         return [], []
-    horse_nums = parse_horse_nums(raw[1]) if raw[1] else []
     amounts    = parse_amounts(raw[2])    if raw[2] else []
+    g = _GROUP_SIZE.get(bet_type, 1)
+    horse_nums = parse_horse_nums(raw[1], count=g * len(amounts), group=g) if (raw[1] and amounts) else []
+    if raw[1] and amounts and not horse_nums:
+        horse_nums = parse_horse_nums(raw[1])  # 分割不能時は旧挙動にフォールバック
     return horse_nums, amounts
 
 
