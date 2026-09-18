@@ -40,7 +40,7 @@ def is_weekend_daytime() -> bool:
 
 
 def target_horse_ids() -> list[str]:
-    """バックテスト対象期間（2025/07 + 2025/10〜2026/06・2勝以上）のユニーク馬ID"""
+    """バックテスト対象（cache/race_result 全期間・2勝以上）のユニーク馬ID"""
     ids = set()
     for f in sorted(CACHE_RACE.glob('*.json')):
         try:
@@ -51,11 +51,6 @@ def target_horse_ids() -> list[str]:
             continue
         m = re.match(r"(\d{4})年(\d{1,2})月(\d{1,2})日", d.get('date', ''))
         if not m:
-            continue
-        dt = datetime(int(m.group(1)), int(m.group(2)), int(m.group(3)))
-        in_scope = (datetime(2025, 7, 1) <= dt <= datetime(2025, 7, 31)) or \
-                   (datetime(2025, 10, 1) <= dt <= datetime(2026, 6, 30))
-        if not in_scope:
             continue
         for e in d['entries']:
             if e.get('horse_id'):
@@ -93,7 +88,7 @@ def main():
         pending = pending[:args.limit]
         print(f"分割実行: 今回 {len(pending)}頭")
 
-    fetched = errors = empty = 0
+    fetched = errors = empty = consecutive_empty = 0
     start = time.time()
     for i, hid in enumerate(pending):
         if i % 50 == 0 and i > 0:
@@ -110,10 +105,14 @@ def main():
             continue
 
         if not records:
+            # 空は保存しない（通信制限中の空応答を「取得済み」として固定化しないため）
             empty += 1
-            # 空でもファイルを書く（再実行時のスキップ用・後で見直せるよう空リスト）
-            (OUT_DIR / f'{hid}.json').write_text('[]')
+            consecutive_empty += 1
+            if consecutive_empty >= 5:
+                print("⚠️ 5頭連続で空応答 — 通信制限の可能性が高いため中断します（約24h後に再実行）。")
+                break
             continue
+        consecutive_empty = 0
 
         (OUT_DIR / f'{hid}.json').write_text(
             json.dumps(records, ensure_ascii=False))
@@ -122,7 +121,8 @@ def main():
         if args.test:
             print(f"\n--- {hid}: 全{len(records)}走 ---")
             for rec in records[:3]:
-                print(f"  {rec['date_raw']} {rec['kaisan']} {rec['race_raw']} {rec['pos_raw']}着")
+                print(f"  {rec['date_raw']} {rec['kaisan']} {rec['race_raw']} {rec['pos_raw']}着"
+                      f" {rec['dist_raw']} {rec['track']} タイム={rec.get('time')} ペース={rec.get('pace')} 斤量={rec.get('carried')}")
 
     print(f"\n完了: 取得={fetched} / 空={empty} / エラー={errors} / 経過{(time.time()-start)/60:.1f}分")
     remaining = len([h for h in ids if not (OUT_DIR / f'{h}.json').exists()])
