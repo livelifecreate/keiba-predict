@@ -25,10 +25,9 @@ import sys, json, re, time, random, argparse
 from pathlib import Path
 from datetime import datetime
 
-sys.path.insert(0, '/Users/du/Documents/競馬予想システム')
+BASE = Path(__file__).resolve().parent   # このファイルと同じ場所の fetch_missing_history（タイム列あり）を使う
+sys.path.insert(0, str(BASE))
 from fetch_missing_history import fetch_full_history
-
-BASE = Path('/Users/du/Documents/競馬予想システム')
 CACHE_RACE = BASE / 'cache' / 'race_result'
 OUT_DIR = BASE / 'cache' / 'horse_full_history'
 TARGET_CLASSES = {"2勝クラス", "3勝クラス", "OP", "重賞"}
