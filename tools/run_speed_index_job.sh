@@ -1,6 +1,6 @@
 #!/bin/zsh
 # 通算成績の取得 → スピード指数検証 の夜間ジョブ（launchd: com.keiba.speedindex から起動）
-#   9/21 01:00 と 9/22 01:00 の2回に分けて取得（1回2500頭・通信制限の再発防止）。
+#   9/22 01:00 と 9/23 01:00 の2回に分けて取得（9/21は開催日のため1日後ろ倒し）（1回2500頭・通信制限の再発防止）。
 #   ログ: cache/logs/speed_index_job.log
 #   手動実行: zsh tools/run_speed_index_job.sh          自己診断のみ: zsh tools/run_speed_index_job.sh --selftest
 MAIN="/Users/du/Documents/競馬予想システム"
@@ -35,8 +35,8 @@ echo "----- $(date '+%H:%M:%S') 取得終了 → スピード指数検証 -----"
 "$PY" -u analyze/speed_index.py
 echo "===== $(date '+%Y-%m-%d %H:%M:%S') 終了 ====="
 
-# 2回目（9/22）以降の実行が済んだら予約を解除（毎年同日に再実行されないように）
-if [[ "$(date '+%Y%m%d')" -ge 20260922 ]]; then
+# 2回目（9/23）以降の実行が済んだら予約を解除（毎年同日に再実行されないように）
+if [[ "$(date '+%Y%m%d')" -ge 20260923 ]]; then
   rm -f "$PLIST"
   launchctl bootout "gui/$(id -u)/com.keiba.speedindex" 2>/dev/null
 fi
