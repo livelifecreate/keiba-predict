@@ -1077,6 +1077,7 @@ def fetch_past_track_conditions(horse_id: str) -> list[tuple[str, int]]:
             pos = int(cells[pos_idx])
         except ValueError:
             continue
+        cond = {"稍": "稍重", "不": "不良"}.get(cond, cond)   # netkeibaの表記は「稍」「不」の1文字（2026-09-20修正: 従来は稍重・不良が全て無視されていた）
         if cond in ("良", "稍重", "重", "不良"):
             result.append((cond, pos))
     return result
