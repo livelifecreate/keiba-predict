@@ -1476,7 +1476,7 @@ def _record_comment(entry) -> str:
     return "実績不明"
 
 
-def save_csv(results: list[tuple], race_info, odds_map: dict = None, training_data: dict = None, sign_tag: str = None, eval_comment: list = None, race_id: str = "", sign_level: str = None, sign_detail_text: str = None, race_class: int = 0, track_condition: str = ""):
+def save_csv(results: list[tuple], race_info, odds_map: dict = None, training_data: dict = None, sign_tag: str = None, eval_comment: list = None, race_id: str = "", sign_level: str = None, sign_detail_text: str = None, race_class: int = 0, track_condition: str = "", presorted: bool = False):
     import csv as _csv, re
     from pathlib import Path
     date_str = race_info.date.replace("年", "").replace("月", "").replace("日", "")
@@ -1503,7 +1503,8 @@ def save_csv(results: list[tuple], race_info, odds_map: dict = None, training_da
         if old_f.name != filename:
             old_f.unlink()
     filepath = save_dir / filename
-    sorted_results = sorted(results, key=lambda x: x[1].total, reverse=True)
+    # presorted=True のときは呼び出し側の順位（案D順位など）をそのまま使う
+    sorted_results = list(results) if presorted else sorted(results, key=lambda x: x[1].total, reverse=True)
     training_data = training_data or {}
 
     popularity = {}

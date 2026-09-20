@@ -28,6 +28,7 @@ from netkeiba_scraper import TrainingData as TD, fetch_training_data
 from jra_scraper import build_jra_url, get_entry_list as get_entry_list_jra, fetch_track_condition, JraParamError
 from hli_calculator import calculate_hli
 import trio_formation
+import plan_d
 
 
 def _fetch_training(race_id: str) -> dict:
@@ -446,6 +447,16 @@ def main(argv=None):
         else:
             sorted_r = sorted(results, key=lambda x: x[1].total, reverse=True)
 
+        # 案D順位（能力指数v2＋能力以外の因子）で並べ替え（2026-09-20〜・PLAN_D=0 で従来順位）
+        plan_d_info = None
+        if plan_d.enabled() and race_date:
+            try:
+                plan_d_info = plan_d.rank(results, horse_ids, race_info.surface, race_date)
+                sorted_r = sorted(results, key=lambda x: plan_d_info[x[0].horse_name]["u"], reverse=True)
+            except Exception as e:
+                plan_d_info = None
+                print(f"  [案D] 算出失敗のため現行スコア順で出力: {e}")
+
         # サイン判定
         sign_level, sign_text, sign_detail = calc_buy_sign(sorted_r, odds_map, n, race_class, race_info.surface)
 
@@ -456,6 +467,8 @@ def main(argv=None):
 
         # 評価コメント生成
         eval_comment = gen_eval_comment(sorted_r, odds_map, n, sign_level, sign_detail, race_class)
+        if plan_d_info:
+            eval_comment = list(eval_comment) + plan_d.comment_lines(sorted_r, plan_d_info)
 
         # ファイル名タグ（買いサインのみ付与）
         if sign_level == "tierce":
@@ -471,12 +484,12 @@ def main(argv=None):
                 save_csv_dart(sorted_r, race_info, odds_map=odds_map, training_data=training,
                               sign_tag=sign_tag, eval_comment=eval_comment, race_id=race_id,
                               sign_level=sign_text, sign_detail_text=sign_detail, race_class=race_class,
-                              track_condition=tc)
+                              track_condition=tc, presorted=bool(plan_d_info))
             else:
                 save_csv_turf(sorted_r, race_info, odds_map=odds_map, training_data=training,
                               sign_tag=sign_tag, eval_comment=eval_comment, race_id=race_id,
                               sign_level=sign_text, sign_detail_text=sign_detail, race_class=race_class,
-                              track_condition=tc)
+                              track_condition=tc, presorted=bool(plan_d_info))
         except Exception as e:
             print(f"  [CSV] 保存失敗: {e}")
 
@@ -485,7 +498,12 @@ def main(argv=None):
         for rank, (entry, d) in enumerate(top3, 1):
             o = odds_map.get(entry.horse_name)
             odds_str = f" {o:.1f}倍" if o else ""
-            print(f"  {rank}位 {entry.horse_number}番 {entry.horse_name:<12} {d.total:+.1f}pt{odds_str}")
+            d_str = ""
+            if plan_d_info:
+                _r = plan_d_info[entry.horse_name]
+                _dev = f"{_r['dev']:.1f}" if _r["dev"] is not None else "-"
+                d_str = f" [案D{_r['u']:+.2f} 能力指数{_dev} 現行{_r['base_rank']}位]"
+            print(f"  {rank}位 {entry.horse_number}番 {entry.horse_name:<12} {d.total:+.1f}pt{odds_str}{d_str}")
 
         print(f"  → {sign_text}  {sign_detail}")
 

@@ -53,11 +53,15 @@ def attach_v2(df):
     return df
 
 
+PARAMS = {}
+
+
 def fit_util(df, cols, l2):
     tr = df[df.dt < TRAIN_END]
     mu, sd = tr[cols].mean(), tr[cols].std() + 1e-9
     _, utr = np.unique(tr.rid, return_inverse=True)
     w = M.fit(((tr[cols] - mu) / sd).values, (tr["実着順"] == 1).values.astype(float), utr, utr.max() + 1, l2=l2, iters=1200)
+    PARAMS[tuple(cols)] = {"cols": cols, "w": [float(x) for x in w], "mu": [float(x) for x in mu], "sd": [float(x) for x in sd]}
     return ((df[cols] - mu) / sd).values @ w, dict(zip(cols, np.round(w, 3)))
 
 
@@ -96,6 +100,12 @@ def main():
     utils["D v2+能力以外の因子合計"], wd = fit_util(df, ["v2_c", "rest_sum"], 0.5)
     utils["E v2+能力以外を個別再重み"], we = fit_util(df, ["v2_c"] + rest, 5.0)
     utils["M 市場人気順(参考)"] = -df["市場人気"].astype(float).values
+    import json
+    out_p = BASE / "data" / "plan_d_params.json"
+    out_p.write_text(json.dumps({"note": "案D: u = Σ w·(x-mu)/sd, x=[v2_c(能力指数v2のレース内中心化), rest_sum(能力系16因子を除いた現行スコアのレース内中心化)]。学習 〜2025/06",
+                                 "tau": 365, "lam": 2.0, "ykey": "yr", "ability_factors": ABILITY_FACTORS,
+                                 **PARAMS[("v2_c", "rest_sum")]}, ensure_ascii=False, indent=1))
+    print("案Dパラメータ保存:", out_p)
     print("学習した重み  C:", wc, " D:", wd)
     print("             E:", {k: v for k, v in sorted(we.items(), key=lambda kv: -abs(kv[1]))[:8]})
 
