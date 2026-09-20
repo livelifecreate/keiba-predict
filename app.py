@@ -100,7 +100,8 @@ def parse_csv(path: Path) -> dict:
         elif parts[0] == "■強み弱み":
             section = "notes"
         elif section == "notes" and parts[0] == "" and len(parts) >= 5:
-            horse_notes.append({"馬番": parts[1], "馬名": parts[2], "強み": parts[3], "弱み": parts[4]})
+            horse_notes.append({"馬番": parts[1], "馬名": parts[2], "強み": parts[3], "弱み": parts[4],
+                                "脚質": parts[5] if len(parts) > 5 else ""})
         elif parts[0] == "■三連複1軸-相手":      # 2026-08-02〜の主買い目
             form10_header = parts[1:]
             form10_combos = []
@@ -300,7 +301,8 @@ if not df.empty:
                 sub = f"<div style='color:#999;font-size:0.8em;font-weight:normal'>旧{_v(r, '旧順位')}位 ({_v(r, '旧スコア(参考)')})</div>"
             td = "padding:6px 6px;vertical-align:top"
             cells = (f"<td style='{td}'>{_v(r, '順位')}</td><td style='{td}'>{_v(r, '馬番')}</td>"
-                     f"<td style='{td};font-weight:bold'>{_v(r, '馬名')}</td>"
+                     f"<td style='{td};font-weight:bold'>{_v(r, '馬名')}"
+                     f"<div style='color:#555;font-size:0.8em;font-weight:normal'>{_html.escape(x.get('脚質', ''))}</div></td>"
                      f"<td style='{td};font-weight:bold'>{score}{sub}</td>"
                      f"<td style='{td}'>{_v(r, '能力指数')}</td>"
                      f"<td style='{td}'>{_v(r, '単勝オッズ')}<div style='color:#666;font-size:0.85em'>{_v(r, '人気')}</div></td>"

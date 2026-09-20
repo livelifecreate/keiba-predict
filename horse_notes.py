@@ -90,6 +90,35 @@ def _short(race_raw: str) -> str:
     return re.sub(r"^(関西TV|東海テレビ杯|日刊スポ賞|産経賞|農林水産省賞典|読売|KBS|HTB|TV|UHB|STV)", "", race_raw or "")
 
 
+def running_style(recs: list[dict], surface: str) -> str:
+    """近5走（同じ芝ダ・平地）の通過順から脚質を判定。最初のコーナーの位置÷頭数の平均で分類"""
+    ratios, firsts = [], []
+    for r in recs:
+        if not r.get("dist_raw", "").startswith(surface):
+            continue
+        c = re.findall(r"\d+", r.get("corner", "") or "")
+        f = str(r.get("field", ""))
+        if not c or not f.isdigit() or int(f) < 5:
+            continue
+        ratios.append((int(c[0]) - 1) / (int(f) - 1))
+        firsts.append(int(c[0]))
+        if len(ratios) == 5:
+            break
+    if len(ratios) < 2:
+        return ""
+    m = sum(ratios) / len(ratios)
+    lead = sum(1 for x in firsts if x == 1)
+    if lead >= 2 or m <= 0.08:
+        name = "逃げ"
+    elif m <= 0.33:
+        name = "先行"
+    elif m <= 0.66:
+        name = "差し"
+    else:
+        name = "追込"
+    return f"{name}（近{len(ratios)}走の序盤 平均{sum(firsts) / len(firsts):.1f}番手）"
+
+
 # ------------------------------------------------------------------ コメント生成
 def build(sorted_results, race_info, race_class: int, track_condition: str, odds_map: dict,
           training_data: dict, plan_d_info: dict | None, race_date) -> list[dict]:
@@ -259,12 +288,14 @@ def build(sorted_results, race_info, race_class: int, track_condition: str, odds
             if w - others >= 1:
                 W.append(f"斤量{w:g}kgは単独で最も重い")
 
-        out.append({"num": e.horse_number, "name": e.horse_name, "strengths": S, "weaknesses": W})
+        out.append({"num": e.horse_number, "name": e.horse_name, "strengths": S, "weaknesses": W,
+                    "style": running_style(recs, surface) if recs else ""})
     return out
 
 
 def csv_section(notes: list[dict]) -> list[list]:
-    rows = [[], ["■強み弱み", "馬番", "馬名", "強み", "弱み"]]
+    rows = [[], ["■強み弱み", "馬番", "馬名", "強み", "弱み", "脚質"]]
     for x in notes:
-        rows.append(["", x["num"], x["name"], " ／ ".join(x["strengths"]) or "—", " ／ ".join(x["weaknesses"]) or "—"])
+        rows.append(["", x["num"], x["name"], " ／ ".join(x["strengths"]) or "—", " ／ ".join(x["weaknesses"]) or "—",
+                     x.get("style", "")])
     return rows
