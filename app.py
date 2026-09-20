@@ -65,6 +65,7 @@ def parse_csv(path: Path) -> dict:
     form10_header = form10_combos = []
     form7_header = form7_combos = []
     eval_comments = []
+    horse_notes = []
     race_surface_dist = ""
     section = "horses"
 
@@ -96,6 +97,20 @@ def parse_csv(path: Path) -> dict:
             form7_header = parts[1:]
             form7_combos = []
             section = "form7"
+        elif parts[0] == "■強み弱み":
+            section = "notes"
+        elif section == "notes" and parts[0] == "" and len(parts) >= 5:
+            horse_notes.append({"馬番": parts[1], "馬名": parts[2], "強み": parts[3], "弱み": parts[4]})
+        elif parts[0] == "■三連複1軸-相手":      # 2026-08-02〜の主買い目
+            form10_header = parts[1:]
+            form10_combos = []
+            section = "form10"
+        elif parts[0].startswith("■参考:2軸型"):
+            form7_header = parts[1:]
+            form7_combos = []
+            section = "form7"
+        elif parts[0].startswith("■") and section in ("eval", "notes"):
+            section = "other"          # 未知の見出しの行を評価コメントに混ぜない
         elif section == "horses" and not parts[0].startswith("■"):
             horse_lines.append(line)
         elif section == "eval" and parts[0] == "" and len(parts) > 1 and parts[1].strip():
@@ -114,6 +129,7 @@ def parse_csv(path: Path) -> dict:
         "sign_type": sign_type,
         "sign_detail": sign_detail,
         "eval_comments": eval_comments,
+        "horse_notes": horse_notes,
         "race_surface_dist": race_surface_dist,
         "formb_header": formb_header,
         "formb_combos": formb_combos,
@@ -262,7 +278,25 @@ if not df.empty:
         height=min(50 + len(df) * 38, 520),
     )
 
-# 評価コメント
+# 強み・弱み（予想順位順・表示専用）
+if data.get("horse_notes"):
+    st.markdown("**■ 強み・弱み**")
+    for k, x in enumerate(data["horse_notes"], 1):
+        st.markdown(
+            f"<div style='margin:4px 0;padding:6px 10px;border-left:3px solid #999;background:#fafafa'>"
+            f"<b>{k}位 {x['馬番']}番 {x['馬名']}</b><br>"
+            f"<span style='color:#1a7f37'>◯ {x['強み']}</span><br>"
+            f"<span style='color:#b3261e'>△ {x['弱み']}</span></div>",
+            unsafe_allow_html=True,
+        )
+
+# 評価コメント（案Dの明細行は出走表と重複するので畳む）
+_plan_d_lines = [c for c in data["eval_comments"] if c.startswith("案D") or c.startswith("【案D")]
+data["eval_comments"] = [c for c in data["eval_comments"] if c not in _plan_d_lines]
+if _plan_d_lines:
+    with st.expander("案Dの明細（総合点の内訳）"):
+        for c in _plan_d_lines:
+            st.text(c)
 if data["eval_comments"]:
     box_color = sign_color
     comment_html = "".join(f"<li>{c}</li>" for c in data["eval_comments"])
@@ -289,7 +323,7 @@ with col1:
 with col2:
     if data["form10_combos"]:
         h = data["form10_header"]
-        st.markdown(f"**■ 三連複10点**")
+        st.markdown(f"**■ 三連複（1軸-相手）**")
         if h:
             st.caption("  ".join(h))
         chunks = [data["form10_combos"][i:i+6] for i in range(0, len(data["form10_combos"]), 6)]

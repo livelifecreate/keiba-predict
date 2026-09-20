@@ -1477,7 +1477,7 @@ def _record_comment(entry) -> str:
     return "実績不明"
 
 
-def save_csv(results: list[tuple], race_info, odds_map: dict = None, training_data: dict = None, sign_tag: str = None, eval_comment: list = None, race_id: str = "", sign_level: str = None, sign_detail_text: str = None, race_class: int = 0, track_condition: str = "", presorted: bool = False, extra_cols: dict = None):
+def save_csv(results: list[tuple], race_info, odds_map: dict = None, training_data: dict = None, sign_tag: str = None, eval_comment: list = None, race_id: str = "", sign_level: str = None, sign_detail_text: str = None, race_class: int = 0, track_condition: str = "", presorted: bool = False, extra_cols: dict = None, extra_sections: list = None):
     import csv as _csv, re
     from pathlib import Path
     date_str = race_info.date.replace("年", "").replace("月", "").replace("日", "")
@@ -1595,6 +1595,10 @@ def save_csv(results: list[tuple], race_info, odds_map: dict = None, training_da
             for c in form7_list:
                 writer.writerow(["", f"{c[0]}－{c[1]}－{c[2]}"])
 
+    # extra_sections: CSV末尾に追記する行のリスト（強み弱みコメントなど・表示専用）
+    if extra_sections:
+        with open(filepath, "a", newline="", encoding="utf-8-sig") as f:
+            _csv.writer(f).writerows(extra_sections)
     print(f"\n  [CSV出力] {filepath}")
 
 

@@ -29,6 +29,7 @@ from jra_scraper import build_jra_url, get_entry_list as get_entry_list_jra, fet
 from hli_calculator import calculate_hli
 import trio_formation
 import plan_d
+import horse_notes
 
 
 def _fetch_training(race_id: str) -> dict:
@@ -470,6 +471,15 @@ def main(argv=None):
         if plan_d_info:
             eval_comment = list(eval_comment) + plan_d.comment_lines(sorted_r, plan_d_info)
 
+        # 強み・弱みコメント（表示専用・採点には使わない。HORSE_NOTES=0 で無効）
+        notes_rows = None
+        if horse_notes.enabled() and race_date:
+            try:
+                _notes = horse_notes.build(sorted_r, race_info, race_class, tc, odds_map, training, plan_d_info, race_date)
+                notes_rows = horse_notes.csv_section(_notes)
+            except Exception as e:
+                print(f"  [強み弱み] 生成失敗: {e}")
+
         # ファイル名タグ（買いサインのみ付与）
         if sign_level == "tierce":
             sign_tag = "★三連単A+B"
@@ -485,13 +495,15 @@ def main(argv=None):
                               sign_tag=sign_tag, eval_comment=eval_comment, race_id=race_id,
                               sign_level=sign_text, sign_detail_text=sign_detail, race_class=race_class,
                               track_condition=tc, presorted=bool(plan_d_info),
-                              extra_cols=plan_d.extra_cols(plan_d_info) if plan_d_info else None)
+                              extra_cols=plan_d.extra_cols(plan_d_info) if plan_d_info else None,
+                              extra_sections=notes_rows)
             else:
                 save_csv_turf(sorted_r, race_info, odds_map=odds_map, training_data=training,
                               sign_tag=sign_tag, eval_comment=eval_comment, race_id=race_id,
                               sign_level=sign_text, sign_detail_text=sign_detail, race_class=race_class,
                               track_condition=tc, presorted=bool(plan_d_info),
-                              extra_cols=plan_d.extra_cols(plan_d_info) if plan_d_info else None)
+                              extra_cols=plan_d.extra_cols(plan_d_info) if plan_d_info else None,
+                              extra_sections=notes_rows)
         except Exception as e:
             print(f"  [CSV] 保存失敗: {e}")
 
