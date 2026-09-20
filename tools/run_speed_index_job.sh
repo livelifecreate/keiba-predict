@@ -33,6 +33,8 @@ trap 'rmdir "$LOCK"' EXIT
 "$PY" -u fetch_full_career.py --run --limit 2500
 echo "----- $(date '+%H:%M:%S') 取得終了 → スピード指数検証 -----"
 "$PY" -u analyze/speed_index.py
+echo "----- $(date '+%H:%M:%S') 道悪適性の再検証（通算成績の馬場4区分を使用） -----"
+"$PY" -u analyze/wet_track_calibration.py
 echo "===== $(date '+%Y-%m-%d %H:%M:%S') 終了 ====="
 
 # 2回目（9/23）以降の実行が済んだら予約を解除（毎年同日に再実行されないように）

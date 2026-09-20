@@ -72,7 +72,8 @@ def rank(results, horse_ids: dict, surface: str, race_date) -> dict:
     u = ((x - np.array(p["mu"])) / np.array(p["sd"])) @ np.array(p["w"])
     base_order = sorted(range(len(results)), key=lambda i: results[i][1].total, reverse=True)
     base_rank = {names[i]: k + 1 for k, i in enumerate(base_order)}
-    return {n: {"u": float(u[i]), "dev": None if np.isnan(v2[i]) else 50 + 10 * (v2[i] - mu_all) / sd_all,
+    # 総合点 = 50 + 10×案Dスコア（順位を決めた点数を見やすい尺度にしたもの。平均的な馬が50前後）
+    return {n: {"u": float(u[i]), "score": round(50 + 10 * float(u[i]), 1), "dev": None if np.isnan(v2[i]) else 50 + 10 * (v2[i] - mu_all) / sd_all,
                 "rest": float(rest[i]), "base_rank": base_rank[n]} for i, n in enumerate(names)}
 
 
@@ -81,5 +82,12 @@ def comment_lines(sorted_results, info: dict) -> list[str]:
     for k, (e, d) in enumerate(sorted_results, 1):
         r = info[e.horse_name]
         dev = f"{r['dev']:.1f}" if r["dev"] is not None else "データなし"
-        lines.append(f"案D{k}位 {e.horse_number}番 {e.horse_name} 案D{r['u']:+.2f} / 能力指数{dev} / 能力以外{r['rest']:+.1f} / 現行{r['base_rank']}位({d.total:+.1f})")
+        lines.append(f"案D{k}位 {e.horse_number}番 {e.horse_name} 総合点{r['score']:.1f} / 能力指数{dev} / 能力以外{r['rest']:+.1f} / 現行{r['base_rank']}位({d.total:+.1f})")
     return lines
+
+
+def extra_cols(info: dict) -> dict:
+    """CSV末尾に足す列: 総合点（順位の根拠）・能力指数（偏差値）・現行順位（旧ロジックでの順位）"""
+    return {"総合点": {n: f"{r['score']:.1f}" for n, r in info.items()},
+            "能力指数": {n: ("" if r["dev"] is None else f"{r['dev']:.1f}") for n, r in info.items()},
+            "旧順位": {n: r["base_rank"] for n, r in info.items()}}

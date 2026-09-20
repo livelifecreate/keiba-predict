@@ -1436,7 +1436,7 @@ def _record_comment(entry) -> str:
     return "実績不明"
 
 
-def save_csv(results: list[tuple], race_info, odds_map: dict = None, training_data: dict = None, sign_tag: str = None, eval_comment: list = None, race_id: str = "", sign_level: str = None, sign_detail_text: str = None, race_class: int = 0, track_condition: str = "", presorted: bool = False):
+def save_csv(results: list[tuple], race_info, odds_map: dict = None, training_data: dict = None, sign_tag: str = None, eval_comment: list = None, race_id: str = "", sign_level: str = None, sign_detail_text: str = None, race_class: int = 0, track_condition: str = "", presorted: bool = False, extra_cols: dict = None):
     import csv as _csv, re
     from pathlib import Path
     date_str = race_info.date.replace("年", "").replace("月", "").replace("日", "")
@@ -1474,8 +1474,10 @@ def save_csv(results: list[tuple], race_info, odds_map: dict = None, training_da
 
     with open(filepath, "w", newline="", encoding="utf-8-sig") as f:
         writer = _csv.writer(f)
+        # extra_cols: {列名: {馬名: 値}}。既存列の位置を変えないよう末尾に追加する（案Dの総合点など）
+        extra_cols = extra_cols or {}
         writer.writerow(["順位", "枠", "馬番", "馬名", "合計スコア",
-                         "単勝オッズ", "人気", "加点内訳", "減点内訳", "調教コメント"])
+                         "単勝オッズ", "人気", "加点内訳", "減点内訳", "調教コメント"] + list(extra_cols))
         for rank, (entry, d) in enumerate(sorted_results, 1):
             plus_items  = [f"+{getattr(d,k):.1f}{_get_label(k,getattr(d,k))}" for k in SCORE_LABELS if getattr(d,k) > 0]
             minus_items = [f"{getattr(d,k):.1f}{_get_label(k,getattr(d,k))}" for k in SCORE_LABELS if getattr(d,k) < 0]
@@ -1486,7 +1488,8 @@ def save_csv(results: list[tuple], race_info, odds_map: dict = None, training_da
             writer.writerow([rank, entry.frame_number, entry.horse_number,
                              entry.horse_name, f"{d.total:+.1f}",
                              odds_val, pop_val,
-                             " / ".join(plus_items), " / ".join(minus_items), comment])
+                             " / ".join(plus_items), " / ".join(minus_items), comment]
+                            + [extra_cols[c].get(entry.horse_name, "") for c in extra_cols])
 
         # レース情報行（芝/ダート/障害・距離・race_id・馬場状態）
         writer.writerow([])

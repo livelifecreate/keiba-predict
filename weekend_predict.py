@@ -484,12 +484,14 @@ def main(argv=None):
                 save_csv_dart(sorted_r, race_info, odds_map=odds_map, training_data=training,
                               sign_tag=sign_tag, eval_comment=eval_comment, race_id=race_id,
                               sign_level=sign_text, sign_detail_text=sign_detail, race_class=race_class,
-                              track_condition=tc, presorted=bool(plan_d_info))
+                              track_condition=tc, presorted=bool(plan_d_info),
+                              extra_cols=plan_d.extra_cols(plan_d_info) if plan_d_info else None)
             else:
                 save_csv_turf(sorted_r, race_info, odds_map=odds_map, training_data=training,
                               sign_tag=sign_tag, eval_comment=eval_comment, race_id=race_id,
                               sign_level=sign_text, sign_detail_text=sign_detail, race_class=race_class,
-                              track_condition=tc, presorted=bool(plan_d_info))
+                              track_condition=tc, presorted=bool(plan_d_info),
+                              extra_cols=plan_d.extra_cols(plan_d_info) if plan_d_info else None)
         except Exception as e:
             print(f"  [CSV] 保存失敗: {e}")
 
@@ -502,8 +504,9 @@ def main(argv=None):
             if plan_d_info:
                 _r = plan_d_info[entry.horse_name]
                 _dev = f"{_r['dev']:.1f}" if _r["dev"] is not None else "-"
-                d_str = f" [案D{_r['u']:+.2f} 能力指数{_dev} 現行{_r['base_rank']}位]"
-            print(f"  {rank}位 {entry.horse_number}番 {entry.horse_name:<12} {d.total:+.1f}pt{odds_str}{d_str}")
+                d_str = f" [総合点{_r['score']:.1f} 能力指数{_dev} 旧{_r['base_rank']}位]"
+            pt_str = f"旧{d.total:+.1f}pt" if plan_d_info else f"{d.total:+.1f}pt"
+            print(f"  {rank}位 {entry.horse_number}番 {entry.horse_name:<12}{d_str} {pt_str}{odds_str}")
 
         print(f"  → {sign_text}  {sign_detail}")
 

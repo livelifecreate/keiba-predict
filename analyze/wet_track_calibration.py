@@ -26,14 +26,55 @@ import ability_index as A
 BASE = Path(__file__).resolve().parent.parent
 K_HORSE, K_SIRE = 2.0, 30.0
 ND = NormalDist()
+_RATINGS = None
+
+
+VENUES = ["札幌", "函館", "福島", "新潟", "東京", "中山", "中京", "京都", "阪神", "小倉"]
+NORM = {"稍": "稍重", "不": "不良", "良": "良", "重": "重", "稍重": "稍重", "不良": "不良"}
+
+
+def going_from_full_history() -> dict:
+    """cache/horse_full_history（馬場4区分つき）から {(日付, 競馬場, 芝ダ): 馬場} を多数決で作る。未取得なら空"""
+    votes = defaultdict(lambda: defaultdict(int))
+    d = BASE / "cache" / "horse_full_history"
+    if not d.exists():
+        return {}
+    for p in d.glob("*.json"):
+        try:
+            recs = json.loads(p.read_text())
+        except Exception:
+            continue
+        for r in recs:
+            v = next((x for x in VENUES if x in r.get("kaisan", "")), None)
+            g = NORM.get(r.get("track", ""))
+            surf = r.get("dist_raw", "")[:1]
+            if v and g and surf in ("芝", "ダ"):
+                votes[(pd.Timestamp(r["date_raw"].replace("/", "-")), v, surf)][g] += 1
+    return {k: max(c, key=c.get) for k, c in votes.items()}
 
 
 def main():
     races = A.load_races()
-    tc = {}
+    full = going_from_full_history()
+    raw_tc = {}
     for p in (BASE / "cache" / "race_result").glob("*.json"):
         d = json.loads(p.read_text())
-        tc[d.get("race_id") or p.stem] = d.get("track_condition") or ""
+        rid = d.get("race_id") or p.stem
+        g = ""
+        if full and d.get("date"):
+            g = full.get((A.M.jp_date(d["date"]), d.get("venue"), d.get("surface")), "")
+        raw_tc[rid] = g or NORM.get(d.get("track_condition") or "", "")
+    from collections import Counter
+    print("馬場データの出所:", "通算成績(4区分)＋race_result" if full else "race_resultのみ(良/重の2値・欠損多)", dict(Counter(raw_tc.values())))
+    for label, wet_set in [("道悪＝稍重・重・不良", {"稍重", "重", "不良"}), ("道悪＝重・不良のみ", {"重", "不良"})]:
+        tc = {k: ("良" if v == "良" else ("重" if v in wet_set else "")) for k, v in raw_tc.items()}
+        if label.endswith("のみ") and not full:
+            continue          # 2値データでは同じ結果になるので省略
+        print(f"\n\n################ {label} ################")
+        run(races, tc)
+
+
+def run(races, tc):
     sire = {}
     for p in (BASE / "cache" / "sire").glob("*.json"):
         try:
@@ -43,10 +84,13 @@ def main():
             pass
     print(f"馬場状態: 良 {sum(v == '良' for v in tc.values())}R / 重 {sum(v == '重' for v in tc.values())}R / 不明 {sum(v == '' for v in tc.values())}R   父馬データ {len(sire)}頭")
 
-    ratings = {}
-    for s in ("芝", "ダ"):
-        obs, hmap, rr = A.build_obs(races, {}, s)
-        ratings.update(A.walk_forward(obs, hmap, rr, 365, 2.0, "yr"))
+    global _RATINGS
+    if _RATINGS is None:                      # 能力指数のウォークフォワードは1回だけ計算
+        _RATINGS = {}
+        for s in ("芝", "ダ"):
+            obs, hmap, rr = A.build_obs(races, {}, s)
+            _RATINGS.update(A.walk_forward(obs, hmap, rr, 365, 2.0, "yr"))
+    ratings = _RATINGS
 
     rows = []
     for r in races:

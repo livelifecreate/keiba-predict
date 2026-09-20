@@ -251,7 +251,11 @@ st.markdown("")
 
 # 馬スコア表
 if not df.empty:
-    show_cols = [c for c in ["順位", "馬番", "馬名", "合計スコア", "単勝オッズ", "人気", "調教コメント"] if c in df.columns]
+    # 案D導入後のCSV（総合点列あり）: 順位の根拠は「総合点」。従来の合計スコアは「旧スコア(参考)」として表示
+    if "総合点" in df.columns:
+        df = df.rename(columns={"合計スコア": "旧スコア(参考)"})
+    show_cols = [c for c in ["順位", "馬番", "馬名", "総合点", "能力指数", "合計スコア", "旧スコア(参考)", "旧順位",
+                             "単勝オッズ", "人気", "調教コメント"] if c in df.columns]
     st.dataframe(
         df[show_cols].set_index("順位"),
         use_container_width=True,
@@ -305,7 +309,7 @@ with col3:
 # 加点・減点詳細（展開式）
 if not df.empty and "加点内訳" in df.columns:
     with st.expander("加点・減点詳細"):
-        detail_cols = [c for c in ["馬番", "馬名", "合計スコア", "加点内訳", "減点内訳"] if c in df.columns]
+        detail_cols = [c for c in ["馬番", "馬名", "合計スコア", "旧スコア(参考)", "加点内訳", "減点内訳"] if c in df.columns]
         st.dataframe(df[detail_cols].set_index("馬番"), use_container_width=True)
 
 # ── HTML レースレポート ────────────────────────────────────────────────────────
