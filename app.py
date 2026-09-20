@@ -272,22 +272,53 @@ if not df.empty:
         df = df.rename(columns={"合計スコア": "旧スコア(参考)"})
     show_cols = [c for c in ["順位", "馬番", "馬名", "総合点", "能力指数", "合計スコア", "旧スコア(参考)", "旧順位",
                              "単勝オッズ", "人気", "調教コメント"] if c in df.columns]
-    st.dataframe(
-        df[show_cols].set_index("順位"),
-        use_container_width=True,
-        height=min(50 + len(df) * 38, 520),
-    )
+    notes = {str(x["馬番"]): x for x in data.get("horse_notes", [])}
+    if notes:
+        # 強み・弱みがあるCSV: 調教コメントの右に「強み」「弱み」列を置き、セル内で折り返す表にする
+        import html as _html
 
-# 強み・弱み（予想順位順・表示専用）
-if data.get("horse_notes"):
-    st.markdown("**■ 強み・弱み**")
-    for k, x in enumerate(data["horse_notes"], 1):
+        def _bullets(text: str, color: str) -> str:
+            items = [t.strip() for t in str(text).split("／") if t.strip() and t.strip() != "—"]
+            if not items:
+                return "<span style='color:#999'>—</span>"
+            return "".join(f"<div style='color:{color};margin:1px 0'>・{_html.escape(t)}</div>" for t in items)
+
+        def _v(r, c):
+            v = r.get(c, "")
+            return "" if str(v) == "nan" else _html.escape(str(v))
+
+        # 横幅を抑えるため列を整理: 旧スコア・旧順位は総合点の下に小さく、単勝と人気は1列に
+        cols = [("順位", "5%"), ("馬番", "5%"), ("馬名", "15%"), ("総合点", "8%"), ("能力", "6%"),
+                ("単勝", "7%"), ("調教", "8%"), ("強み", "25%"), ("弱み", "21%")]
+        head = "".join(f"<th style='padding:6px 6px;text-align:left;width:{w};white-space:nowrap;border-bottom:2px solid #ccc'>{c}</th>" for c, w in cols)
+        body = []
+        for i, (_, r) in enumerate(df.iterrows()):
+            x = notes.get(str(r.get("馬番")), {})
+            score = _v(r, "総合点") or _v(r, "合計スコア")
+            sub = ""
+            if "旧順位" in df.columns:
+                sub = f"<div style='color:#999;font-size:0.8em;font-weight:normal'>旧{_v(r, '旧順位')}位 ({_v(r, '旧スコア(参考)')})</div>"
+            td = "padding:6px 6px;vertical-align:top"
+            cells = (f"<td style='{td}'>{_v(r, '順位')}</td><td style='{td}'>{_v(r, '馬番')}</td>"
+                     f"<td style='{td};font-weight:bold'>{_v(r, '馬名')}</td>"
+                     f"<td style='{td};font-weight:bold'>{score}{sub}</td>"
+                     f"<td style='{td}'>{_v(r, '能力指数')}</td>"
+                     f"<td style='{td}'>{_v(r, '単勝オッズ')}<div style='color:#666;font-size:0.85em'>{_v(r, '人気')}</div></td>"
+                     f"<td style='{td}'>{_v(r, '調教コメント')}</td>"
+                     f"<td style='{td}'>{_bullets(x.get('強み', ''), '#1a7f37')}</td>"
+                     f"<td style='{td}'>{_bullets(x.get('弱み', ''), '#b3261e')}</td>")
+            bg = "#ffffff" if i % 2 == 0 else "#f7f7f7"
+            body.append(f"<tr style='background:{bg};border-bottom:1px solid #e5e5e5'>{cells}</tr>")
         st.markdown(
-            f"<div style='margin:4px 0;padding:6px 10px;border-left:3px solid #999;background:#fafafa'>"
-            f"<b>{k}位 {x['馬番']}番 {x['馬名']}</b><br>"
-            f"<span style='color:#1a7f37'>◯ {x['強み']}</span><br>"
-            f"<span style='color:#b3261e'>△ {x['弱み']}</span></div>",
+            "<table style='border-collapse:collapse;width:100%;table-layout:fixed;font-size:0.86em;color:#222;line-height:1.45'>"
+            f"<thead><tr style='background:#eef1f4'>{head}</tr></thead><tbody>{''.join(body)}</tbody></table>",
             unsafe_allow_html=True,
+        )
+    else:
+        st.dataframe(
+            df[show_cols].set_index("順位"),
+            use_container_width=True,
+            height=min(50 + len(df) * 38, 520),
         )
 
 # 評価コメント（案Dの明細行は出走表と重複するので畳む）
