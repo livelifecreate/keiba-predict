@@ -1115,15 +1115,16 @@ def check_track_condition(past_conds: list[tuple[str, int]], current_condition: 
         foul_good  = [p for c, p in past_conds if c == "不良" and 1 <= p <= 3]
         heavy_good = [p for c, p in past_conds if c in ("重", "不良") and 1 <= p <= 3]
         heavy_bad  = [p for c, p in past_conds if c in ("重", "不良") and p > 3]
-        wet_any    = [p for c, p in past_conds if c in ("稍重", "重", "不良")]
         if foul_good:
             return 2.0
         if heavy_good:
             return 1.0
         if len(heavy_bad) >= 2:
             return -2.0
-        if not wet_any:
-            return -1.0
+        # 2026-09-23検証: 「道悪未経験」への-1.0は根拠なし（不良レースでの平均残差は
+        # 未経験+0.040 / 稍重のみ+0.025 / 重・不良経験あり+0.061 で、未経験が劣らない）→ 撤廃。
+        # なお「稍重の好走歴」は重・不良を予測する（傾き+0.294・両方持つ馬での同時推定で+0.434）
+        # ため、重ブランチの +1.0 は維持する。
         return 0.0
 
     return 0.0
