@@ -56,6 +56,11 @@ def _ability(surface: str, as_of: int):
     return _ABILITY[key]
 
 
+def ability_map(surface: str, race_date):
+    """(θ辞書{馬ID: 値}, 偏差値化の平均, 標準偏差) を返す。レースレベルの算出に使う"""
+    return _ability("芝" if surface == "芝" else "ダ", race_date.toordinal())
+
+
 def rank(results, horse_ids: dict, surface: str, race_date) -> dict:
     """
     results: score_all の戻り値 [(entry, ScoreBreakdown), ...]

@@ -475,7 +475,9 @@ def main(argv=None):
         notes_rows = None
         if horse_notes.enabled() and race_date:
             try:
-                _notes = horse_notes.build(sorted_r, race_info, race_class, tc, odds_map, training, plan_d_info, race_date)
+                _theta = plan_d.ability_map(race_info.surface, race_date) if plan_d_info else None
+                _notes = horse_notes.build(sorted_r, race_info, race_class, tc, odds_map, training, plan_d_info, race_date,
+                                           theta_map=_theta)
                 notes_rows = horse_notes.csv_section(_notes)
             except Exception as e:
                 print(f"  [強み弱み] 生成失敗: {e}")

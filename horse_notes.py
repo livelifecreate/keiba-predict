@@ -11,6 +11,8 @@
   環境変数 HORSE_NOTES=0 で無効化。
 """
 import json, os, re, statistics
+
+import numpy as np
 from datetime import date
 from pathlib import Path
 
@@ -90,6 +92,44 @@ def _short(race_raw: str) -> str:
     return re.sub(r"^(関西TV|東海テレビ杯|日刊スポ賞|産経賞|農林水産省賞典|読売|KBS|HTB|TV|UHB|STV)", "", race_raw or "")
 
 
+_RACE_INDEX = None
+
+
+def race_index() -> dict:
+    """{(日付, 競馬場, レース名の先頭): (芝ダ, [馬ID,...])} … 過去レースのレベル算出用"""
+    global _RACE_INDEX
+    if _RACE_INDEX is None:
+        _RACE_INDEX = {}
+        for p in (BASE / "cache" / "race_result").glob("*.json"):
+            try:
+                d = json.loads(p.read_text())
+            except Exception:
+                continue
+            dt = _d(d.get("date", ""))
+            if not dt:
+                continue
+            key = (dt, d.get("venue", ""), re.sub(r"[\s　]", "", d.get("race_name", ""))[:6])
+            _RACE_INDEX[key] = (d.get("surface", ""), [e.get("horse_id") for e in d.get("entries", []) if e.get("horse_id")])
+    return _RACE_INDEX
+
+
+def past_race_level(rec: dict, theta: dict, mu: float, sd: float):
+    """過去レースのレベル（出走メンバーの能力指数の平均・偏差値）。不明なら None"""
+    dt = _d(rec.get("date_raw", ""))
+    venue = next((v for v in ("札幌", "函館", "福島", "新潟", "東京", "中山", "中京", "京都", "阪神", "小倉")
+                  if v in rec.get("kaisan", "")), "")
+    if not dt or not venue:
+        return None
+    name = re.sub(r"[\s　]", "", re.sub(r"\(.*?\)", "", rec.get("race_raw", "")))[:6]
+    hit = race_index().get((dt, venue, name))
+    if not hit:
+        return None
+    vals = [theta[h] for h in hit[1] if h in theta]
+    if len(vals) < max(4, len(hit[1]) * 0.5):
+        return None
+    return 50 + 10 * (float(np.mean(vals)) - mu) / sd
+
+
 def running_style(recs: list[dict], surface: str) -> str:
     """近5走（同じ芝ダ・平地）の通過順から脚質を判定。最初のコーナーの位置÷頭数の平均で分類"""
     ratios, firsts = [], []
@@ -120,8 +160,22 @@ def running_style(recs: list[dict], surface: str) -> str:
 
 
 # ------------------------------------------------------------------ コメント生成
+def _cls_name(race_raw: str) -> str:
+    s = race_raw or ""
+    for k in ("重賞", "OP", "3勝クラス", "2勝クラス", "1勝クラス", "未勝利", "新馬"):
+        pass
+    if re.search(r"\((GI|G1|GII|G2|GIII|G3|Jpn)", s): return "重賞"
+    if re.search(r"\((L|OP)\)", s) or "オープン" in s: return "OP"
+    if "3勝" in s: return "3勝クラス"
+    if "2勝" in s: return "2勝クラス"
+    if "1勝" in s: return "1勝クラス"
+    if "未勝利" in s: return "未勝利"
+    if "新馬" in s: return "新馬"
+    return "2勝クラス"
+
+
 def build(sorted_results, race_info, race_class: int, track_condition: str, odds_map: dict,
-          training_data: dict, plan_d_info: dict | None, race_date) -> list[dict]:
+          training_data: dict, plan_d_info: dict | None, race_date, theta_map=None) -> list[dict]:
     """[{num, name, strengths:[...], weaknesses:[...]}, ...] を予想順位順で返す"""
     surface = "芝" if race_info.surface == "芝" else "ダ"
     m = re.search(r"(\d+)", str(race_info.distance))
@@ -242,6 +296,28 @@ def build(sorted_results, race_info, race_class: int, track_condition: str, odds
                 S.append(f"前走{_short(last['race_raw'])}{lp}着")
             elif lp and lp >= 10:
                 W.append(f"前走{_short(last['race_raw'])}{lp}着（{last.get('margin', '')}秒差）")
+
+            # 6b. 前走のレースレベル（メンバーの平均能力）と着差
+            if theta_map is not None and lp:
+                lv = past_race_level(last, *theta_map)
+                if lv is not None:
+                    try:
+                        mg = float(last.get("margin", ""))
+                    except (TypeError, ValueError):
+                        mg = None
+                    base_lv = {"新馬": 42, "未勝利": 42, "1勝クラス": 48, "2勝クラス": 55,
+                               "3勝クラス": 64, "OP": 68, "重賞": 71}.get(_cls_name(last["race_raw"]), 55)
+                    if lv >= base_lv + 5 and lp <= 8:
+                        s_txt = f"前走は相手が強い一戦（メンバーレベル{lv:.0f}）で{lp}着"
+                        if mg is not None and 0 < mg <= 0.5:
+                            s_txt += f"・{mg}秒差"
+                        S.append(s_txt)
+                    elif lv <= base_lv - 5 and lp <= 3:
+                        W.append(f"前走{lp}着は相手が手薄な一戦（メンバーレベル{lv:.0f}）")
+                    if mg is not None and 4 <= lp <= 8 and mg <= 0.3:
+                        S.append(f"前走は{lp}着でも{mg}秒差（見た目より僅差）")
+                    elif mg is not None and lp <= 3 and mg >= 1.0:
+                        W.append(f"前走{lp}着だが勝ち馬から{mg}秒差")
 
             # 7. 休み明け（2勝クラス以上・芝14,736頭の集計: 4〜6か月は複勝率が人気比-1.6pt、半年以上は-3.9pt）
             ld = _d(last["date_raw"])
