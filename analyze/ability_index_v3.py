@@ -29,6 +29,7 @@ import pandas as pd
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import ability_index as A
 import market_residual_model as M
+import wet_track_calibration as WET
 
 BASE = Path(__file__).resolve().parent.parent
 FULL_DIR = BASE / "cache" / "horse_full_history"
@@ -72,8 +73,86 @@ def _lvl(race_raw: str) -> int:
     return 0
 
 
+# ------------------------------------------------------------------ 馬場と道悪適性
+def going_map(races) -> dict:
+    """{rid: 良/稍重/重/不良}。通算成績の4区分を優先し、無ければ race_result の2値"""
+    full = WET.going_from_full_history()
+    venue, fb = {}, {}
+    for p in (BASE / "cache" / "race_result").glob("*.json"):
+        d = json.loads(p.read_text())
+        rid = d.get("race_id") or p.stem
+        venue[rid] = d.get("venue") or ""
+        fb[rid] = WET.NORM.get(d.get("track_condition") or "", "")
+    out = {}
+    for r in races:
+        g = full.get((r["dt"], venue.get(r["rid"], ""), r["surface"])) if full else None
+        out[r["rid"]] = g or fb.get(r["rid"], "")
+    return out
+
+
+def sire_map() -> dict:
+    out = {}
+    for p in (BASE / "cache" / "sire").glob("*.json"):
+        try:
+            v = json.loads(p.read_text())
+            out[p.stem] = v if isinstance(v, str) else (v.get("sire") or v.get("name") or "")
+        except Exception:
+            pass
+    return out
+
+
+def wet_features(obs, rr, going, sires, byday, k_horse=2.0, k_sire=30.0):
+    """
+    重・不良への適性を特徴量にする（時系列に蓄積・先読みなし）。
+      残差 e = 実際の相対パフォーマンス − 能力から期待される値（1パス目のθを使用）
+      馬・父それぞれについて「重・不良での残差の縮小平均」を持ち、当日が重・不良のときだけ効かせる。
+    戻り値: (n_obs, 2) 列 = [重不良 × 馬自身の道悪残差, 重不良 × 父の(道悪−良)残差]
+    """
+    n = len(obs["h"])
+    heavy = np.array([going.get(rr[ri]["rid"], "") in ("重", "不良") for ri, _ in obs["meta"]])
+    # 1パス目のθからレース内中心化した期待値を作り、残差を出す
+    theta_c = np.full(n, 0.0)
+    for k, (ri, e) in enumerate(obs["meta"]):
+        day = byday.get(rr[ri]["dt"])
+        if day is None:
+            continue
+        theta_c[k] = day[0][obs["h"][k]] if not np.isnan(day[0][obs["h"][k]]) else 0.0
+    rid_idx = obs["r"]
+    mean_by_race = np.bincount(rid_idx, weights=theta_c) / np.bincount(rid_idx)
+    resid = obs["y"] - 1.4 * (theta_c - mean_by_race[rid_idx])     # 係数1.4は良馬場での回帰から（WET参照）
+
+    order = np.argsort(obs["d"], kind="stable")
+    hsum, hcnt = defaultdict(float), defaultdict(int)
+    ssum, scnt = defaultdict(float), defaultdict(int)
+    sgood_s, sgood_c = defaultdict(float), defaultdict(int)
+    feat = np.zeros((n, 2))
+    day_buf = []
+    cur_day = None
+    for k in order:
+        d = obs["d"][k]
+        if d != cur_day:                      # 同じ日の結果は当日の特徴量に入れない
+            for kk, hid, sire, e, hv in day_buf:
+                if hv:
+                    hsum[hid] += e; hcnt[hid] += 1
+                    if sire:
+                        ssum[sire] += e; scnt[sire] += 1
+                elif sire:
+                    sgood_s[sire] += e; sgood_c[sire] += 1
+            day_buf, cur_day = [], d
+        ri, ent = obs["meta"][k]
+        hid = ent["horse_id"]
+        sire = sires.get(hid, "")
+        if heavy[k]:
+            feat[k, 0] = hsum[hid] / (hcnt[hid] + k_horse)
+            if sire:
+                feat[k, 1] = (ssum[sire] / (scnt[sire] + k_sire)) - (sgood_s[sire] / (sgood_c[sire] + k_sire))
+        day_buf.append((k, hid, sire, resid[k], heavy[k]))
+    print(f"  重・不良の観測 {heavy.sum()}件（{heavy.mean():.1%}）  道悪残差が入った観測 {(feat[:, 0] != 0).sum()}件")
+    return feat
+
+
 # ------------------------------------------------------------------ 設計行列
-def build(races, surface, prevs):
+def build(races, surface, prevs, going=None, sires=None, byday=None):
     """観測ごとの y・馬index・レースindex・条件行列を作る"""
     rr = [r for r in races if r["surface"] == surface]
     hmap, jmap = {}, {}
@@ -121,8 +200,12 @@ def build(races, surface, prevs):
             ])
     names = ["枠(外)", "枠(外)^2", "斤量", "牝馬", "セン馬", "3歳", "4歳", "7歳以上",
              "3週以内", "2〜4か月", "4〜6か月", "半年以上", "距離延長", "距離短縮", "昇級", "降級"]
+    if going is not None:
+        names += ["重不良×馬の道悪実績", "重不良×父の道悪傾向"]
     obs = {"h": np.array(H), "r": np.array(R), "d": np.array(D), "y": np.array(Y),
            "j": np.array(J), "x": np.array(X, dtype=float), "names": names, "meta": META}
+    if going is not None and byday is not None:
+        obs["x"] = np.column_stack([obs["x"], wet_features(obs, rr, going, sires or {}, byday)])
     have_prev = np.mean([1 if prevs.get((e["horse_id"], rr[ri]["dt"])) else 0 for ri, e in META])
     print(f"[{surface}] {len(rr)}R / 馬{len(hmap)} / 騎手{len(jmap)} / 観測{len(H)}  前走が通算成績から引けた割合 {have_prev:.0%}")
     return obs, hmap, jmap, rr
@@ -212,8 +295,11 @@ def main():
 
     rows = []
     coef_report = {}
+    going, sires = going_map(races), sire_map()
     for surface in ("芝", "ダ"):
-        obs, hmap, jmap, rr = build(races, surface, prevs)
+        obs0, hmap, jmap, rr = build(races, surface, prevs)          # 1パス目（道悪特徴量なし）
+        byday0, _ = walk_forward(obs0, hmap, jmap, rr)
+        obs, hmap, jmap, rr = build(races, surface, prevs, going, sires, byday0)   # 2パス目
         byday, last = walk_forward(obs, hmap, jmap, rr)
         theta_f, W_f, a_f, beta_f = last
         coef_report[surface] = (dict(zip(obs["names"], beta_f)), a_f, jmap)
