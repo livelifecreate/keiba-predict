@@ -1095,12 +1095,8 @@ def check_track_condition(past_conds: list[tuple[str, int]], current_condition: 
         return 0.0
 
     if current_condition == "稍重":
-        wet_good = [p for c, p in past_conds if c in ("稍重", "重", "不良") and 1 <= p <= 3]
-        wet_bad  = [p for c, p in past_conds if c in ("稍重", "重", "不良") and p > 3]
-        if wet_good:
-            return 0.5
-        if len(wet_bad) >= 2:
-            return -0.5
+        # 2026-09-23検証: 稍重では道悪適性が検出できない（道悪→道悪の傾き+0.148に対し
+        # 対照の良→道悪が+0.137で区別不能）。重・不良でのみ+0.403と分離するため、稍重は加点しない。
         return 0.0
 
     if current_condition == "重":
