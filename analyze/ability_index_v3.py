@@ -312,11 +312,13 @@ def main():
             rows.append({"rid": r["rid"], "dt": r["dt"], "cls": r["cls"], "surface": surface,
                          "馬名": e["horse_name"], "rank": e["rank"], "odds": e["odds"], "pop": e["popularity"],
                          "v3": theta[j] if W[j] > 0 else np.nan,
-                         "ctx": a[obs["j"][k]] + obs["x"][k] @ beta})
+                         "ctx": a[obs["j"][k]] + obs["x"][k] @ beta,
+                         "wet": float(obs["x"][k][-2:] @ beta[-2:]),      # 重不良×(馬の道悪実績, 父の道悪傾向)
+                         "jockey": float(a[obs["j"][k]])})
     df = pd.DataFrame(rows)
     ok = df.groupby("rid")["v3"].transform(lambda s: s.notna().mean()) >= 0.6
     df = df[ok].copy()
-    for c in ("v3", "ctx"):
+    for c in ("v3", "ctx", "wet", "jockey"):
         m = df.groupby("rid")[c].transform("mean")
         df[c + "_c"] = (df[c].fillna(m) - m).fillna(0.0)
     df["v3_full"] = df["v3_c"] + df["ctx_c"]
