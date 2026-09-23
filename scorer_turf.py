@@ -1044,6 +1044,43 @@ def fetch_horse_ids(race_id: str) -> dict[str, str]:
     return result
 
 
+def past_track_conditions_cached(horse_id: str, as_of: str = "") -> list[tuple[str, int]]:
+    """
+    通算成績キャッシュ（cache/horse_full_history/{馬ID}.json）から近走の (馬場状態, 着順) を返す。
+    2026-09-23追加。従来は毎回 netkeiba へアクセスしていたため、通信制限中は全馬0点になり
+    バックテストで道悪適性を検証できなかった（実際CSVの95%が0）。キャッシュ優先に変更。
+    as_of（'YYYY/MM/DD' または '2026年9月20日'）を渡すと、その日より前の走のみを使う（先読み防止）。
+    """
+    import json as _json, re as _re
+    from pathlib import Path as _Path
+    p = _Path(__file__).resolve().parent / "cache" / "horse_full_history" / f"{horse_id}.json"
+    if not p.exists():
+        return []
+    try:
+        recs = _json.loads(p.read_text())
+    except Exception:
+        return []
+    cut = None
+    m = _re.search(r"(\d{4})[年/](\d{1,2})[月/](\d{1,2})", as_of or "")
+    if m:
+        cut = (int(m.group(1)), int(m.group(2)), int(m.group(3)))
+    norm = {"稍": "稍重", "不": "不良", "良": "良", "重": "重", "稍重": "稍重", "不良": "不良"}
+    out = []
+    for r in recs:                                   # 通算成績は日付の新しい順
+        d = _re.match(r"(\d{4})/(\d{2})/(\d{2})", r.get("date_raw", ""))
+        if not d:
+            continue
+        if cut and (int(d.group(1)), int(d.group(2)), int(d.group(3))) >= cut:
+            continue
+        cond = norm.get((r.get("track") or "").strip())
+        pos = r.get("pos_raw", "")
+        if cond and str(pos).isdigit():
+            out.append((cond, int(pos)))
+        if len(out) >= 10:                            # 直近10走（従来と同じ）
+            break
+    return out
+
+
 def fetch_past_track_conditions(horse_id: str) -> list[tuple[str, int]]:
     """db.netkeiba.com/horse/result/{id}/ から近走の (馬場状態, 着順) リストを取得"""
     import time as _time
@@ -1095,12 +1132,8 @@ def check_track_condition(past_conds: list[tuple[str, int]], current_condition: 
         return 0.0
 
     if current_condition == "稍重":
-        wet_good = [p for c, p in past_conds if c in ("稍重", "重", "不良") and 1 <= p <= 3]
-        wet_bad  = [p for c, p in past_conds if c in ("稍重", "重", "不良") and p > 3]
-        if wet_good:
-            return 0.5
-        if len(wet_bad) >= 2:
-            return -0.5
+        # 2026-09-23検証: 稍重では道悪適性が検出できない（道悪→道悪の傾き+0.148に対し
+        # 対照の良→道悪が+0.137で区別不能）。重・不良でのみ+0.403と分離するため、稍重は加点しない。
         return 0.0
 
     if current_condition == "重":
@@ -1119,15 +1152,16 @@ def check_track_condition(past_conds: list[tuple[str, int]], current_condition: 
         foul_good  = [p for c, p in past_conds if c == "不良" and 1 <= p <= 3]
         heavy_good = [p for c, p in past_conds if c in ("重", "不良") and 1 <= p <= 3]
         heavy_bad  = [p for c, p in past_conds if c in ("重", "不良") and p > 3]
-        wet_any    = [p for c, p in past_conds if c in ("稍重", "重", "不良")]
         if foul_good:
             return 2.0
         if heavy_good:
             return 1.0
         if len(heavy_bad) >= 2:
             return -2.0
-        if not wet_any:
-            return -1.0
+        # 2026-09-23検証: 「道悪未経験」への-1.0は根拠なし（不良レースでの平均残差は
+        # 未経験+0.040 / 稍重のみ+0.025 / 重・不良経験あり+0.061 で、未経験が劣らない）→ 撤廃。
+        # なお「稍重の好走歴」は重・不良を予測する（傾き+0.294・両方持つ馬での同時推定で+0.434）
+        # ため、重ブランチの +1.0 は維持する。
         return 0.0
 
     return 0.0
@@ -1272,7 +1306,8 @@ def score_all(entries: list, race_info, training_data: dict = None,
             else:
                 hid = horse_ids.get(entry.horse_name, "")
                 track_cond_cache[entry.horse_name] = (
-                    fetch_past_track_conditions(hid) if hid else []
+                    past_track_conditions_cached(hid, getattr(race_info, 'date', '')) or
+                    (fetch_past_track_conditions(hid) if hid else [])
                 )
 
     # 全馬の前走3F・斤量を先に収集

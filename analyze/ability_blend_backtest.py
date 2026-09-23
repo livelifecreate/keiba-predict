@@ -99,6 +99,21 @@ def main():
     utils["C 現行スコア+v2"], wc = fit_util(df, ["score_z", "v2_c"], 0.5)
     utils["D v2+能力以外の因子合計"], wd = fit_util(df, ["v2_c", "rest_sum"], 0.5)
     utils["E v2+能力以外を個別再重み"], we = fit_util(df, ["v2_c"] + rest, 5.0)
+    # v3（能力θと条件効果の同時推定・analyze/ability_index_v3.py が保存）があれば比較に加える
+    v3p = BASE / "data" / "v3_eval.parquet"
+    if v3p.exists():
+        v3 = pd.read_parquet(v3p)[["馬名", "dt", "v3_c", "ctx_c", "v3_full"]]
+        v3 = v3[~v3.duplicated(subset=["馬名", "dt"])].set_index(["馬名", "dt"])
+        j = df.join(v3, on=["馬名", "dt"])
+        cover = j["v3_full"].notna().mean()
+        for c in ("v3_c", "ctx_c", "v3_full"):
+            m = j.groupby("rid")[c].transform("mean")
+            df[c] = (j[c].fillna(m) - m).fillna(0.0)
+        print(f"v3付与率: {cover:.1%}")
+        utils["F v3(能力+条件)"] = df["v3_full"].values
+        utils["G v3能力+現行の能力以外"], wg = fit_util(df, ["v3_c", "rest_sum"], 0.5)
+        utils["H v3(能力+条件)+残り因子"], wh = fit_util(df, ["v3_full", "rest_sum"], 0.5)
+        print("  v3の重み  G:", wg, " H:", wh)
     utils["M 市場人気順(参考)"] = -df["市場人気"].astype(float).values
     import json
     out_p = BASE / "data" / "plan_d_params.json"
