@@ -203,16 +203,21 @@ def calc_buy_sign(sorted_results, odds_map, n_horses, race_class=0, surface=""):
     odds1  = odds_map.get(top_entry.horse_name, 0)
     n      = n_horses
     skips = []
-    if n == 18:
-        skips.append("18頭フルゲート")
-    if 3 <= gap < 5:
-        skips.append(f"乖離{gap:.1f}pt（3〜5pt）")
-    if race_class < 3:
-        cls_name = {0: "未勝利", 1: "1勝", 2: "2勝"}.get(race_class, f"class{race_class}")
-        skips.append(f"{cls_name}クラス（ROI47%）")
+    # 買い条件（2026-09-25改定・analyze/strength_profile.py）:
+    #   頭数 11〜13頭 かつ 重賞以外。クラス（2勝/3勝/OP）は問わない。
+    #   三連複1軸-相手2〜5位(6点)で 的中21.9% / ROI131%（学習151% / テスト116% / 上位3件除外82%・n=320）。
+    #   旧条件（3勝・OP のみ）はテスト期間ROI 88%で赤字だった。頭数で絞るほうが有効。
+    #   〜10頭は的中40%でも配当が安く94%、14〜15頭は的中10.6%・ROI58%（両期間とも赤字）、16頭〜は期間で不安定。
+    if not 11 <= n <= 13:
+        band = "10頭以下（的中40%だがROI94%）" if n <= 10 else (
+            "14〜15頭（的中10.6%・ROI58%）" if n <= 15 else "16頭以上（期間で不安定）")
+        skips.append(f"{n}頭＝{band}")
     if race_class >= 5:
         cls_name = {5: "GIII", 6: "GII", 7: "GI"}.get(race_class, "重賞")
-        skips.append(f"{cls_name}（三連複ROI6%以下・n=92）")
+        skips.append(f"{cls_name}（三連複ROI33〜48%）")
+    if race_class < 2:
+        cls_name = {0: "未勝利", 1: "1勝"}.get(race_class, f"class{race_class}")
+        skips.append(f"{cls_name}クラス（検証対象外）")
 
     if skips:
         return "skip", "⚠ 見送り", " / ".join(skips)
@@ -232,6 +237,8 @@ def calc_buy_sign(sorted_results, odds_map, n_horses, race_class=0, surface=""):
     ctx = []
     if odds1 and odds1 < 2:
         ctx.append(f"断然人気{odds1:.1f}倍(複勝87.9%/5BOX回収141%)")
+    if 3 <= gap < 5:
+        ctx.append(f"乖離{gap:.1f}pt（旧: 見送り帯。2026-09-25に頭数基準へ変更し撤廃）")
     if gap < 1:
         ctx.append(f"横並び乖離{gap:.1f}pt")
     if 14 <= n <= 17:
