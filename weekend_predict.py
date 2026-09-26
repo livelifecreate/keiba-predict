@@ -133,14 +133,18 @@ def pre_output_check(sorted_results, odds_map, race_class, n_horses, race_name) 
 
 # ── サイン判定（scorer_turf.pyのprint_buy_signsと同ロジック）──────────
 
-def gen_eval_comment(sorted_results, odds_map, n_horses, sign_level, sign_detail, race_class=0) -> list[str]:
+def gen_eval_comment(sorted_results, odds_map, n_horses, sign_level, sign_detail, race_class=0, scores=None) -> list[str]:
     """買いサイン評価コメントを生成して list[str] で返す"""
     if len(sorted_results) < 2:
         return []
 
     top_entry, top_d = sorted_results[0]
     sec_entry, sec_d = sorted_results[1]
-    gap   = top_d.total - sec_d.total
+    if scores:
+        gap = (scores.get(top_entry.horse_name, {}).get("score", top_d.total)
+               - scores.get(sec_entry.horse_name, {}).get("score", sec_d.total))
+    else:
+        gap = top_d.total - sec_d.total
     odds1 = (odds_map or {}).get(top_entry.horse_name, 0)
     odds2 = (odds_map or {}).get(sec_entry.horse_name, 0)
     lines = []
@@ -186,7 +190,7 @@ def gen_eval_comment(sorted_results, odds_map, n_horses, sign_level, sign_detail
     return lines
 
 
-def calc_buy_sign(sorted_results, odds_map, n_horses, race_class=0, surface=""):
+def calc_buy_sign(sorted_results, odds_map, n_horses, race_class=0, surface="", scores=None):
     """
     Returns: (sign_level, sign_text, detail_text)
       sign_level: "tierce" / "trio_axis" / "skip" / "neutral"
@@ -198,9 +202,15 @@ def calc_buy_sign(sorted_results, odds_map, n_horses, race_class=0, surface=""):
 
     top_entry, top_d = sorted_results[0]
     sec_entry, sec_d = sorted_results[1]
-    score1 = top_d.total
-    score2 = sec_d.total
-    gap    = score1 - score2
+    # 乖離は「順位を決めた点数」の差を使う。scores（案Gの総合点）があればそれを、
+    # 無ければ従来の合計スコアを使う。2026-09-26修正: 案G順に並べた後に旧スコアの差を
+    # 取ると、案G1位の旧スコアが2位より低いときに負の値が出て意味不明だった。
+    if scores:
+        score1 = scores.get(top_entry.horse_name, {}).get("score", top_d.total)
+        score2 = scores.get(sec_entry.horse_name, {}).get("score", sec_d.total)
+    else:
+        score1, score2 = top_d.total, sec_d.total
+    gap = score1 - score2
     odds1  = odds_map.get(top_entry.horse_name, 0)
     n      = n_horses
     skips = []
@@ -469,7 +479,8 @@ def main(argv=None):
                 print(f"  [案D] 算出失敗のため現行スコア順で出力: {e}")
 
         # サイン判定
-        sign_level, sign_text, sign_detail = calc_buy_sign(sorted_r, odds_map, n, race_class, race_info.surface)
+        sign_level, sign_text, sign_detail = calc_buy_sign(sorted_r, odds_map, n, race_class, race_info.surface,
+                                                           scores=plan_d_info)
 
         # 事前確認チェック
         check_warns = pre_output_check(sorted_r, odds_map, race_class, n, race_info.name)
@@ -487,7 +498,7 @@ def main(argv=None):
                 print(f"  [ペース] 算出失敗: {e}")
 
         # 評価コメント生成
-        eval_comment = gen_eval_comment(sorted_r, odds_map, n, sign_level, sign_detail, race_class)
+        eval_comment = gen_eval_comment(sorted_r, odds_map, n, sign_level, sign_detail, race_class, scores=plan_d_info)
         if plan_d_info:
             eval_comment = list(eval_comment) + plan_d.comment_lines(sorted_r, plan_d_info)
         if pace_fc:
