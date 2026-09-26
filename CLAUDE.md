@@ -44,6 +44,7 @@ python3 verify/bet_metrics_standard.py --surface 芝 # 芝のみ絞り込み
 | `cache/payouts/` | 払戻データ（三連複・馬連等） |
 | `data/検証_新ロジック_調教あり.csv` | 現行採点済みCSV（バックテスト入力） |
 | `MEETINGS.md` | 会議議事録アーカイブ |
+| `RACE_LOG.md` | **実戦記録**（買いサインの有無・結果・的中を毎週追記。見送りレースも記録しフィルタを検証する） |
 
 ---
 
