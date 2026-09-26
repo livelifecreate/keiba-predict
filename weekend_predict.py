@@ -30,6 +30,7 @@ from hli_calculator import calculate_hli
 import trio_formation
 import plan_d
 import horse_notes
+import pace_forecast
 
 
 def _fetch_training(race_id: str) -> dict:
@@ -475,10 +476,22 @@ def main(argv=None):
         for w in check_warns:
             print(f"  {w}")
 
+        # ペース想定（表示専用・順位づけには使わない。PACE_FORECAST=0 で無効）
+        pace_fc = None
+        if pace_forecast.enabled() and race_date:
+            try:
+                _dm = re.search(r"(\d+)", str(race_info.distance))
+                pace_fc = pace_forecast.forecast(entries, horse_ids, race_info.surface,
+                                                 int(_dm.group(1)) if _dm else 1600, race_date)
+            except Exception as e:
+                print(f"  [ペース] 算出失敗: {e}")
+
         # 評価コメント生成
         eval_comment = gen_eval_comment(sorted_r, odds_map, n, sign_level, sign_detail, race_class)
         if plan_d_info:
             eval_comment = list(eval_comment) + plan_d.comment_lines(sorted_r, plan_d_info)
+        if pace_fc:
+            eval_comment = list(eval_comment) + pace_forecast.comment_lines(pace_fc, sorted_r)
 
         # 強み・弱みコメント（表示専用・採点には使わない。HORSE_NOTES=0 で無効）
         notes_rows = None
@@ -530,6 +543,8 @@ def main(argv=None):
                 d_str = f" [総合点{_r['score']:.1f} 能力指数{_dev} 旧{_r['base_rank']}位]"
             pt_str = f"旧{d.total:+.1f}pt" if plan_d_info else f"{d.total:+.1f}pt"
             print(f"  {rank}位 {entry.horse_number}番 {entry.horse_name:<12}{d_str} {pt_str}{odds_str}")
+        if pace_fc:
+            print(f"  [ペース] {pace_fc['label']}（{pace_fc['pace']:+.1f}秒・前に行くタイプ{pace_fc['n_front']}頭）")
 
         print(f"  → {sign_text}  {sign_detail}")
 
