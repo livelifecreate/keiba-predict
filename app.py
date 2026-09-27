@@ -36,15 +36,17 @@ if not st.session_state.authenticated:
 
 RESULTS_DIR = Path(__file__).parent / "results"
 
-SIGN_ORDER = {"★三連単A+B": 0, "★三連複4頭BOX": 1, "★三連複5頭BOX": 2, "": 3}
+SIGN_ORDER = {"★三連単A+B": 0, "★三連複1軸相手": 1, "★三連複4頭BOX": 1, "★三連複5頭BOX": 2, "": 3}
 SIGN_COLOR = {
     "★三連単A+B":   "#c0392b",
+    "★三連複1軸相手": "#e67e22",
     "★三連複4頭BOX": "#e67e22",
     "★三連複5頭BOX": "#2980b9",
     "":            "#7f8c8d",
 }
 SIGN_LABEL = {
     "★三連単A+B":   "🏇 三連単A+B (24点)",
+    "★三連複1軸相手": "★ 三連複1軸-相手",
     "★三連複4頭BOX": "三連複4頭BOX (4点)",
     "★三連複5頭BOX": "三連複5頭BOX (10点)",
     "":            "⚠ 見送り",
@@ -223,7 +225,7 @@ if not filtered:
 st.sidebar.markdown("---")
 st.sidebar.markdown(f"**{len(filtered)} レース**")
 
-labels = [f"{SIGN_LABEL.get(r['sign_tag'], '⚠')}  {r['label']}" for r in filtered]
+labels = [f"{SIGN_LABEL.get(r['sign_tag'], r['sign_tag'] or '⚠')}  {r['label']}" for r in filtered]
 sel_idx = st.sidebar.radio("レース選択", range(len(filtered)), format_func=lambda i: labels[i])
 
 race = filtered[sel_idx]
@@ -235,8 +237,8 @@ data = parse_csv(race["path"])
 df   = data["df"]
 
 sign_tag    = race["sign_tag"]
-sign_color  = SIGN_COLOR.get(sign_tag, "#7f8c8d")
-sign_label  = SIGN_LABEL.get(sign_tag, "⚠ 見送り")
+sign_color  = SIGN_COLOR.get(sign_tag, "#e67e22" if sign_tag else "#7f8c8d")
+sign_label  = SIGN_LABEL.get(sign_tag, sign_tag or "⚠ 見送り")
 sign_detail = data["sign_detail"]
 
 # 馬場・距離（ファイル名優先、なければCSV内■レース情報から）
