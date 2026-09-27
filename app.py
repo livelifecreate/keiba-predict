@@ -325,11 +325,18 @@ if not df.empty:
             height=min(50 + len(df) * 38, 520),
         )
 
-# 評価コメント（案Dの明細行は出走表と重複するので畳む）
-_plan_d_lines = [c for c in data["eval_comments"] if c.startswith("案D") or c.startswith("【案D")]
+# ペース想定（【ペース想定】行と、前に行きそう/後方からの行）は目立つ位置に分けて出す
+_pace_lines = [c for c in data["eval_comments"]
+               if c.startswith(("【ペース想定】", "前に行きそう:", "後方から:"))]
+data["eval_comments"] = [c for c in data["eval_comments"] if c not in _pace_lines]
+if _pace_lines:
+    st.info("\n\n".join(_pace_lines), icon="🏁")
+
+# 評価コメント（案D/案Gの明細行は出走表と重複するので畳む）
+_plan_d_lines = [c for c in data["eval_comments"] if c.startswith(("案D", "【案D", "案G", "【案G"))]
 data["eval_comments"] = [c for c in data["eval_comments"] if c not in _plan_d_lines]
 if _plan_d_lines:
-    with st.expander("案Dの明細（総合点の内訳）"):
+    with st.expander("順位の明細（総合点の内訳）"):
         for c in _plan_d_lines:
             st.text(c)
 if data["eval_comments"]:
