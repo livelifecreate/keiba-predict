@@ -3,6 +3,7 @@
 """
 import csv
 import io
+import json
 import re
 from pathlib import Path
 
@@ -267,6 +268,26 @@ st.markdown(
     unsafe_allow_html=True,
 )
 st.markdown("")
+
+# 当日の馬場傾向（track_bias.py が results/<日付>/track_bias.json に書く・表示のみ）
+_bias_file = RESULTS_DIR / race["date"] / "track_bias.json"
+if _bias_file.exists():
+    try:
+        _bias = json.loads(_bias_file.read_text(encoding="utf-8"))
+    except Exception:
+        _bias = {}
+    _surf = "ダ" if surface_dist.startswith("ダート") else ("芝" if surface_dist.startswith("芝") else "")
+    _mine = (_bias.get("summary") or {}).get(f"{race['venue']}{_surf}")
+    _idx = list((_bias.get("summary") or {}).keys())
+    _lines = _bias.get("lines") or []
+    if _mine:
+        _line = _lines[_idx.index(f"{race['venue']}{_surf}")]
+        st.warning(f"**本日の馬場傾向**（{_bias.get('updated', '')}時点）　{_line}\n\n"
+                   "※当日の確定レースの3着内馬が4角でどこにいたか。順位づけには使っていません。", icon="🏟")
+    if _lines:
+        with st.expander("本日の馬場傾向（全場）"):
+            for _l in _lines:
+                st.text(_l)
 
 # 馬スコア表
 if not df.empty:
