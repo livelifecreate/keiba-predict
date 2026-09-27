@@ -177,7 +177,7 @@ def gen_eval_comment(sorted_results, odds_map, n_horses, sign_level, sign_detail
         pts = trio_formation.point_count(race_class)
         form = f"三連複1軸-相手{end - start + 1}頭({pts}点)"
         if odds1 and odds1 < 2:
-            lines.append(f"断然人気{odds1:.1f}倍：予想1位の複勝率が高く軸信頼度大。{form}で相手を広くカバー。")
+            lines.append(f"断然人気{odds1:.1f}倍。{form}。")
         if gap < 1:
             lines.append(f"上位横並び（乖離{gap:.1f}pt）。1位を軸に固定し{form}で相手をカバー。")
         elif 14 <= n_horses <= 17:
@@ -249,7 +249,7 @@ def calc_buy_sign(sorted_results, odds_map, n_horses, race_class=0, surface="", 
     # ※ 乖離≥5ptの高信頼7点推奨は廃止（バックテスト: 単勝ROI50%・5BOX ROI40%）
     ctx = []
     if odds1 and odds1 < 2:
-        ctx.append(f"断然人気{odds1:.1f}倍(複勝87.9%/5BOX回収141%)")
+        ctx.append(f"断然人気{odds1:.1f}倍")
     if 3 <= gap < 5:
         ctx.append(f"乖離{gap:.1f}pt（旧: 見送り帯。2026-09-25に頭数基準へ変更し撤廃）")
     if gap < 1:

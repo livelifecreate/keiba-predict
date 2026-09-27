@@ -1667,7 +1667,7 @@ def print_buy_signs(sorted_results: list[tuple], race_info, odds_map: dict = Non
     if odds1 and odds1 >= 15:
         notes.append(f"軸{odds1:.1f}倍（大穴帯）")
     if odds1 and odds1 < 2:
-        notes.append(f"軸{odds1:.1f}倍（断然人気・複勝率87.9%）")
+        notes.append(f"軸{odds1:.1f}倍（断然人気）")
 
     print()
     print("─ 買い判断サイン ─")
