@@ -353,6 +353,12 @@ data["eval_comments"] = [c for c in data["eval_comments"] if c not in _pace_line
 if _pace_lines:
     st.info("\n\n".join(_pace_lines), icon="🏁")
 
+# 軸の参考（axis_hint.py・1番人気が予想2〜3位のとき）
+_axis_lines = [c for c in data["eval_comments"] if c.startswith(("【軸の参考】", "軸を替えるなら:"))]
+data["eval_comments"] = [c for c in data["eval_comments"] if c not in _axis_lines]
+if _axis_lines:
+    st.info("\n\n".join(_axis_lines), icon="🔄")
+
 # 評価コメント（案D/案Gの明細行は出走表と重複するので畳む）
 _plan_d_lines = [c for c in data["eval_comments"] if c.startswith(("案D", "【案D", "案G", "【案G"))]
 data["eval_comments"] = [c for c in data["eval_comments"] if c not in _plan_d_lines]

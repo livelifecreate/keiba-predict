@@ -31,6 +31,7 @@ import trio_formation
 import plan_d
 import horse_notes
 import pace_forecast
+import axis_hint
 
 
 def _fetch_training(race_id: str) -> dict:
@@ -503,6 +504,12 @@ def main(argv=None):
             eval_comment = list(eval_comment) + plan_d.comment_lines(sorted_r, plan_d_info)
         if pace_fc:
             eval_comment = list(eval_comment) + pace_forecast.comment_lines(pace_fc, sorted_r)
+        # 軸の参考（1番人気が予想2〜3位のとき・表示専用。AXIS_HINT=0 で無効）
+        if axis_hint.enabled() and odds_map:
+            _hint = axis_hint.comment_lines(sorted_r, odds_map)
+            for _l in _hint:
+                print(f"  {_l}")
+            eval_comment = list(eval_comment) + _hint
 
         # 強み・弱みコメント（表示専用・採点には使わない。HORSE_NOTES=0 で無効）
         notes_rows = None
