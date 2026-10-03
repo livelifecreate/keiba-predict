@@ -19,6 +19,7 @@ from pathlib import Path
 BASE = Path(__file__).resolve().parent
 FULL_DIR = BASE / "cache" / "horse_full_history"
 WET = ("稍", "重", "不", "稍重", "不良")
+NAR = {"門別", "帯広", "盛岡", "水沢", "浦和", "船橋", "大井", "川崎", "金沢", "笠松", "名古屋", "園田", "姫路", "高知", "佐賀"}
 _fail_streak = 0
 _fetch_disabled = False
 
@@ -332,6 +333,13 @@ def build(sorted_results, race_info, race_class: int, track_condition: str, odds
             r8 = [p for p in (_pos(r) for r in recs[:8]) if p]
             if len(r8) >= 6 and 1 not in r8 and sum(p <= 5 for p in r8) >= 4:
                 S.append(f"近{len(r8)}走で掲示板{sum(p <= 5 for p in r8)}回と堅実（ただし勝ち星なし）")
+
+            # 12. 地方デビューで中央の出走が少ない（analyze/nar_history_test.py・2勝以上n=213:
+            #     3着内率8.0%に対し案Gの期待14.5%・学習/テストとも過大評価。能力指数は中央のレースしか数えない）
+            is_nar = [re.sub(r"\d", "", r.get("kaisan", "")) in NAR for r in recs]
+            n_jra = is_nar.count(False)
+            if is_nar[-1] and n_jra <= 3:
+                W.append(f"地方デビューで中央はまだ{n_jra}走（能力指数が当てになりにくい。同じ形の馬は3着内8%で、案Gの見込み15%を下回る）")
         else:
             W.append("通算成績を取得できず（距離・コース・道悪の評価なし）")
 
