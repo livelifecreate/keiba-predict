@@ -48,6 +48,21 @@ from aptitude_index import venue_aptitude_score
 CENTRAL = {"東京", "中山", "京都", "阪神", "中京"}
 LOCAL   = {"福島", "新潟", "小倉", "函館", "札幌"}
 ALL_VENUES = CENTRAL | LOCAL
+# 地方競馬場（2026-10-03）。以前は地方の過去走が「海外・クラス不明=OP扱い」になり、
+# 地方の下級条件の1着がOP1着として加点されていた（旧スコアのみ。案Gの順位には影響なし）。
+NAR_VENUES = ("門別", "帯広", "盛岡", "水沢", "浦和", "船橋", "大井", "川崎",
+              "金沢", "笠松", "名古屋", "園田", "姫路", "高知", "佐賀")
+_NAR_RE = re.compile(r"\d{4}年\d{1,2}月\d{1,2}日(" + "|".join(NAR_VENUES) + ")")
+
+
+def nar_race_class(race_name: str) -> int:
+    """地方のレースのクラス。交流重賞（JpnI〜III・GI〜III）だけ格を付け、それ以外は0（未勝利相当・格上扱いしない）"""
+    import unicodedata
+    name = unicodedata.normalize("NFKC", race_name)
+    if re.search(r"(Jpn|G)III", name): return 5
+    if re.search(r"(Jpn|G)II", name):  return 6
+    if re.search(r"(Jpn|G)I", name):   return 7
+    return 0
 
 # -------------------------------------------------------------------
 # スコア項目 係数（scorer_turf と共通設定 2026-06-17）
@@ -285,10 +300,10 @@ def parse_past_race(text: str) -> Optional[PastRace]:
     if not text:
         return None
 
-    overseas = is_overseas(text)
-
-    # 競馬場
-    venue_match = re.search(r"(東京|中山|阪神|京都|中京|新潟|福島|小倉|札幌|函館)", text)
+    # 競馬場（地方を先に判定。地方のレース名に「東京」等が含まれても中央と誤認しない）
+    nar_match = _NAR_RE.match(text)
+    overseas = False if nar_match else is_overseas(text)
+    venue_match = nar_match or re.search(r"(東京|中山|阪神|京都|中京|新潟|福島|小倉|札幌|函館)", text)
     venue = venue_match.group(1) if venue_match else ""
 
     # 日付
@@ -369,7 +384,7 @@ def parse_past_race(text: str) -> Optional[PastRace]:
         distance=distance,
         surface=surface,
         last_3f=last_3f,
-        race_class=parse_race_class(race_name),
+        race_class=nar_race_class(race_name) if nar_match else parse_race_class(race_name),
         margin=margin,
         horse_weight=horse_weight,
         is_overseas=overseas,
