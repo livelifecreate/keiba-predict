@@ -80,6 +80,34 @@ def _level(race_raw: str) -> int:
     return 0
 
 
+def comeback_reasons(flat: list[dict], surface: str, dist: int, race_class: int) -> list[str]:
+    """前走（flat[0]・新しい順）の大敗に「理由」があるか。analyze/comeback_test.py と同じ6区分"""
+    p, prior = flat[0], flat[1:]
+
+    def c1r(r):
+        c1 = str(r.get("corner", "")).split("-")[0]
+        f = str(r.get("field", ""))
+        return int(c1) / int(f) if c1.isdigit() and f.isdigit() and int(f) else None
+
+    out = []
+    usual = [x for x in (c1r(r) for r in prior[:5]) if x is not None]
+    if c1r(p) is not None and usual and c1r(p) - sum(usual) / len(usual) >= 0.3:
+        out.append("出遅れ・位置取り負け")
+    if p.get("track") in ("重", "不"):
+        out.append("道悪")
+    m = re.match(r"^(芝|ダ)(\d+)", p.get("dist_raw", ""))
+    if m and dist and abs(int(m.group(2)) - dist) >= 400:
+        out.append(f"距離{m.group(2)}m")
+    if m and m.group(1) != surface:
+        out.append("芝ダ替わり")
+    if min(_level(p.get("race_raw", "")), 5) > min(race_class, 5):
+        out.append("格上挑戦")
+    d0, d1 = _d(p.get("date_raw", "")), (_d(prior[0].get("date_raw", "")) if prior else None)
+    if d0 and d1 and (d0 - d1).days >= 120:
+        out.append("休み明け")
+    return out
+
+
 def _pos(r):
     return int(r["pos_raw"]) if str(r.get("pos_raw", "")).isdigit() else None
 
@@ -340,6 +368,15 @@ def build(sorted_results, race_info, race_class: int, track_condition: str, odds
             n_jra = is_nar.count(False)
             if is_nar[-1] and n_jra <= 3:
                 W.append(f"地方デビューで中央はまだ{n_jra}走（能力指数が当てになりにくい。同じ形の馬は3着内8%で、案Gの見込み15%を下回る）")
+
+            # 13. 巻き返し候補（analyze/comeback_test.py・2勝以上）: 案G上位3頭で前走10着以下、かつ大敗に理由がある馬は
+            #     人気から見込まれるより3着内+5.4pt（学習+6.3/テスト+4.3・n=393）、複勝回収104%（上位3除外91%）。
+            #     理由のない大敗は+1.6ptで優位なし。表示のみ（順位は変えない）
+            flat = [r for r in recs if not r.get("dist_raw", "").startswith("障")]
+            if rank <= 3 and flat and (_pos(flat[0]) or 0) >= 10:
+                why = comeback_reasons(flat, surface, dist, race_class)
+                if why:
+                    S.append(f"巻き返し候補: 前走{_pos(flat[0])}着は{'・'.join(why)}（能力上位で理由のある大敗は、人気より3着内+5pt・複勝回収104%）")
         else:
             W.append("通算成績を取得できず（距離・コース・道悪の評価なし）")
 
