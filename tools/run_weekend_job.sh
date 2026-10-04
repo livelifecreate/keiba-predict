@@ -1,12 +1,13 @@
 #!/bin/zsh
-# 週末の自動実行（launchd: com.keiba.weekend から起動）
+# 週末の自動実行（launchd: com.keiba.weekend.predict / .results から毎週土日に起動）
 #   予想モード  : 予想を実行 → RACE_LOG.md に追記 → コミット＆push
 #   結果モード  : レース結果を取得 → RACE_LOG.md の結果欄を埋める → コミット＆push
 # 使い方: zsh tools/run_weekend_job.sh predict sun    /  zsh tools/run_weekend_job.sh results
 MAIN="/Users/du/Documents/競馬予想システム"
 PY="/usr/local/bin/python3"
 MODE="${1:-predict}"
-DAY="${2:-sun}"          # sat / sun（predictのとき使用）
+DAY="${2:-auto}"         # sat / sun / auto（auto=実行した曜日で判定・predictのとき使用）
+if [[ "$DAY" == "auto" ]]; then [[ $(date +%u) == 6 ]] && DAY=sat || DAY=sun; fi
 
 mkdir -p "$MAIN/cache/logs"
 LOG="$MAIN/cache/logs/weekend_job.log"

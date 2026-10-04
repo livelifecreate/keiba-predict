@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key><string>com.keiba.datarefresh</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/usr/bin/caffeinate</string>
+    <string>-i</string>
+    <string>/bin/zsh</string>
+    <string>/Users/du/Documents/競馬予想システム/tools/run_data_refresh_job.sh</string>
+  </array>
+  <key>StartCalendarInterval</key>
+  <dict><key>Month</key><integer>10</integer><key>Day</key><integer>5</integer><key>Hour</key><integer>1</integer><key>Minute</key><integer>0</integer></dict>
+  <key>StandardErrorPath</key><string>/Users/du/Documents/競馬予想システム/cache/logs/data_refresh_job.launchd.err</string>
+  <key>StandardOutPath</key><string>/Users/du/Documents/競馬予想システム/cache/logs/data_refresh_job.launchd.out</string>
+</dict>
+</plist>
