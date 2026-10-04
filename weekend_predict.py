@@ -474,7 +474,7 @@ def main(argv=None):
         plan_d_info = None
         if plan_d.enabled() and race_date:
             try:
-                plan_d_info = plan_d.rank(results, horse_ids, race_info.surface, race_date)
+                plan_d_info = plan_d.rank(results, horse_ids, race_info.surface, race_date, venue=race_info.venue)
                 sorted_r = sorted(results, key=lambda x: plan_d_info[x[0].horse_name]["u"], reverse=True)
             except Exception as e:
                 plan_d_info = None

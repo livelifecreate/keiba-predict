@@ -45,10 +45,15 @@ def variant() -> str:
     return "D" if os.environ.get("PLAN_VARIANT", "G").upper() == "D" else "G"
 
 
+def ace_enabled() -> bool:
+    """コース巧者を順位に使うか（2026-10-04〜既定ON。PLAN_ACE=0 で巧者なしの旧設定）"""
+    return variant() == "G" and os.environ.get("PLAN_ACE", "1") != "0"
+
+
 def _params():
     global _PARAMS
     if _PARAMS is None:
-        f = "plan_d_params.json" if variant() == "D" else "plan_g_params.json"
+        f = "plan_d_params.json" if variant() == "D" else ("plan_g_params.json" if ace_enabled() else "plan_g_params_noace.json")
         _PARAMS = json.loads((BASE / "data" / f).read_text())
     return _PARAMS
 
@@ -104,7 +109,29 @@ def ability_map(surface: str, race_date):
     return _ability("芝" if surface == "芝" else "ダ", race_date.toordinal())
 
 
-def rank(results, horse_ids: dict, surface: str, race_date) -> dict:
+def course_ace(horse_id: str, venue: str, surface: str, race_date, latest_run=None) -> float:
+    """コース巧者: レース日より前に、同じ競馬場×芝ダで2走以上し、3着内率50%以上なら1.0
+    （analyze/bigloss_course_front_test.py と同じ定義。通算成績は horse_notes.career で取得・更新）"""
+    if not horse_id or not venue:
+        return 0.0
+    import re
+    from horse_notes import career, _d
+    try:
+        recs = career(horse_id, latest_run)
+    except Exception:
+        return 0.0
+    here = []
+    for r in recs:
+        d = _d(r.get("date_raw", ""))
+        m = re.match(r"^(芝|ダ)\d+", r.get("dist_raw", ""))
+        if not d or d >= race_date or not m or not str(r.get("pos_raw", "")).isdigit():
+            continue
+        if m.group(1) == surface and re.sub(r"\d", "", r.get("kaisan", "")) == venue:
+            here.append(int(r["pos_raw"]) <= 3)
+    return 1.0 if len(here) >= 2 and sum(here) / len(here) >= 0.5 else 0.0
+
+
+def rank(results, horse_ids: dict, surface: str, race_date, venue: str = "") -> dict:
     """
     results: score_all の戻り値 [(entry, ScoreBreakdown), ...]
     戻り値: {馬名: {"u": スコア, "score": 総合点, "dev": 能力指数(偏差値), "rest": 能力以外の点, "base_rank": 現行順位}}
@@ -116,20 +143,29 @@ def rank(results, horse_ids: dict, surface: str, race_date) -> dict:
     rest = np.array([d.total - sum(float(getattr(d, f, 0) or 0) for f in ABILITY_FIELDS) for _, d in results], dtype=float)
     abil_c = np.where(np.isnan(abil), 0.0, abil - np.nanmean(abil)) if np.isfinite(abil).any() else np.zeros(len(names))
     rest_c = rest - rest.mean()
-    x = np.column_stack([abil_c, rest_c])
+    cols = [abil_c, rest_c]
+    ace = np.zeros(len(names))
+    if "ace" in p.get("cols", []):
+        from horse_notes import _d
+        surf = "芝" if surface == "芝" else "ダ"
+        ace = np.array([course_ace(horse_ids.get(n, ""), venue, surf, race_date,
+                                   _d(e.recent_races[0]) if getattr(e, "recent_races", None) else None)
+                        for (e, _), n in zip(results, names)], dtype=float)
+        cols.append(ace)
+    x = np.column_stack(cols)
     u = ((x - np.array(p["mu"])) / np.array(p["sd"])) @ np.array(p["w"])
     base_order = sorted(range(len(results)), key=lambda i: results[i][1].total, reverse=True)
     base_rank = {names[i]: k + 1 for k, i in enumerate(base_order)}
     # 総合点 = 50 + 10×スコア（順位を決めた点数を見やすい尺度にしたもの。平均的な馬が50前後）
     return {n: {"u": float(u[i]), "score": round(50 + 10 * float(u[i]), 1),
                 "dev": None if np.isnan(abil[i]) else 50 + 10 * (abil[i] - mu_all) / sd_all,
-                "rest": float(rest[i]), "base_rank": base_rank[n]} for i, n in enumerate(names)}
+                "rest": float(rest[i]), "base_rank": base_rank[n], "ace": bool(ace[i])} for i, n in enumerate(names)}
 
 
 def comment_lines(sorted_results, info: dict) -> list[str]:
     v = variant()
     head = ("【案G順位】能力指数v3（騎手・枠・斤量・休養・距離変化・道悪適性を差し引いた純粋な能力）"
-            "＋能力以外の因子で順位を決定（2026-09-23〜）。合計スコア列は従来の現行スコア（参考）")
+            "＋能力以外の因子" + ("＋コース巧者（2026-10-04〜）" if ace_enabled() else "") + "で順位を決定（2026-09-23〜）。合計スコア列は従来の現行スコア（参考）")
     if v == "D":
         head = "【案D順位】能力指数v2＋能力以外の因子で順位を決定。合計スコア列は従来の現行スコア（参考）"
     lines = [head]
@@ -137,7 +173,7 @@ def comment_lines(sorted_results, info: dict) -> list[str]:
         r = info[e.horse_name]
         dev = f"{r['dev']:.1f}" if r["dev"] is not None else "データなし"
         lines.append(f"案{v}{k}位 {e.horse_number}番 {e.horse_name} 総合点{r['score']:.1f} / 能力指数{dev} / "
-                     f"能力以外{r['rest']:+.1f} / 現行{r['base_rank']}位({d.total:+.1f})")
+                     f"能力以外{r['rest']:+.1f}{' / コース巧者' if r.get('ace') else ''} / 現行{r['base_rank']}位({d.total:+.1f})")
     return lines
 
 
