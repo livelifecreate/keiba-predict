@@ -43,7 +43,7 @@ def histories():
     return out
 
 
-def main():
+def build():
     src = open(Path(__file__).resolve().parent / "comeback_test.py", encoding="utf-8").read()
     body = src.split("def main():")[1].split("    H = histories()")[0]
     ns = dict(vars(CB)); exec(textwrap.dedent(body), ns)
@@ -65,6 +65,11 @@ def main():
     df["front"] = pd.array(front, dtype="boolean").fillna(False).astype(bool)
     df["n_front"] = df.groupby("rid")["front"].transform("sum")
     df["few_front"] = df["n_front"] <= 2
+    return df
+
+
+def main():
+    df = build()
 
     def line(x, lab):
         if len(x) < 40:
