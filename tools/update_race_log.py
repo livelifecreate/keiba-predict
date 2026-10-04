@@ -126,6 +126,13 @@ def bet_result(b: dict, pays: dict):
     return got, len(combos) * unit
 
 
+def json_status(rid: str) -> str:
+    """そのレースの最新オッズ記録の状態（result=確定オッズ記録済み）"""
+    import json
+    fs = sorted((BASE / "cache" / "odds_snapshots" / rid).glob("*.json"))
+    return json.loads(fs[-1].read_text(encoding="utf-8")).get("status", "") if fs else ""
+
+
 def section(day: str, races: list, results: dict, pays: dict = None) -> str:
     pays = pays or {}
     bets = load_bets().get(day, {})
@@ -203,6 +210,13 @@ def main():
                 res, pay = fetch_top3(x["rid"])
                 if res:
                     results[x["rid"]], pays[x["rid"]] = res, pay
+                    try:   # 最終オッズも記録（予想時の朝オッズと比べるため・odds_snapshot.py）
+                        sys.path.insert(0, str(BASE))
+                        import odds_snapshot
+                        if odds_snapshot.enabled() and json_status(x["rid"]) != "result":
+                            odds_snapshot.save(x["rid"])
+                    except Exception:
+                        pass
         print(f"結果を取得: {len(results)}/{len(races)}レース")
     write(a.date, races, results, pays)
     return 0

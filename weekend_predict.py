@@ -32,6 +32,7 @@ import plan_d
 import horse_notes
 import pace_forecast
 import axis_hint
+import odds_snapshot
 
 
 def _fetch_training(race_id: str) -> dict:
@@ -504,6 +505,13 @@ def main(argv=None):
             eval_comment = list(eval_comment) + plan_d.comment_lines(sorted_r, plan_d_info)
         if pace_fc:
             eval_comment = list(eval_comment) + pace_forecast.comment_lines(pace_fc, sorted_r)
+        # オッズの記録（全券種の組み合わせオッズを保存・記録のみ。ODDS_SNAPSHOT=0 で無効）
+        if odds_snapshot.enabled() and race_id:
+            try:
+                odds_snapshot.save(race_id)
+            except Exception as e:
+                print(f"  [オッズ記録] 失敗: {e}")
+
         # 軸の参考（1番人気が予想2〜3位のとき・表示専用。AXIS_HINT=0 で無効）
         if axis_hint.enabled() and odds_map:
             _hint = axis_hint.comment_lines(sorted_r, odds_map)
