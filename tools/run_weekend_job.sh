@@ -6,8 +6,10 @@
 MAIN="/Users/du/Documents/競馬予想システム"
 PY="/usr/local/bin/python3"
 MODE="${1:-predict}"
-DAY="${2:-auto}"         # sat / sun / auto（auto=実行した曜日で判定・predictのとき使用）
-if [[ "$DAY" == "auto" ]]; then [[ $(date +%u) == 6 ]] && DAY=sat || DAY=sun; fi
+DAY="${2:-auto}"         # sat / sun / today / auto（auto=実行した曜日で判定。土日以外＝祝日開催は today＝当日の日付で予想）
+if [[ "$DAY" == "auto" ]]; then
+  case $(date +%u) in 6) DAY=sat ;; 7) DAY=sun ;; *) DAY=today ;; esac
+fi
 
 mkdir -p "$MAIN/cache/logs"
 LOG="$MAIN/cache/logs/weekend_job.log"
@@ -22,7 +24,9 @@ trap 'rmdir "$LOCK"' EXIT
 TODAY=$(date '+%Y-%m-%d')
 
 if [[ "$MODE" == "predict" ]]; then
-  if [[ "$DAY" == "sat" ]]; then "$PY" -u saturday_predict.py; else "$PY" -u sunday_predict.py; fi
+  if [[ "$DAY" == "sat" ]]; then "$PY" -u saturday_predict.py
+  elif [[ "$DAY" == "today" ]]; then "$PY" -u weekend_predict.py --dates "$TODAY"
+  else "$PY" -u sunday_predict.py; fi
   echo "----- $(date '+%H:%M:%S') 予想完了 → RACE_LOG.md に追記 -----"
   "$PY" -u tools/update_race_log.py --predict --date "$TODAY"
   MSG="$TODAY 予想（自動実行）"

@@ -100,6 +100,7 @@ python3 verify/bet_metrics_standard.py --surface 芝 # 芝のみ絞り込み
 
 ### 運用まわりの変更（2026-09-27〜10-04）
 - **週末の自動実行（毎週）**: launchd `com.keiba.weekend.predict`（土日10:00・予想→RACE_LOG追記→push）/ `com.keiba.weekend.results`（土日18:00・結果取得→RACE_LOG→push）。`tools/run_weekend_job.sh predict auto` で曜日を自動判定。ログ `cache/logs/weekend_job.log`。
+- **祝日開催（月曜など）**: `run_weekend_job.sh predict auto` は土日以外に起動すると当日の日付で予想する（`weekend_predict.py --dates 当日`）。祝日ごとに launchd `com.keiba.holiday`（`tools/run_holiday_job.sh`・10:00予想／18:00結果・結果のあと自動で予約解除）を登録する。2026-10-12（月・祝）分を登録済み。
 - **RACE_LOG.md**: 見送りレースも含め全レースを記録。「実際の買い目」「実際の結果」列は `data/actual_bets.json` から作る（`python3 tools/record_bet.py --date D --race 阪神10 --kind 馬連BOX --nums 1,10,2,6,5 --note "..."`。券種: 単勝/複勝/馬連BOX/馬連流し/ワイドBOX/ワイド流し/三連複BOX/三連複1軸流し。※=ユーザーが予想から変えた点）。`update_race_log.py` を再実行しても消えない。
 - **オッズの記録**（`odds_snapshot.py`・`ODDS_SNAPSHOT=0`で無効）: 予想時（朝）と結果記録時（最終）に、単勝・複勝・馬連・ワイド・三連複の全組み合わせオッズを `cache/odds_snapshots/{race_id}/` へ保存。数か月後に「三連系の値付けの偏り」「朝→最終のオッズ変動」の検証に使う。
 - **当日の馬場傾向**（`track_bias.py`・表示のみ）: 確定レースの3着内馬の4角位置・内外枠を場×芝ダ別に集計し平常時（`data/track_bias_baseline.json`）と比べて「前残り/差し/内有利/外有利」を表示。`python3 track_bias.py --date D` で更新→push。定期実行はしない（ユーザーは予想時点で購入するため）。
