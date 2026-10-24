@@ -108,6 +108,28 @@ def comeback_reasons(flat: list[dict], surface: str, dist: int, race_class: int)
     return out
 
 
+def _wdelta(r):
+    m = re.search(r"\(([+-]?\d+)\)", str(r.get("weight", "")))
+    return int(m.group(1)) if m else None
+
+
+def excuse_reasons(flat: list[dict], surface: str, dist: int, race_class: int) -> list[str]:
+    """comeback_reasons に「馬体重±15kg以上」「得意距離から外れた」を足した版（2026-10-24・表示の参考）"""
+    out = comeback_reasons(flat, surface, dist, race_class)
+    p, prior = flat[0], flat[1:]
+    wd = _wdelta(p)
+    if wd is not None and abs(wd) >= 15:
+        out.append(f"馬体重{wd:+d}kg")
+    m = re.match(r"^(芝|ダ)(\d+)", p.get("dist_raw", ""))
+    if m and dist and 200 <= abs(int(m.group(2)) - dist) < 400 and m.group(1) == surface:
+        near = [r for r in prior if r.get("dist_raw", "").startswith(surface)
+                and (x := re.search(r"(\d+)", r["dist_raw"])) and abs(int(x.group(1)) - dist) <= 100]
+        t3 = sum((_pos(r) or 99) <= 3 for r in near)
+        if t3 >= 1:
+            out.append(f"距離{m.group(2)}m（今回の{dist}m前後は3着内{t3}回）")
+    return out
+
+
 def _pos(r):
     return int(r["pos_raw"]) if str(r.get("pos_raw", "")).isdigit() else None
 
@@ -373,10 +395,27 @@ def build(sorted_results, race_info, race_class: int, track_condition: str, odds
             #     人気から見込まれるより3着内+5.4pt（学習+6.3/テスト+4.3・n=393）、複勝回収104%（上位3除外91%）。
             #     理由のない大敗は+1.6ptで優位なし。表示のみ（順位は変えない）
             flat = [r for r in recs if not r.get("dist_raw", "").startswith("障")]
-            if rank <= 3 and flat and (_pos(flat[0]) or 0) >= 10:
-                why = comeback_reasons(flat, surface, dist, race_class)
-                if why:
-                    S.append(f"巻き返し候補: 前走{_pos(flat[0])}着は{'・'.join(why)}（能力上位で理由のある大敗は、人気より3着内+5pt・複勝回収104%）")
+            why = comeback_reasons(flat, surface, dist, race_class) if flat else []
+            if rank <= 3 and flat and (_pos(flat[0]) or 0) >= 10 and why:
+                S.append(f"巻き返し候補: 前走{_pos(flat[0])}着は{'・'.join(why)}（能力上位で理由のある大敗は、人気より3着内+5pt・複勝回収104%）")
+            # 14. 理由のある負け（2026-10-24・表示のみ・analyze/excused_loss_test.py）: 前走6着以下で、休み明け・距離・道悪・馬体重などの理由がある馬。
+            #     上の巻き返し候補（検証済み）に当たらない馬すべてに出す。ふだん走れている馬（近4走に3着内か0.5秒差内）は
+            #     理由なしの凡走より3着内率が高い（16.2% vs 14.3%）が、案G・人気にほぼ織り込み済み（人気比-0.5pt）で採点には足さない。
+            #     理由はあっても大敗続きの馬は、案Gの見込みより3着内-6.6pt（学習-8.3/テスト-5.3・n=1543）と過大評価なので弱みに出す
+            elif flat and (_pos(flat[0]) or 0) >= 6:
+                why = excuse_reasons(flat, surface, dist, race_class)
+
+                def _close(r):
+                    try:
+                        return (_pos(r) or 99) <= 3 or float(r.get("margin", "")) <= 0.5
+                    except ValueError:
+                        return False
+                mg = flat[0].get("margin", "")
+                head = f"前走{_pos(flat[0])}着" + (f"（{mg}秒差）" if mg else "")
+                if why and any(_close(r) for r in flat[1:5]):     # ふだんは走れている馬
+                    S.append(f"{head}は{'・'.join(why)}（理由のある負け・参考）")
+                elif why and len(flat) >= 2:
+                    W.append(f"{head}は{'・'.join(why)}だが、その前も大敗続き（同じ形の馬は案Gの見込みより3着内-7pt）")
         else:
             W.append("通算成績を取得できず（距離・コース・道悪の評価なし）")
 
