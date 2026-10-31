@@ -11,7 +11,7 @@
   {"race_id", "fetched_at", "status"(middle=発売中/result=確定), "official_datetime", "odds": {type: {組番: [オッズ, 上限, 人気]}}}
   type: 1=単勝 2=複勝（1と同時に返る） 4=馬連 5=ワイド 7=三連複
 
-  python3 odds_snapshot.py --date 2026-10-04   # その日の予想CSVにある全レースを今のオッズで記録（発走前の取り直し用）
+  python3 odds_snapshot.py --date 2026-10-04   # その日の予想CSVにある全レースを今のオッズで記録（発走前の取り直し用・Web表示の倍率も更新）
 """
 import argparse, glob, json, os, re, time
 from datetime import datetime
@@ -71,3 +71,5 @@ if __name__ == "__main__":
     a = ap.parse_args()
     for rid in race_ids(a.date):
         print(rid, "保存した券種:", save(rid))
+    import bet_odds
+    print("Web表示用の想定オッズ:", bet_odds.write_day(a.date), "レース")

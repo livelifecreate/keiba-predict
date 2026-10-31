@@ -27,6 +27,7 @@ if [[ "$MODE" == "predict" ]]; then
   if [[ "$DAY" == "sat" ]]; then "$PY" -u saturday_predict.py
   elif [[ "$DAY" == "today" ]]; then "$PY" -u weekend_predict.py --dates "$TODAY"
   else "$PY" -u sunday_predict.py; fi
+  "$PY" -u bet_odds.py --date "$TODAY"     # 買い目の想定オッズ（Web表示用）
   echo "----- $(date '+%H:%M:%S') 予想完了 → RACE_LOG.md に追記 -----"
   "$PY" -u tools/update_race_log.py --predict --date "$TODAY"
   MSG="$TODAY 予想（自動実行）"

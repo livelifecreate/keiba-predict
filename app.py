@@ -70,6 +70,7 @@ def parse_csv(path: Path) -> dict:
     eval_comments = []
     horse_notes = []
     race_surface_dist = ""
+    race_id = ""
     section = "horses"
 
     for line in lines:
@@ -84,6 +85,7 @@ def parse_csv(path: Path) -> dict:
             section = "sign"
         elif parts[0] == "■レース情報":
             race_surface_dist = parts[1] if len(parts) > 1 else ""
+            race_id = parts[2] if len(parts) > 2 else ""
             section = "raceinfo"
         elif parts[0] == "■評価コメント":
             eval_comments = []
@@ -135,6 +137,7 @@ def parse_csv(path: Path) -> dict:
         "eval_comments": eval_comments,
         "horse_notes": horse_notes,
         "race_surface_dist": race_surface_dist,
+        "race_id": race_id,
         "formb_header": formb_header,
         "formb_combos": formb_combos,
         "form10_header": form10_header,
@@ -376,33 +379,75 @@ if data["eval_comments"]:
         unsafe_allow_html=True,
     )
 
-# 買い目
+# 買い目（想定オッズは bet_odds.py が予想時に書き出した results/.../odds_{race_id}.json）
+_odds_file = race["path"].parent / f"odds_{data.get('race_id', '')}.json"
+try:
+    odds_info = json.loads(_odds_file.read_text(encoding="utf-8")) if data.get("race_id") else None
+except Exception:
+    odds_info = None
+
+
+def _fmt(v):
+    return f"{v:.1f}倍" if isinstance(v, (int, float)) else "—"
+
+
+def _odds_block(title, block, fallback_combos=None):
+    """買い目と、各組み合わせの倍率・想定倍率の範囲を表示"""
+    st.markdown(f"**{title}**")
+    if block and block.get("組み合わせ"):
+        lo, hi, n = block.get("最低"), block.get("最高"), block.get("点数", 0)
+        st.markdown(
+            f"<div style='background:#fff4e0;border-radius:4px;padding:4px 8px;margin:2px 0 6px'>"
+            f"想定倍率 <b>{_fmt(lo)} 〜 {_fmt(hi)}</b>（{n}点）"
+            + (f"<br><span style='color:#c0392b;font-size:0.85em'>当たっても元が取れない（{n}倍未満）: {block.get('トリガミ', 0)}点</span>"
+               if block.get("トリガミ") else "")
+            + "</div>",
+            unsafe_allow_html=True,
+        )
+        rows = sorted(block["組み合わせ"], key=lambda r: (r["倍率"] is None, r["倍率"] or 0))
+        st.text("\n".join(f"{r['組']:<9}{_fmt(r['倍率']):>8}" for r in rows))
+    elif fallback_combos:
+        st.caption("オッズ未記録")
+        chunks = [fallback_combos[i:i+6] for i in range(0, len(fallback_combos), 6)]
+        for chunk in chunks:
+            st.text("  ".join(chunk))
+
+
+if odds_info and odds_info.get("取得時刻"):
+    st.caption(f"倍率は {odds_info['取得時刻'][5:16].replace('-', '/')} 時点（予想時）のオッズ。発走までに変わります。")
+
 col1, col2, col3 = st.columns(3)
 
 with col1:
-    if data["formb_combos"]:
-        h = data["formb_header"]
-        st.markdown(f"**■ 三連複BOX**")
+    if data["form10_combos"]:
+        h = data["form10_header"]
+        _odds_block("■ 三連複（1軸-相手）", (odds_info or {}).get("三連複1軸"), data["form10_combos"])
         if h:
             st.caption("  ".join(h))
+    elif data["formb_combos"]:      # 旧CSV
+        st.markdown("**■ 三連複BOX**")
+        if data["formb_header"]:
+            st.caption("  ".join(data["formb_header"]))
         chunks = [data["formb_combos"][i:i+6] for i in range(0, len(data["formb_combos"]), 6)]
         for chunk in chunks:
             st.text("  ".join(chunk))
 
 with col2:
-    if data["form10_combos"]:
-        h = data["form10_header"]
-        st.markdown(f"**■ 三連複（1軸-相手）**")
-        if h:
-            st.caption("  ".join(h))
-        chunks = [data["form10_combos"][i:i+6] for i in range(0, len(data["form10_combos"]), 6)]
-        for chunk in chunks:
-            st.text("  ".join(chunk))
+    # 馬連は買いサインの有無に関係なく常に出す（予想1〜5位のBOX・10点）
+    box = (odds_info or {}).get("馬連5頭BOX")
+    fallback = []
+    if not box and not df.empty and "馬番" in df.columns:
+        top5 = [int(x) for x in df["馬番"].head(5)]
+        fallback = [f"{min(a, b)}-{max(a, b)}" for i, a in enumerate(top5) for b in top5[i + 1:]]
+    if box or fallback:
+        _odds_block("■ 馬連5頭BOX（予想1〜5位）", box, fallback)
+        if odds_info and odds_info.get("馬連1-2") is not None:
+            st.caption(f"参考: 馬連1-2（予想1位×2位）{_fmt(odds_info['馬連1-2'])}")
 
 with col3:
     if data["form7_combos"]:
         h = data["form7_header"]
-        st.markdown(f"**■ 三連複7点**")
+        st.markdown(f"**■ 参考:2軸型**")
         if h:
             st.caption("  ".join(h))
         chunks = [data["form7_combos"][i:i+6] for i in range(0, len(data["form7_combos"]), 6)]
